@@ -408,13 +408,38 @@ ${roomQuestionQuery.data.question}
             </div>
           </>
         ) : isCandidate ? (
-          /* Candidate View - Clean interface */
-          <div className="text-center p-6 bg-white rounded-lg shadow-sm h-full">
-            <div className="text-4xl mb-4">💻</div>
-            <div className="text-gray-600 font-medium text-lg mb-2">Candidate View</div>
-            <div className="text-gray-400 text-sm">
-              Focus on solving the coding challenge in the editor
-            </div>
+          /* Candidate View - Show current question or waiting state */
+          <div className="p-4 bg-white rounded-lg shadow-sm h-full overflow-y-auto">
+            {roomQuestionQuery.data?.question ? (
+              <div>
+                <div className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
+                  <span className="text-xl">📝</span>
+                  Current Question
+                </div>
+                <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg border">
+                  {roomQuestionQuery.data.question}
+                </div>
+                <div className="mt-4 text-xs text-gray-500">
+                  Use the code editor to write your solution
+                </div>
+              </div>
+            ) : roomQuestionQuery.isLoading ? (
+              <div className="text-center p-6">
+                <div className="text-4xl mb-4">⏳</div>
+                <div className="text-gray-600 font-medium text-lg mb-2">Loading...</div>
+                <div className="text-gray-400 text-sm">
+                  Checking for interview questions
+                </div>
+              </div>
+            ) : (
+              <div className="text-center p-6">
+                <div className="text-4xl mb-4">💻</div>
+                <div className="text-gray-600 font-medium text-lg mb-2">Waiting for Question</div>
+                <div className="text-gray-400 text-sm">
+                  The interviewer will generate a coding question shortly
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           /* Default View - No role specified */
