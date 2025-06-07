@@ -11,7 +11,18 @@ export default function InterviewRoom() {
   const [isMuted, setIsMuted] = useState(true);
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [editorValue, setEditorValue] = useState("");
-  const [generatedQuestion, setGeneratedQuestion] = useState<string>("");
+  const [generatedQuestion, setGeneratedQuestion] = useState<string>(`// Welcome to the Interview Code Editor
+// Click "Generate Coding Question" to get started with an AI-generated question
+// This is where you can write and test code during the interview
+
+function fibonacci(n) {
+    if (n <= 1) return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+console.log(fibonacci(10));
+
+// Feel free to modify this code or write your own!`);
   const { toast } = useToast();
 
   const generateQuestionMutation = useMutation({
