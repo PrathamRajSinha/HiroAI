@@ -9,6 +9,7 @@ declare global {
 
 interface MonacoEditorProps {
   defaultValue?: string;
+  value?: string;
   language?: string;
   theme?: string;
   readOnly?: boolean;
@@ -27,6 +28,7 @@ function fibonacci(n) {
 console.log(fibonacci(10));
 
 // Feel free to modify this code or write your own!`,
+  value,
   language = "javascript",
   theme = "vs",
   readOnly = false,
@@ -51,7 +53,7 @@ console.log(fibonacci(10));
           monacoInstance.current = window.monaco.editor.create(
             editorRef.current,
             {
-              value: defaultValue,
+              value: value || defaultValue,
               language,
               theme,
               automaticLayout: true,
@@ -88,6 +90,16 @@ console.log(fibonacci(10));
       }
     };
   }, [defaultValue, language, theme, readOnly, onChange]);
+
+  // Handle value updates
+  useEffect(() => {
+    if (monacoInstance.current && value !== undefined) {
+      const currentValue = monacoInstance.current.getValue();
+      if (currentValue !== value) {
+        monacoInstance.current.setValue(value);
+      }
+    }
+  }, [value]);
 
   useEffect(() => {
     const handleResize = () => {

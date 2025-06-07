@@ -20,7 +20,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ error: "Google Gemini API key not configured" });
       }
 
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
       const prompt = `Generate a coding interview question for a frontend developer about ${topic}. The question should be clear and beginner-to-intermediate level. Include a brief description of what the candidate should implement, any specific requirements, and expected difficulty level. Make it practical and relevant to real-world development scenarios.`;
       
