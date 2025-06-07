@@ -53,17 +53,22 @@ console.log(fibonacci(10));
       return apiRequest("/api/generate-question", "POST", { topic, roomId });
     },
     onSuccess: (data: { question: string }) => {
-      const questionContent = `/*
+      // For interviewers, don't automatically put question in editor
+      // Store it for the candidate to receive via polling
+      if (!isInterviewer) {
+        const questionContent = `/*
 ${data.question}
 */
 
 // Write your solution below:
 
 `;
-      setGeneratedQuestion(questionContent);
+        setGeneratedQuestion(questionContent);
+      }
+      
       toast({
         title: "Question Generated!",
-        description: "A new coding question has been generated and displayed in the editor.",
+        description: "A new coding question has been generated and shared with the candidate.",
       });
     },
     onError: (error) => {
@@ -101,13 +106,13 @@ ${data.question}
   const roomQuestionQuery = useQuery({
     queryKey: ["/api/room", roomId, "question"],
     queryFn: () => apiRequest(`/api/room/${roomId}/question`, "GET"),
-    enabled: !!roomId && isCandidate,
+    enabled: !!roomId,
     refetchInterval: 3000, // Poll every 3 seconds for real-time updates
   });
 
   // Update the editor with room question for candidates
   useEffect(() => {
-    if (isCandidate && roomQuestionQuery.data?.question && roomQuestionQuery.data.question !== generatedQuestion) {
+    if (isCandidate && roomQuestionQuery.data?.question) {
       const questionContent = `/*
 ${roomQuestionQuery.data.question}
 */
@@ -115,15 +120,18 @@ ${roomQuestionQuery.data.question}
 // Write your solution below:
 
 `;
-      setGeneratedQuestion(questionContent);
+      if (questionContent !== generatedQuestion) {
+        setGeneratedQuestion(questionContent);
+      }
     }
-  }, [roomQuestionQuery.data, isCandidate, generatedQuestion]);
+  }, [roomQuestionQuery.data, isCandidate]);
 
   const handleTabSwitch = (tab: TabType) => {
     setActiveTab(tab);
   };
 
   const generateCodingQuestion = () => {
+    console.log("Generating question for roomId:", roomId);
     generateQuestionMutation.mutate("React");
   };
 
@@ -410,6 +418,12 @@ ${roomQuestionQuery.data.question}
         ) : isCandidate ? (
           /* Candidate View - Show current question or waiting state */
           <div className="p-4 bg-white rounded-lg shadow-sm h-full overflow-y-auto">
+            {(() => {
+              console.log("Candidate query data:", roomQuestionQuery.data);
+              console.log("Query loading:", roomQuestionQuery.isLoading);
+              console.log("Query error:", roomQuestionQuery.error);
+              return null;
+            })()}
             {roomQuestionQuery.data?.question ? (
               <div>
                 <div className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">

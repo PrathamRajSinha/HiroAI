@@ -31,6 +31,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Store question for the room if roomId is provided
       if (roomId) {
+        console.log(`Storing question for room ${roomId}:`, question.substring(0, 100) + "...");
         await storage.setRoomQuestion(roomId, question);
       }
 
@@ -46,6 +47,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { roomId } = req.params;
       const question = await storage.getRoomQuestion(roomId);
+      
+      console.log(`Fetching question for room ${roomId}:`, question ? "Found" : "Not found");
       
       if (!question) {
         return res.json({ question: null });
