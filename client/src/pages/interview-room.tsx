@@ -21,8 +21,6 @@ export default function InterviewRoom() {
   console.log("Role === 'candidate':", role === "candidate");
   
   const [activeTab, setActiveTab] = useState<TabType>("resume");
-  const [isMuted, setIsMuted] = useState(true);
-  const [isVideoOn, setIsVideoOn] = useState(true);
   const [editorValue, setEditorValue] = useState("");
   const [generatedQuestion, setGeneratedQuestion] = useState<string>(`// Welcome to the Interview Code Editor
 // Click "Generate Coding Question" to get started with an AI-generated question
@@ -79,14 +77,6 @@ ${data.question}
 
   const generateCodingQuestion = () => {
     generateQuestionMutation.mutate("React");
-  };
-
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
-  };
-
-  const toggleVideo = () => {
-    setIsVideoOn(!isVideoOn);
   };
 
   const renderTabContent = () => {
@@ -159,53 +149,32 @@ ${data.question}
   return (
     <div className="h-screen w-screen flex gap-4 p-4 bg-gray-50">
       {/* Left Panel - Video Call (25% width) */}
-      <div className="w-1/4 bg-gray-100 rounded-xl p-6 flex items-center justify-center min-h-full">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🎥</div>
-          <div className="text-gray-600 font-medium text-lg">Video Here</div>
-          <div className="text-gray-400 text-sm mt-2">
-            Camera feed will appear here
-          </div>
-          
-          {/* Role and Room indicators */}
-          <div className="mt-3 space-y-2">
+      <div className="w-1/4 bg-gray-100 rounded-xl p-2 min-h-full relative">
+        {roomId ? (
+          <>
+            <iframe
+              src={`https://your-subdomain.daily.co/${roomId}`}
+              className="w-full h-full rounded-xl shadow-md"
+              allow="camera; microphone; fullscreen; speaker; display-capture"
+              title="Daily Video Chat"
+            />
+            {/* Role indicator overlay */}
             {role && (
-              <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                {role.charAt(0).toUpperCase() + role.slice(1)} View
+              <div className="absolute top-4 left-4 z-10">
+                <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium shadow-md backdrop-blur-sm bg-opacity-90">
+                  {role.charAt(0).toUpperCase() + role.slice(1)} View
+                </div>
               </div>
             )}
-            {roomId && (
-              <div className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
-                Room: {roomId}
-              </div>
-            )}
-          </div>
-          
-          <div className="mt-4 space-y-2">
-            <div className="flex justify-center space-x-2">
-              <button
-                onClick={toggleMute}
-                className={`w-10 h-10 ${
-                  isMuted
-                    ? "bg-red-500 hover:bg-red-600"
-                    : "bg-green-500 hover:bg-green-600"
-                } rounded-full flex items-center justify-center text-white transition-colors`}
-              >
-                <span className="text-sm">{isMuted ? "🔇" : "🔊"}</span>
-              </button>
-              <button
-                onClick={toggleVideo}
-                className={`w-10 h-10 ${
-                  isVideoOn
-                    ? "bg-gray-600 hover:bg-gray-700"
-                    : "bg-red-500 hover:bg-red-600"
-                } rounded-full flex items-center justify-center text-white transition-colors`}
-              >
-                <span className="text-sm">{isVideoOn ? "📹" : "📷"}</span>
-              </button>
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-full text-center">
+            <div>
+              <div className="text-4xl mb-2">🎥</div>
+              <div className="text-gray-600 text-sm">Loading video room...</div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Center Panel - Monaco Editor (50% width) */}
