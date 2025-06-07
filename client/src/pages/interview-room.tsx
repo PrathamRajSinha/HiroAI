@@ -13,6 +13,12 @@ export default function InterviewRoom() {
     setActiveTab(tab);
   };
 
+  const generateCodingQuestion = () => {
+    // Placeholder function for generating coding questions
+    console.log("Generating coding question...");
+    // Future implementation: AI-powered question generation
+  };
+
   const toggleMute = () => {
     setIsMuted(!isMuted);
   };
@@ -126,7 +132,16 @@ export default function InterviewRoom() {
       </div>
 
       {/* Center Panel - Monaco Editor (50% width) */}
-      <div className="w-1/2 bg-white rounded-xl shadow-md p-2 border border-gray-200">
+      <div className="w-1/2 bg-white rounded-xl shadow-md p-2 border border-gray-200 relative">
+        {/* Floating Generate Question Button */}
+        <button
+          onClick={generateCodingQuestion}
+          className="absolute top-4 right-4 z-10 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center gap-2 hover:scale-105"
+        >
+          <span>🎯</span>
+          Generate Coding Question
+        </button>
+        
         <div className="h-full rounded-lg overflow-hidden">
           <MonacoEditor
             language="javascript"
