@@ -207,8 +207,8 @@ ${data.question}
 
       {/* Center Panel - Monaco Editor (50% width) */}
       <div className="w-1/2 bg-white rounded-xl shadow-md p-2 border border-gray-200 relative">
-        {/* Floating Generate Question Button - Only for interviewers */}
-        {isInterviewer && (
+        {/* Floating Generate Question Button - Show for interviewers and default users, hide for candidates */}
+        {role !== "candidate" && (
           <button
             onClick={generateCodingQuestion}
             disabled={generateQuestionMutation.isPending}
