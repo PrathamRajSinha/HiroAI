@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MonacoEditor } from "@/components/monaco-editor";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation, useParams } from "wouter";
@@ -96,6 +96,28 @@ ${data.question}
       });
     },
   });
+
+  // Query to fetch room question for candidates
+  const roomQuestionQuery = useQuery({
+    queryKey: ["/api/room", roomId, "question"],
+    queryFn: () => apiRequest(`/api/room/${roomId}/question`, "GET"),
+    enabled: !!roomId && isCandidate,
+    refetchInterval: 3000, // Poll every 3 seconds for real-time updates
+  });
+
+  // Update the editor with room question for candidates
+  useEffect(() => {
+    if (isCandidate && roomQuestionQuery.data?.question && roomQuestionQuery.data.question !== generatedQuestion) {
+      const questionContent = `/*
+${roomQuestionQuery.data.question}
+*/
+
+// Write your solution below:
+
+`;
+      setGeneratedQuestion(questionContent);
+    }
+  }, [roomQuestionQuery.data, isCandidate, generatedQuestion]);
 
   const handleTabSwitch = (tab: TabType) => {
     setActiveTab(tab);
