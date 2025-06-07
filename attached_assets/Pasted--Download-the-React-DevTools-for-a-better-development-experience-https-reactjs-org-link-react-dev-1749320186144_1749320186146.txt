@@ -1,0 +1,1348 @@
+ Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+ Current role: interviewer
+ Room ID: 446bfebc
+ Full location: /interview/446bfebc
+ Role type: string
+ Role === 'candidate': false
+ isInterviewer: true
+ isCandidate: false
+ Should show button: true
+ Unrecognized feature: 'speaker'.
+setValueForProperty @ chunk-WERSD76P.js:1232
+ Current role: interviewer
+interview-room.tsx:18 Room ID: 446bfebc
+interview-room.tsx:19 Full location: /interview/446bfebc
+interview-room.tsx:20 Role type: string
+interview-room.tsx:21 Role === 'candidate': false
+interview-room.tsx:47 isInterviewer: true
+interview-room.tsx:48 isCandidate: false
+interview-room.tsx:49 Should show button: true
+o77906.ingest.sentry.io/api/5728081/envelope/?sentry_key=468e374d8f614f9691bb3194f97efd42&sentry_version=7&sentry_client=sentry.javascript.react%2F7.64.0:1 
+            
+            
+           Failed to load resource: net::ERR_BLOCKED_BY_CLIENT
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. <URL>
+The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. <URL>
+The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. <URL>
+The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. <URL>
+The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. <URL>
+The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. <URL>
+The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. <URL>
+The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. <URL>
+The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. <URL>
+The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. <URL>
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+interview-room.tsx:134 Generating question for roomId: 446bfebc
+interview-room.tsx:17 Current role: interviewer
+interview-room.tsx:18 Room ID: 446bfebc
+interview-room.tsx:19 Full location: /interview/446bfebc
+interview-room.tsx:20 Role type: string
+interview-room.tsx:21 Role === 'candidate': false
+interview-room.tsx:47 isInterviewer: true
+interview-room.tsx:48 isCandidate: false
+interview-room.tsx:49 Should show button: true
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+interview-room.tsx:17 Current role: interviewer
+interview-room.tsx:18 Room ID: 446bfebc
+interview-room.tsx:19 Full location: /interview/446bfebc
+interview-room.tsx:20 Role type: string
+interview-room.tsx:21 Role === 'candidate': false
+interview-room.tsx:47 isInterviewer: true
+interview-room.tsx:48 isCandidate: false
+interview-room.tsx:49 Should show button: true
+interview-room.tsx:17 Current role: interviewer
+interview-room.tsx:18 Room ID: 446bfebc
+interview-room.tsx:19 Full location: /interview/446bfebc
+interview-room.tsx:20 Role type: string
+interview-room.tsx:21 Role === 'candidate': false
+interview-room.tsx:47 isInterviewer: true
+interview-room.tsx:48 isCandidate: false
+interview-room.tsx:49 Should show button: true
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+o77906.ingest.sentry.io/api/5728081/envelope/?sentry_key=468e374d8f614f9691bb3194f97efd42&sentry_version=7&sentry_client=sentry.javascript.react%2F7.64.0:1 
+            
+            
+           Failed to load resource: net::ERR_BLOCKED_BY_CLIENT
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+Promise.then
+g @ VM24:4
+o @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g.getCamStream @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+f.camOperation @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+dispatch @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+L @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+value @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+C @ VM24:4
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+postMessage
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+(anonymous) @ %5B...room%5D-453b018c394d6347.js:1
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+Promise.then
+g @ VM24:4
+o @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g.getCamStream @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+f.camOperation @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+dispatch @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+L @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+value @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+C @ VM24:4
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+postMessage
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+(anonymous) @ %5B...room%5D-453b018c394d6347.js:1
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+Promise.then
+g @ VM24:4
+o @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g.getCamStream @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+f.camOperation @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+dispatch @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+L @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+value @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+C @ VM24:4
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+postMessage
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+(anonymous) @ %5B...room%5D-453b018c394d6347.js:1
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+Promise.then
+g @ VM24:4
+o @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g.getCamStream @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+f.camOperation @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+dispatch @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+L @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+value @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+C @ VM24:4
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+postMessage
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+(anonymous) @ %5B...room%5D-453b018c394d6347.js:1
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+Promise.then
+g @ VM24:4
+o @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g.getCamStream @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+f.camOperation @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+dispatch @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+L @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+value @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+C @ VM24:4
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+postMessage
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+(anonymous) @ %5B...room%5D-453b018c394d6347.js:1
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+Promise.then
+g @ VM24:4
+o @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g.getCamStream @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+f.camOperation @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+dispatch @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+L @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+value @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+C @ VM24:4
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+postMessage
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+(anonymous) @ %5B...room%5D-453b018c394d6347.js:1
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+interview-room.tsx:17 Current role: interviewer
+interview-room.tsx:18 Room ID: 446bfebc
+interview-room.tsx:19 Full location: /interview/446bfebc
+interview-room.tsx:20 Role type: string
+interview-room.tsx:21 Role === 'candidate': false
+interview-room.tsx:47 isInterviewer: true
+interview-room.tsx:48 isCandidate: false
+interview-room.tsx:49 Should show button: true
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+Promise.then
+g @ VM24:4
+o @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g.getCamStream @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+f.camOperation @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+dispatch @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+L @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+value @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+C @ VM24:4
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+postMessage
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+(anonymous) @ %5B...room%5D-453b018c394d6347.js:1
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+Promise.then
+g @ VM24:4
+o @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g.getCamStream @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+f.camOperation @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+dispatch @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+L @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+value @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+C @ VM24:4
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+postMessage
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+(anonymous) @ %5B...room%5D-453b018c394d6347.js:1
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+Promise.then
+g @ VM24:4
+o @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g.getCamStream @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+f.camOperation @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+dispatch @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+L @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+value @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+C @ VM24:4
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+postMessage
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+(anonymous) @ %5B...room%5D-453b018c394d6347.js:1
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+value @ VM24:4
+M @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+o @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g.getCamStream @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+f.camOperation @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+dispatch @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+L @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+value @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+C @ VM24:4
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+postMessage
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+(anonymous) @ %5B...room%5D-453b018c394d6347.js:1
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+ 
+            
+            
+           POST https://o77906.ingest.sentry.io/api/168844/envelope/?sentry_version=7&sentry_key=f10f1c81e5d44a4098416c0867a8b740&sentry_client=sentry.javascript.browser%2F8.55.0 net::ERR_BLOCKED_BY_CLIENT
+(anonymous) @ 1801-f6b4155b4b51cd3f.js:18
+(anonymous) @ 4ec946c7-1391fb59e53571b9.js:20
+(anonymous) @ 4ec946c7-1391fb59e53571b9.js:18
+add @ 4ec946c7-1391fb59e53571b9.js:18
+send @ 4ec946c7-1391fb59e53571b9.js:18
+sendEnvelope @ 4ec946c7-1391fb59e53571b9.js:9
+sendEvent @ 4ec946c7-1391fb59e53571b9.js:9
+(anonymous) @ 4ec946c7-1391fb59e53571b9.js:9
+(anonymous) @ 4ec946c7-1391fb59e53571b9.js:9
+(anonymous) @ 4ec946c7-1391fb59e53571b9.js:9
+_executeHandlers @ 4ec946c7-1391fb59e53571b9.js:9
+(anonymous) @ 4ec946c7-1391fb59e53571b9.js:9
+ft @ 4ec946c7-1391fb59e53571b9.js:9
+then @ 4ec946c7-1391fb59e53571b9.js:9
+_processEvent @ 4ec946c7-1391fb59e53571b9.js:9
+_captureEvent @ 4ec946c7-1391fb59e53571b9.js:9
+(anonymous) @ 4ec946c7-1391fb59e53571b9.js:9
+(anonymous) @ 4ec946c7-1391fb59e53571b9.js:9
+(anonymous) @ 4ec946c7-1391fb59e53571b9.js:9
+_executeHandlers @ 4ec946c7-1391fb59e53571b9.js:9
+(anonymous) @ 4ec946c7-1391fb59e53571b9.js:9
+ft @ 4ec946c7-1391fb59e53571b9.js:9
+then @ 4ec946c7-1391fb59e53571b9.js:9
+captureException @ 4ec946c7-1391fb59e53571b9.js:9
+captureException @ 4ec946c7-1391fb59e53571b9.js:9
+value @ 4ec946c7-1391fb59e53571b9.js:20
+(anonymous) @ 4ec946c7-1391fb59e53571b9.js:20
+i @ 4ec946c7-1391fb59e53571b9.js:20
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+postMessage
+value @ VM24:4
+value @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+value @ VM24:4
+M @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+o @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g.getCamStream @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+f.camOperation @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+dispatch @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+L @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+value @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+C @ VM24:4
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+postMessage
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+(anonymous) @ %5B...room%5D-453b018c394d6347.js:1
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+value @ VM24:4
+M @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+o @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g.getCamStream @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+f.camOperation @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+dispatch @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+L @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+value @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+C @ VM24:4
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+postMessage
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+(anonymous) @ %5B...room%5D-453b018c394d6347.js:1
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+value @ VM24:4
+M @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+o @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g.getCamStream @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+f.camOperation @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+dispatch @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+L @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+value @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+C @ VM24:4
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+postMessage
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+(anonymous) @ %5B...room%5D-453b018c394d6347.js:1
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+value @ VM24:4
+M @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+o @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g.getCamStream @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+f.camOperation @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+dispatch @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+L @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+value @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+C @ VM24:4
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+postMessage
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+(anonymous) @ %5B...room%5D-453b018c394d6347.js:1
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+value @ VM24:4
+M @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+o @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g.getCamStream @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+f.camOperation @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+dispatch @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+L @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+value @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+C @ VM24:4
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+postMessage
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+(anonymous) @ %5B...room%5D-453b018c394d6347.js:1
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+VM24:4 Devices Error (Permission Denied): NotAllowedError: Permission denied
+value @ VM24:4
+value @ VM24:4
+M @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+o @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g.getCamStream @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+f.camOperation @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+dispatch @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+L @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+Promise.then
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+value @ VM24:4
+eval @ VM24:4
+g @ VM24:4
+i @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+eval @ VM24:4
+C @ VM24:4
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18
+postMessage
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+value @ 4ec946c7-1391fb59e53571b9.js:20
+(anonymous) @ %5B...room%5D-453b018c394d6347.js:1
+sentryWrapped @ 1801-f6b4155b4b51cd3f.js:18

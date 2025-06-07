@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { MonacoEditor } from "@/components/monaco-editor";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation, useParams } from "wouter";
 
-type TabType = "resume" | "github" | "linkedin";
+type TabType = "resume" | "github" | "linkedin" | "question";
 
 export default function InterviewRoom() {
   const params = useParams();
@@ -65,6 +65,11 @@ ${data.question}
 `;
         setGeneratedQuestion(questionContent);
       }
+      
+      // Invalidate and refetch the room question query immediately
+      queryClient.invalidateQueries({
+        queryKey: ["/api/room", roomId, "question"]
+      });
       
       toast({
         title: "Question Generated!",
@@ -131,7 +136,6 @@ ${roomQuestionQuery.data.question}
   };
 
   const generateCodingQuestion = () => {
-    console.log("Generating question for roomId:", roomId);
     generateQuestionMutation.mutate("React");
   };
 
@@ -288,6 +292,26 @@ ${roomQuestionQuery.data.question}
             </div>
           </div>
         );
+      case "question":
+        return (
+          <div className="bg-white rounded-lg shadow-sm h-96 p-4 overflow-y-auto">
+            <div className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
+              <span className="text-xl">📝</span>
+              Current Question
+            </div>
+            {roomQuestionQuery.data?.question ? (
+              <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg border">
+                {roomQuestionQuery.data.question}
+              </div>
+            ) : (
+              <div className="text-center p-4 text-gray-500">
+                <div className="text-2xl mb-2">📋</div>
+                <div className="text-sm">No question generated yet</div>
+                <div className="text-xs mt-1">Click "Generate Coding Question" to create one</div>
+              </div>
+            )}
+          </div>
+        );
     }
   };
 
@@ -379,10 +403,10 @@ ${roomQuestionQuery.data.question}
         {isInterviewer ? (
           <>
             {/* Interviewer View - Candidate Info Tabs */}
-            <div className="flex space-x-1 mb-4">
+            <div className="flex flex-wrap gap-1 mb-4">
               <button
                 onClick={() => handleTabSwitch("resume")}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
                   activeTab === "resume"
                     ? "bg-violet-600 text-white"
                     : "bg-white text-gray-600 hover:bg-violet-100 hover:text-violet-700"
@@ -392,7 +416,7 @@ ${roomQuestionQuery.data.question}
               </button>
               <button
                 onClick={() => handleTabSwitch("github")}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
                   activeTab === "github"
                     ? "bg-violet-600 text-white"
                     : "bg-white text-gray-600 hover:bg-violet-100 hover:text-violet-700"
@@ -402,13 +426,23 @@ ${roomQuestionQuery.data.question}
               </button>
               <button
                 onClick={() => handleTabSwitch("linkedin")}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
                   activeTab === "linkedin"
                     ? "bg-violet-600 text-white"
                     : "bg-white text-gray-600 hover:bg-violet-100 hover:text-violet-700"
                 }`}
               >
                 LinkedIn
+              </button>
+              <button
+                onClick={() => handleTabSwitch("question")}
+                className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
+                  activeTab === "question"
+                    ? "bg-violet-600 text-white"
+                    : "bg-white text-gray-600 hover:bg-violet-100 hover:text-violet-700"
+                }`}
+              >
+                Question
               </button>
             </div>
             <div className="tab-content h-full">
@@ -418,12 +452,7 @@ ${roomQuestionQuery.data.question}
         ) : isCandidate ? (
           /* Candidate View - Show current question or waiting state */
           <div className="p-4 bg-white rounded-lg shadow-sm h-full overflow-y-auto">
-            {(() => {
-              console.log("Candidate query data:", roomQuestionQuery.data);
-              console.log("Query loading:", roomQuestionQuery.isLoading);
-              console.log("Query error:", roomQuestionQuery.error);
-              return null;
-            })()}
+
             {roomQuestionQuery.data?.question ? (
               <div>
                 <div className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
