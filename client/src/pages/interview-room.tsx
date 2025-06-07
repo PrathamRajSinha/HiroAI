@@ -15,6 +15,7 @@ export default function InterviewRoom() {
   
   console.log("Current role:", role);
   console.log("Room ID:", roomId);
+  console.log("Full location:", location);
   
   const [activeTab, setActiveTab] = useState<TabType>("resume");
   const [isMuted, setIsMuted] = useState(true);
@@ -36,6 +37,10 @@ console.log(fibonacci(10));
   
   const isInterviewer = role === "interviewer";
   const isCandidate = role === "candidate";
+  
+  console.log("isInterviewer:", isInterviewer);
+  console.log("isCandidate:", isCandidate);
+  console.log("Should show button (!isCandidate):", !isCandidate);
 
   const generateQuestionMutation = useMutation({
     mutationFn: async (topic: string) => {
