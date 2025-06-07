@@ -161,7 +161,7 @@ console.log(fibonacci(10));
     switch (activeTab) {
       case "resume":
         return (
-          <div className="bg-white rounded-lg shadow-sm h-96 p-4 overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-sm h-full p-4 overflow-y-auto">
             {!resumeFile ? (
               <div className="flex flex-col items-center justify-center h-full border-2 border-dashed border-gray-300 rounded-lg">
                 <div className="text-4xl mb-4">📄</div>
@@ -207,7 +207,7 @@ console.log(fibonacci(10));
         );
       case "github":
         return (
-          <div className="bg-white rounded-lg shadow-sm h-96 p-4 overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-sm h-full p-4 overflow-y-auto">
             <div className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
               <span className="text-xl">💻</span>
               GitHub Repository
@@ -244,7 +244,7 @@ console.log(fibonacci(10));
         );
       case "linkedin":
         return (
-          <div className="bg-white rounded-lg shadow-sm h-96 p-4 overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-sm h-full p-4 overflow-y-auto">
             <div className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
               <span className="text-xl">💼</span>
               LinkedIn Profile
@@ -276,7 +276,7 @@ console.log(fibonacci(10));
         );
       case "question":
         return (
-          <div className="bg-white rounded-lg shadow-sm h-96 p-4 overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-sm h-full p-4 overflow-y-auto">
             <div className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
               <span className="text-xl">📝</span>
               Current Question
