@@ -23,6 +23,7 @@ export default function InterviewRoom() {
   const [activeTab, setActiveTab] = useState<TabType>("resume");
   const [editorValue, setEditorValue] = useState("");
   const [generatedSummary, setGeneratedSummary] = useState<string>("");
+  const [currentQuestion, setCurrentQuestion] = useState<string>("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeUrl, setResumeUrl] = useState<string>("");
   const [githubUrl, setGithubUrl] = useState<string>("");
@@ -53,18 +54,8 @@ console.log(fibonacci(10));
       return apiRequest("/api/generate-question", "POST", { topic, roomId });
     },
     onSuccess: (data: { question: string }) => {
-      // For interviewers, don't automatically put question in editor
-      // Store it for the candidate to receive via polling
-      if (!isInterviewer) {
-        const questionContent = `/*
-${data.question}
-*/
-
-// Write your solution below:
-
-`;
-        setGeneratedQuestion(questionContent);
-      }
+      // Set the current question for display above the editor
+      setCurrentQuestion(data.question);
       
       // Invalidate and refetch the room question query immediately
       queryClient.invalidateQueries({
@@ -115,19 +106,10 @@ ${data.question}
     refetchInterval: 3000, // Poll every 3 seconds for real-time updates
   });
 
-  // Update the editor with room question for candidates
+  // Update the current question for candidates
   useEffect(() => {
     if (isCandidate && roomQuestionQuery.data?.question) {
-      const questionContent = `/*
-${roomQuestionQuery.data.question}
-*/
-
-// Write your solution below:
-
-`;
-      if (questionContent !== generatedQuestion) {
-        setGeneratedQuestion(questionContent);
-      }
+      setCurrentQuestion(roomQuestionQuery.data.question);
     }
   }, [roomQuestionQuery.data, isCandidate]);
 
@@ -370,7 +352,20 @@ ${roomQuestionQuery.data.question}
           </div>
         )}
         
-        <div className="h-full rounded-lg overflow-hidden">
+        {/* Question Display Card */}
+        {currentQuestion && (
+          <div className="bg-violet-100 p-4 rounded-xl text-sm font-medium mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-violet-700">📝</span>
+              <span className="text-violet-700 font-semibold">Interview Question</span>
+            </div>
+            <div className="text-violet-800 whitespace-pre-wrap">
+              {currentQuestion}
+            </div>
+          </div>
+        )}
+        
+        <div className={`rounded-lg overflow-hidden ${currentQuestion ? 'h-[calc(100%-theme(spacing.32))]' : 'h-full'}`}>
           <MonacoEditor
             value={generatedQuestion}
             language="javascript"
