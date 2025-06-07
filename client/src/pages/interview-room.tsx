@@ -23,6 +23,10 @@ export default function InterviewRoom() {
   const [activeTab, setActiveTab] = useState<TabType>("resume");
   const [editorValue, setEditorValue] = useState("");
   const [generatedSummary, setGeneratedSummary] = useState<string>("");
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeUrl, setResumeUrl] = useState<string>("");
+  const [githubUrl, setGithubUrl] = useState<string>("");
+  const [linkedinUrl, setLinkedinUrl] = useState<string>("");
   const [generatedQuestion, setGeneratedQuestion] = useState<string>(`// Welcome to the Interview Code Editor
 // Click "Generate Coding Question" to get started with an AI-generated question
 // This is where you can write and test code during the interview
@@ -114,67 +118,143 @@ ${data.question}
     generateSummaryMutation.mutate(currentCode);
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === "application/pdf") {
+      setResumeFile(file);
+      const url = URL.createObjectURL(file);
+      setResumeUrl(url);
+    } else {
+      toast({
+        title: "Invalid File",
+        description: "Please upload a PDF file.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const clearResume = () => {
+    if (resumeUrl) {
+      URL.revokeObjectURL(resumeUrl);
+    }
+    setResumeFile(null);
+    setResumeUrl("");
+  };
+
   const renderTabContent = () => {
-    const baseContentClass = "text-center p-8 bg-white rounded-lg shadow-sm h-96";
-    
     switch (activeTab) {
       case "resume":
         return (
-          <div className={baseContentClass}>
-            <div className="text-4xl mb-4">👤</div>
-            <div className="text-gray-600 font-medium">Resume Content</div>
-            <div className="text-gray-400 text-sm mt-2">
-              Candidate's resume will be displayed here
-            </div>
-            <div className="mt-4 space-y-3 text-left">
-              <div className="border-b border-gray-200 pb-2">
-                <div className="font-semibold text-gray-800">John Doe</div>
-                <div className="text-sm text-gray-500">Senior Software Engineer</div>
+          <div className="bg-white rounded-lg shadow-sm h-96 p-4 overflow-y-auto">
+            {!resumeFile ? (
+              <div className="flex flex-col items-center justify-center h-full border-2 border-dashed border-gray-300 rounded-lg">
+                <div className="text-4xl mb-4">📄</div>
+                <div className="text-gray-600 font-medium mb-4">Upload Resume</div>
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="resume-upload"
+                />
+                <label
+                  htmlFor="resume-upload"
+                  className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg cursor-pointer transition-colors text-sm font-medium"
+                >
+                  Choose PDF File
+                </label>
+                <div className="text-gray-400 text-xs mt-2">
+                  PDF files only, max 10MB
+                </div>
               </div>
-              <div className="text-sm space-y-1">
-                <div className="font-medium text-gray-700">Experience:</div>
-                <div className="text-gray-600">5+ years in React, Node.js</div>
+            ) : (
+              <div className="h-full flex flex-col">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-gray-700 truncate">
+                    {resumeFile.name}
+                  </span>
+                  <button
+                    onClick={clearResume}
+                    className="text-red-500 hover:text-red-700 text-xs"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <iframe
+                  src={resumeUrl}
+                  className="flex-1 w-full border border-gray-200 rounded"
+                  title="Resume PDF"
+                />
               </div>
-            </div>
+            )}
           </div>
         );
       case "github":
         return (
-          <div className={baseContentClass}>
-            <div className="text-4xl mb-4">⚡</div>
-            <div className="text-gray-600 font-medium">GitHub Profile</div>
-            <div className="text-gray-400 text-sm mt-2">
-              GitHub repositories and contributions
+          <div className="bg-white rounded-lg shadow-sm h-96 p-4 overflow-y-auto">
+            <div className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
+              <span className="text-xl">💻</span>
+              GitHub Repository
             </div>
-            <div className="mt-4 space-y-3 text-left">
-              <div className="border-b border-gray-200 pb-2">
-                <div className="font-semibold text-gray-800">@johndoe</div>
-                <div className="text-sm text-gray-500">42 repositories</div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Repository URL
+                </label>
+                <input
+                  type="url"
+                  value={githubUrl}
+                  onChange={(e) => setGithubUrl(e.target.value)}
+                  placeholder="https://github.com/username/repo"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm"
+                />
               </div>
-              <div className="text-sm space-y-1">
-                <div className="font-medium text-gray-700">Recent Projects:</div>
-                <div className="text-gray-600">react-dashboard, api-gateway</div>
-              </div>
+              {githubUrl && (
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-gray-700">Repository Link:</div>
+                  <a
+                    href={githubUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-violet-600 hover:text-violet-800 text-sm underline break-all"
+                  >
+                    <span>🔗</span>
+                    {githubUrl}
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         );
       case "linkedin":
         return (
-          <div className={baseContentClass}>
-            <div className="text-4xl mb-4">💼</div>
-            <div className="text-gray-600 font-medium">LinkedIn Profile</div>
-            <div className="text-gray-400 text-sm mt-2">
-              Professional background and network
+          <div className="bg-white rounded-lg shadow-sm h-96 p-4 overflow-y-auto">
+            <div className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
+              <span className="text-xl">💼</span>
+              LinkedIn Profile
             </div>
-            <div className="mt-4 space-y-3 text-left">
-              <div className="border-b border-gray-200 pb-2">
-                <div className="font-semibold text-gray-800">John Doe</div>
-                <div className="text-sm text-gray-500">500+ connections</div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Profile URL
+                </label>
+                <input
+                  type="url"
+                  value={linkedinUrl}
+                  onChange={(e) => setLinkedinUrl(e.target.value)}
+                  placeholder="https://linkedin.com/in/username"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm"
+                />
               </div>
-              <div className="text-sm space-y-1">
-                <div className="font-medium text-gray-700">Current Role:</div>
-                <div className="text-gray-600">Senior Engineer at TechCorp</div>
-              </div>
+              {linkedinUrl && (
+                <button
+                  onClick={() => window.open(linkedinUrl, '_blank')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                >
+                  <span>👤</span>
+                  View Profile
+                </button>
+              )}
             </div>
           </div>
         );
