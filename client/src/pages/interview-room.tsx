@@ -22,6 +22,7 @@ export default function InterviewRoom() {
   
   const [activeTab, setActiveTab] = useState<TabType>("resume");
   const [editorValue, setEditorValue] = useState("");
+  const [generatedSummary, setGeneratedSummary] = useState<string>("");
   const [generatedQuestion, setGeneratedQuestion] = useState<string>(`// Welcome to the Interview Code Editor
 // Click "Generate Coding Question" to get started with an AI-generated question
 // This is where you can write and test code during the interview
@@ -71,12 +72,46 @@ ${data.question}
     },
   });
 
+  const generateSummaryMutation = useMutation({
+    mutationFn: async (code: string) => {
+      return apiRequest("/api/generate-summary", "POST", { code });
+    },
+    onSuccess: (data: { summary: string }) => {
+      setGeneratedSummary(data.summary);
+      toast({
+        title: "Summary Generated!",
+        description: "Code feedback summary has been generated successfully.",
+      });
+    },
+    onError: (error) => {
+      console.error("Error generating summary:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate summary. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleTabSwitch = (tab: TabType) => {
     setActiveTab(tab);
   };
 
   const generateCodingQuestion = () => {
     generateQuestionMutation.mutate("React");
+  };
+
+  const generateSummary = () => {
+    const currentCode = editorValue || generatedQuestion;
+    if (!currentCode.trim()) {
+      toast({
+        title: "No Code Found",
+        description: "Please write some code before generating a summary.",
+        variant: "destructive",
+      });
+      return;
+    }
+    generateSummaryMutation.mutate(currentCode);
   };
 
   const renderTabContent = () => {
@@ -179,16 +214,26 @@ ${data.question}
 
       {/* Center Panel - Monaco Editor (50% width) */}
       <div className="w-1/2 bg-white rounded-xl shadow-md p-2 border border-gray-200 relative">
-        {/* Floating Generate Question Button - Show for interviewers and default users, hide for candidates */}
+        {/* Floating Action Buttons - Show for interviewers and default users, hide for candidates */}
         {role !== "candidate" && (
-          <button
-            onClick={generateCodingQuestion}
-            disabled={generateQuestionMutation.isPending}
-            className="absolute top-4 right-4 z-10 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center gap-2 hover:scale-105 disabled:hover:scale-100"
-          >
-            <span>{generateQuestionMutation.isPending ? "⏳" : "🎯"}</span>
-            {generateQuestionMutation.isPending ? "Generating..." : "Generate Coding Question"}
-          </button>
+          <div className="absolute top-4 right-4 z-10 flex gap-2">
+            <button
+              onClick={generateCodingQuestion}
+              disabled={generateQuestionMutation.isPending}
+              className="bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center gap-2 hover:scale-105 disabled:hover:scale-100"
+            >
+              <span>{generateQuestionMutation.isPending ? "⏳" : "🎯"}</span>
+              {generateQuestionMutation.isPending ? "Generating..." : "Generate Coding Question"}
+            </button>
+            <button
+              onClick={generateSummary}
+              disabled={generateSummaryMutation.isPending}
+              className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center gap-2 hover:scale-105 disabled:hover:scale-100"
+            >
+              <span>{generateSummaryMutation.isPending ? "⏳" : "🧠"}</span>
+              {generateSummaryMutation.isPending ? "Generating..." : "Generate Summary"}
+            </button>
+          </div>
         )}
         
         <div className="h-full rounded-lg overflow-hidden">
@@ -199,6 +244,24 @@ ${data.question}
             onChange={setEditorValue}
           />
         </div>
+        
+        {/* Summary Card - Show below editor when summary is generated */}
+        {generatedSummary && (
+          <div className="absolute bottom-4 left-4 right-4 z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-h-48 overflow-y-auto">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-gray-800">Code Feedback Summary</h3>
+              <button
+                onClick={() => setGeneratedSummary("")}
+                className="text-gray-400 hover:text-gray-600 text-xs"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="text-xs text-gray-600 whitespace-pre-wrap">
+              {generatedSummary}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Right Panel - Role-based content (25% width) */}

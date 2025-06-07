@@ -35,6 +35,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate code feedback summary
+  app.post("/api/generate-summary", async (req, res) => {
+    try {
+      const { code } = req.body;
+      
+      if (!code) {
+        return res.status(400).json({ error: "Code is required" });
+      }
+
+      if (!process.env.GOOGLE_GEMINI_API_KEY) {
+        return res.status(500).json({ error: "Google Gemini API key not configured" });
+      }
+
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      
+      const prompt = `You're an interview assistant. Given the candidate's code, generate a feedback summary highlighting what the candidate did well, any mistakes, and possible improvements. Here's the code:
+
+${code}
+
+Please provide constructive feedback in a professional tone that would be helpful for both the interviewer and candidate.`;
+      
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const summary = response.text();
+
+      res.json({ summary });
+    } catch (error) {
+      console.error("Error generating summary:", error);
+      res.status(500).json({ error: "Failed to generate summary" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
