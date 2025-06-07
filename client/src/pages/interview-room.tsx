@@ -3,15 +3,18 @@ import { MonacoEditor } from "@/components/monaco-editor";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
+import { useLocation, useParams } from "wouter";
 
 type TabType = "resume" | "github" | "linkedin";
 
 export default function InterviewRoom() {
+  const params = useParams();
   const [location] = useLocation();
   const role = new URLSearchParams(location.split('?')[1] || '').get("role");
+  const roomId = params.roomId;
   
   console.log("Current role:", role);
+  console.log("Room ID:", roomId);
   
   const [activeTab, setActiveTab] = useState<TabType>("resume");
   const [isMuted, setIsMuted] = useState(true);
@@ -156,12 +159,19 @@ ${data.question}
             Camera feed will appear here
           </div>
           
-          {/* Role indicator */}
-          {role && (
-            <div className="mt-3 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-              {role.charAt(0).toUpperCase() + role.slice(1)} View
-            </div>
-          )}
+          {/* Role and Room indicators */}
+          <div className="mt-3 space-y-2">
+            {role && (
+              <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                {role.charAt(0).toUpperCase() + role.slice(1)} View
+              </div>
+            )}
+            {roomId && (
+              <div className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                Room: {roomId}
+              </div>
+            )}
+          </div>
           
           <div className="mt-4 space-y-2">
             <div className="flex justify-center space-x-2">

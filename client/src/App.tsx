@@ -5,11 +5,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import InterviewRoom from "@/pages/interview-room";
+import CreateInterview from "@/pages/create-interview";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={InterviewRoom} />
+      <Route path="/" component={CreateInterview} />
+      <Route path="/interview/:roomId" component={InterviewRoom} />
       <Route component={NotFound} />
     </Switch>
   );
