@@ -299,8 +299,8 @@ console.log(fibonacci(10));
 
   return (
     <div className="h-screen w-screen flex gap-4 p-4 bg-gray-50">
-      {/* Left Panel - Video Call (25% width) */}
-      <div className="w-1/4 bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-3 min-h-full relative border border-gray-200 shadow-sm">
+      {/* Left Panel - Video Call (20% width) */}
+      <div className="w-1/5 bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-3 min-h-full relative border border-gray-200 shadow-sm">
         {roomId ? (
           <>
             <iframe
@@ -334,8 +334,8 @@ console.log(fibonacci(10));
         )}
       </div>
 
-      {/* Center Panel - Monaco Editor (50% width) */}
-      <div className="w-1/2 bg-white rounded-xl shadow-lg p-4 border border-gray-200 relative">
+      {/* Center Panel - Monaco Editor (55% width) */}
+      <div className="flex-1 bg-white rounded-xl shadow-lg p-4 border border-gray-200 relative">
         {/* Floating Action Buttons - Show for interviewers and default users, hide for candidates */}
         {role !== "candidate" && (
           <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
