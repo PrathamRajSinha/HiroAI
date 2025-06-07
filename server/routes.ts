@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer } from "ws";
 import { storage } from "./storage";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -10,7 +11,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate coding interview question
   app.post("/api/generate-question", async (req, res) => {
     try {
-      const { topic } = req.body;
+      const { topic, roomId } = req.body;
       
       if (!topic) {
         return res.status(400).json({ error: "Topic is required" });
@@ -28,10 +29,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const response = await result.response;
       const question = response.text();
 
+      // Store question for the room if roomId is provided
+      if (roomId) {
+        await storage.setRoomQuestion(roomId, question);
+      }
+
       res.json({ question });
     } catch (error) {
       console.error("Error generating question:", error);
       res.status(500).json({ error: "Failed to generate question" });
+    }
+  });
+
+  // Get current question for a room
+  app.get("/api/room/:roomId/question", async (req, res) => {
+    try {
+      const { roomId } = req.params;
+      const question = await storage.getRoomQuestion(roomId);
+      
+      if (!question) {
+        return res.json({ question: null });
+      }
+
+      res.json({ question });
+    } catch (error) {
+      console.error("Error fetching room question:", error);
+      res.status(500).json({ error: "Failed to fetch question" });
     }
   });
 

@@ -7,14 +7,18 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  setRoomQuestion(roomId: string, question: string): Promise<void>;
+  getRoomQuestion(roomId: string): Promise<string | undefined>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
+  private roomQuestions: Map<string, string>;
   currentId: number;
 
   constructor() {
     this.users = new Map();
+    this.roomQuestions = new Map();
     this.currentId = 1;
   }
 
@@ -33,6 +37,14 @@ export class MemStorage implements IStorage {
     const user: User = { ...insertUser, id };
     this.users.set(id, user);
     return user;
+  }
+
+  async setRoomQuestion(roomId: string, question: string): Promise<void> {
+    this.roomQuestions.set(roomId, question);
+  }
+
+  async getRoomQuestion(roomId: string): Promise<string | undefined> {
+    return this.roomQuestions.get(roomId);
   }
 }
 

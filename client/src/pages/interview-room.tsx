@@ -50,7 +50,7 @@ console.log(fibonacci(10));
 
   const generateQuestionMutation = useMutation({
     mutationFn: async (topic: string) => {
-      return apiRequest("/api/generate-question", "POST", { topic });
+      return apiRequest("/api/generate-question", "POST", { topic, roomId });
     },
     onSuccess: (data: { question: string }) => {
       const questionContent = `/*
@@ -386,17 +386,13 @@ ${data.question}
             </div>
           </>
         ) : isCandidate ? (
-          /* Candidate View - Instructions/Notes */
+          /* Candidate View - Clean interface */
           <div className="text-center p-6 bg-white rounded-lg shadow-sm h-full">
-            <div className="text-4xl mb-4">📝</div>
-            <div className="text-gray-600 font-medium text-lg mb-2">Interview Notes</div>
-            <div className="text-gray-400 text-sm mb-4">
-              Take notes during the interview
+            <div className="text-4xl mb-4">💻</div>
+            <div className="text-gray-600 font-medium text-lg mb-2">Candidate View</div>
+            <div className="text-gray-400 text-sm">
+              Focus on solving the coding challenge in the editor
             </div>
-            <textarea
-              className="w-full h-64 p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-              placeholder="Write your thoughts, approach, or any notes here..."
-            />
           </div>
         ) : (
           /* Default View - No role specified */
