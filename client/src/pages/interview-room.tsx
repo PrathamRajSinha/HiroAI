@@ -300,72 +300,83 @@ console.log(fibonacci(10));
   return (
     <div className="h-screen w-screen flex gap-4 p-4 bg-gray-50">
       {/* Left Panel - Video Call (25% width) */}
-      <div className="w-1/4 bg-gray-100 rounded-xl p-2 min-h-full relative">
+      <div className="w-1/4 bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-3 min-h-full relative border border-gray-200 shadow-sm">
         {roomId ? (
           <>
             <iframe
               src={`https://aiinterview.daily.co/test-room`}
-              className="w-full h-full rounded-xl shadow-md"
+              className="w-full h-full rounded-xl shadow-lg border border-gray-300"
               allow="camera; microphone; fullscreen; speaker; display-capture"
               title="Daily Video Chat"
             />
             {/* Role indicator overlay */}
             {role && (
-              <div className="absolute top-4 left-4 z-10">
-                <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium shadow-md backdrop-blur-sm bg-opacity-90">
-                  {role.charAt(0).toUpperCase() + role.slice(1)} View
+              <div className="absolute top-6 left-6 z-10">
+                <div className="px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg text-xs font-semibold shadow-lg backdrop-blur-sm border border-blue-400">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                    <span>{role.charAt(0).toUpperCase() + role.slice(1)} View</span>
+                  </div>
                 </div>
               </div>
             )}
           </>
         ) : (
           <div className="flex items-center justify-center h-full text-center">
-            <div>
-              <div className="text-4xl mb-2">🎥</div>
-              <div className="text-gray-600 text-sm">Loading video room...</div>
+            <div className="p-8">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-2xl">🎥</span>
+              </div>
+              <div className="text-gray-700 font-semibold text-base mb-2">Loading Video Room</div>
+              <div className="text-gray-500 text-sm">Connecting to Daily.co...</div>
             </div>
           </div>
         )}
       </div>
 
       {/* Center Panel - Monaco Editor (50% width) */}
-      <div className="w-1/2 bg-white rounded-xl shadow-md p-2 border border-gray-200 relative">
+      <div className="w-1/2 bg-white rounded-xl shadow-lg p-4 border border-gray-200 relative">
         {/* Floating Action Buttons - Show for interviewers and default users, hide for candidates */}
         {role !== "candidate" && (
-          <div className="absolute top-4 right-4 z-10 flex gap-2">
+          <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
             <button
               onClick={generateCodingQuestion}
               disabled={generateQuestionMutation.isPending}
-              className="bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center gap-2 hover:scale-105 disabled:hover:scale-100"
+              className="bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 disabled:from-violet-400 disabled:to-violet-500 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center gap-2 hover:scale-[1.02] disabled:hover:scale-100 border border-violet-500"
             >
-              <span>{generateQuestionMutation.isPending ? "⏳" : "🎯"}</span>
-              {generateQuestionMutation.isPending ? "Generating..." : "Generate Coding Question"}
+              <span className="text-base">{generateQuestionMutation.isPending ? "⏳" : "🎯"}</span>
+              <span>{generateQuestionMutation.isPending ? "Generating..." : "Generate Question"}</span>
             </button>
             <button
               onClick={generateSummary}
               disabled={generateSummaryMutation.isPending}
-              className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center gap-2 hover:scale-105 disabled:hover:scale-100"
+              className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-purple-400 disabled:to-purple-500 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center gap-2 hover:scale-[1.02] disabled:hover:scale-100 border border-purple-500"
             >
-              <span>{generateSummaryMutation.isPending ? "⏳" : "🧠"}</span>
-              {generateSummaryMutation.isPending ? "Generating..." : "Generate Summary"}
+              <span className="text-base">{generateSummaryMutation.isPending ? "⏳" : "🧠"}</span>
+              <span>{generateSummaryMutation.isPending ? "Generating..." : "Summary"}</span>
             </button>
           </div>
         )}
         
         {/* Question Display Card */}
         {currentQuestion && (
-          <div className="bg-violet-100 p-4 rounded-xl text-sm font-medium mb-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-violet-700">📝</span>
-              <span className="text-violet-700 font-semibold">Interview Question</span>
+          <div className="bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 p-6 rounded-xl mb-4 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 bg-violet-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm">📝</span>
+              </div>
+              <div>
+                <h3 className="text-violet-700 font-semibold text-base">Interview Question</h3>
+                <p className="text-violet-600 text-xs">Read carefully and implement your solution below</p>
+              </div>
             </div>
-            <div className="text-violet-800 whitespace-pre-wrap">
+            <div className="text-gray-800 whitespace-pre-wrap leading-relaxed text-sm bg-white p-4 rounded-lg border border-violet-100">
               {currentQuestion}
             </div>
           </div>
         )}
         
-        <div className={`rounded-lg overflow-hidden ${currentQuestion ? 'h-[calc(100%-theme(spacing.32))]' : 'h-full'}`}>
+        <div className={`rounded-lg overflow-hidden ${currentQuestion ? 'h-[calc(100%-12rem)]' : 'h-full'}`}>
           <MonacoEditor
             value={generatedQuestion}
             language="javascript"
@@ -394,86 +405,93 @@ console.log(fibonacci(10));
       </div>
 
       {/* Right Panel - Role-based content (25% width) */}
-      <div className="w-1/4 bg-violet-50 rounded-xl p-4">
+      <div className="w-1/4 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-4 border border-violet-100 shadow-sm">
         {isInterviewer ? (
           <>
             {/* Interviewer View - Candidate Info Tabs */}
-            <div className="flex flex-wrap gap-1 mb-4">
+            <div className="grid grid-cols-2 gap-2 mb-4">
               <button
                 onClick={() => handleTabSwitch("resume")}
-                className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
+                className={`px-3 py-2.5 text-xs font-medium rounded-lg transition-all duration-200 ${
                   activeTab === "resume"
-                    ? "bg-violet-600 text-white"
-                    : "bg-white text-gray-600 hover:bg-violet-100 hover:text-violet-700"
+                    ? "bg-gradient-to-r from-violet-600 to-violet-700 text-white shadow-md"
+                    : "bg-white text-gray-600 hover:bg-violet-100 hover:text-violet-700 border border-violet-200"
                 }`}
               >
-                Resume
+                📄 Resume
               </button>
               <button
                 onClick={() => handleTabSwitch("github")}
-                className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
+                className={`px-3 py-2.5 text-xs font-medium rounded-lg transition-all duration-200 ${
                   activeTab === "github"
-                    ? "bg-violet-600 text-white"
-                    : "bg-white text-gray-600 hover:bg-violet-100 hover:text-violet-700"
+                    ? "bg-gradient-to-r from-violet-600 to-violet-700 text-white shadow-md"
+                    : "bg-white text-gray-600 hover:bg-violet-100 hover:text-violet-700 border border-violet-200"
                 }`}
               >
-                GitHub
+                💻 GitHub
               </button>
               <button
                 onClick={() => handleTabSwitch("linkedin")}
-                className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
+                className={`px-3 py-2.5 text-xs font-medium rounded-lg transition-all duration-200 ${
                   activeTab === "linkedin"
-                    ? "bg-violet-600 text-white"
-                    : "bg-white text-gray-600 hover:bg-violet-100 hover:text-violet-700"
+                    ? "bg-gradient-to-r from-violet-600 to-violet-700 text-white shadow-md"
+                    : "bg-white text-gray-600 hover:bg-violet-100 hover:text-violet-700 border border-violet-200"
                 }`}
               >
-                LinkedIn
+                💼 LinkedIn
               </button>
               <button
                 onClick={() => handleTabSwitch("question")}
-                className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
+                className={`px-3 py-2.5 text-xs font-medium rounded-lg transition-all duration-200 ${
                   activeTab === "question"
-                    ? "bg-violet-600 text-white"
-                    : "bg-white text-gray-600 hover:bg-violet-100 hover:text-violet-700"
+                    ? "bg-gradient-to-r from-violet-600 to-violet-700 text-white shadow-md"
+                    : "bg-white text-gray-600 hover:bg-violet-100 hover:text-violet-700 border border-violet-200"
                 }`}
               >
-                Question
+                📝 Question
               </button>
             </div>
-            <div className="tab-content h-full">
+            <div className="tab-content h-[calc(100%-4rem)]">
               {renderTabContent()}
             </div>
           </>
         ) : isCandidate ? (
           /* Candidate View - Show current question or waiting state */
-          <div className="p-4 bg-white rounded-lg shadow-sm h-full overflow-y-auto">
-
+          <div className="p-6 bg-white rounded-lg shadow-sm h-full overflow-y-auto border border-violet-100">
             {roomQuestionQuery.data?.question ? (
               <div>
-                <div className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
-                  <span className="text-xl">📝</span>
-                  Current Question
+                <div className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm">📝</span>
+                  </div>
+                  <span>Current Question</span>
                 </div>
-                <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg border">
+                <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gradient-to-r from-gray-50 to-violet-50 p-4 rounded-lg border border-violet-100">
                   {roomQuestionQuery.data.question}
                 </div>
-                <div className="mt-4 text-xs text-gray-500">
-                  Use the code editor to write your solution
+                <div className="mt-4 p-3 bg-violet-50 rounded-lg border border-violet-200">
+                  <p className="text-xs text-violet-700 font-medium">
+                    💡 Use the code editor to implement your solution
+                  </p>
                 </div>
               </div>
             ) : roomQuestionQuery.isLoading ? (
-              <div className="text-center p-6">
-                <div className="text-4xl mb-4">⏳</div>
-                <div className="text-gray-600 font-medium text-lg mb-2">Loading...</div>
-                <div className="text-gray-400 text-sm">
+              <div className="text-center p-8">
+                <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xl">⏳</span>
+                </div>
+                <div className="text-gray-700 font-semibold text-lg mb-2">Loading...</div>
+                <div className="text-gray-500 text-sm">
                   Checking for interview questions
                 </div>
               </div>
             ) : (
-              <div className="text-center p-6">
-                <div className="text-4xl mb-4">💻</div>
-                <div className="text-gray-600 font-medium text-lg mb-2">Waiting for Question</div>
-                <div className="text-gray-400 text-sm">
+              <div className="text-center p-8">
+                <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xl">💻</span>
+                </div>
+                <div className="text-gray-700 font-semibold text-lg mb-2">Waiting for Question</div>
+                <div className="text-gray-500 text-sm">
                   The interviewer will generate a coding question shortly
                 </div>
               </div>
