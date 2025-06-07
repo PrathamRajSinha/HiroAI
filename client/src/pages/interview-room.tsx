@@ -153,7 +153,7 @@ ${data.question}
         {roomId ? (
           <>
             <iframe
-              src={`https://your-subdomain.daily.co/${roomId}`}
+              src={`https://aiinterview.daily.co/${roomId}`}
               className="w-full h-full rounded-xl shadow-md"
               allow="camera; microphone; fullscreen; speaker; display-capture"
               title="Daily Video Chat"
