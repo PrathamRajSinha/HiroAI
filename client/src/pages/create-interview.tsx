@@ -1,15 +1,32 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function CreateInterview() {
   const [roomId, setRoomId] = useState<string>("");
+  const [isRoomCreated, setIsRoomCreated] = useState<boolean>(false);
+  const [interviewTitle, setInterviewTitle] = useState<string>("");
+  const [candidateName, setCandidateName] = useState<string>("");
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Generate unique room ID when component loads
+  const createRoom = () => {
+    if (!interviewTitle.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter an interview title",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const generatedRoomId = crypto.randomUUID().slice(0, 8);
     setRoomId(generatedRoomId);
-  }, []);
+    setIsRoomCreated(true);
+    
+    toast({
+      title: "Room Created!",
+      description: "Interview room has been successfully created",
+    });
+  };
 
   const copyToClipboard = async (text: string, type: string) => {
     try {
@@ -32,8 +49,69 @@ export default function CreateInterview() {
     window.open(interviewerUrl, '_blank');
   };
 
-  const interviewerLink = `${window.location.origin}/interview/${roomId}?role=interviewer`;
-  const candidateLink = `${window.location.origin}/interview/${roomId}?role=candidate`;
+  const interviewerLink = roomId ? `${window.location.origin}/interview/${roomId}?role=interviewer` : "";
+  const candidateLink = roomId ? `${window.location.origin}/interview/${roomId}?role=candidate` : "";
+
+  if (!isRoomCreated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-violet-50 to-indigo-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full">
+          <div className="text-center mb-8">
+            <div className="text-6xl mb-4">🎯</div>
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">Create Interview Room</h1>
+            <p className="text-gray-600">Set up a new technical interview session</p>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Interview Title *
+              </label>
+              <input
+                type="text"
+                value={interviewTitle}
+                onChange={(e) => setInterviewTitle(e.target.value)}
+                placeholder="e.g., Frontend Developer Interview"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Candidate Name (Optional)
+              </label>
+              <input
+                type="text"
+                value={candidateName}
+                onChange={(e) => setCandidateName(e.target.value)}
+                placeholder="e.g., John Smith"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+              />
+            </div>
+
+            <button
+              onClick={createRoom}
+              className="w-full px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl"
+            >
+              Create Interview Room
+            </button>
+          </div>
+
+          <div className="mt-6 p-4 bg-violet-50 rounded-lg">
+            <div className="text-sm text-violet-800">
+              <div className="font-medium mb-2">Features:</div>
+              <ul className="list-disc list-inside space-y-1 text-violet-700">
+                <li>Real-time video chat with Daily.co</li>
+                <li>Collaborative Monaco code editor</li>
+                <li>AI-powered coding questions</li>
+                <li>Separate links for interviewer and candidate</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -42,7 +120,10 @@ export default function CreateInterview() {
         <div className="text-center mb-8">
           <div className="text-6xl mb-4">✅</div>
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Interview Room Created!</h1>
-          <p className="text-gray-600">Share these links with the interviewer and candidate</p>
+          <p className="text-gray-600">
+            {interviewTitle && `"${interviewTitle}" - `}
+            Share these links with the interviewer and candidate
+          </p>
         </div>
 
         {/* Room ID Display */}
@@ -90,13 +171,24 @@ export default function CreateInterview() {
           </div>
         </div>
 
-        {/* Action Button */}
-        <div className="text-center">
+        {/* Action Buttons */}
+        <div className="text-center space-y-3">
           <button
             onClick={openInterviewRoom}
-            className="px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium text-lg transition-colors shadow-lg hover:shadow-xl"
+            className="w-full px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium text-lg transition-colors shadow-lg hover:shadow-xl"
           >
             Go to Interview Room
+          </button>
+          <button
+            onClick={() => {
+              setIsRoomCreated(false);
+              setInterviewTitle("");
+              setCandidateName("");
+              setRoomId("");
+            }}
+            className="w-full px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors"
+          >
+            Create New Room
           </button>
         </div>
 
