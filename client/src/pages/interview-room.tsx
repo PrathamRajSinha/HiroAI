@@ -300,7 +300,7 @@ console.log(fibonacci(10));
   return (
     <div className="h-screen w-screen flex gap-4 p-4 bg-gray-50">
       {/* Left Panel - Video Call (15% width) */}
-      <div className="w-[15%] bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-3 min-h-full relative border border-gray-200 shadow-sm">
+      <div className="w-[15%] h-[60%] bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-3 relative border border-gray-200 shadow-sm">
         {roomId ? (
           <>
             <iframe
