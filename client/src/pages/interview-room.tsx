@@ -3,10 +3,16 @@ import { MonacoEditor } from "@/components/monaco-editor";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 type TabType = "resume" | "github" | "linkedin";
 
 export default function InterviewRoom() {
+  const [location] = useLocation();
+  const role = new URLSearchParams(location.split('?')[1] || '').get("role");
+  
+  console.log("Current role:", role);
+  
   const [activeTab, setActiveTab] = useState<TabType>("resume");
   const [isMuted, setIsMuted] = useState(true);
   const [isVideoOn, setIsVideoOn] = useState(true);
@@ -24,6 +30,9 @@ console.log(fibonacci(10));
 
 // Feel free to modify this code or write your own!`);
   const { toast } = useToast();
+  
+  const isInterviewer = role === "interviewer";
+  const isCandidate = role === "candidate";
 
   const generateQuestionMutation = useMutation({
     mutationFn: async (topic: string) => {
@@ -146,6 +155,14 @@ ${data.question}
           <div className="text-gray-400 text-sm mt-2">
             Camera feed will appear here
           </div>
+          
+          {/* Role indicator */}
+          {role && (
+            <div className="mt-3 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+              {role.charAt(0).toUpperCase() + role.slice(1)} View
+            </div>
+          )}
+          
           <div className="mt-4 space-y-2">
             <div className="flex justify-center space-x-2">
               <button
@@ -175,15 +192,17 @@ ${data.question}
 
       {/* Center Panel - Monaco Editor (50% width) */}
       <div className="w-1/2 bg-white rounded-xl shadow-md p-2 border border-gray-200 relative">
-        {/* Floating Generate Question Button */}
-        <button
-          onClick={generateCodingQuestion}
-          disabled={generateQuestionMutation.isPending}
-          className="absolute top-4 right-4 z-10 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center gap-2 hover:scale-105 disabled:hover:scale-100"
-        >
-          <span>{generateQuestionMutation.isPending ? "⏳" : "🎯"}</span>
-          {generateQuestionMutation.isPending ? "Generating..." : "Generate Coding Question"}
-        </button>
+        {/* Floating Generate Question Button - Only visible to interviewers */}
+        {isInterviewer && (
+          <button
+            onClick={generateCodingQuestion}
+            disabled={generateQuestionMutation.isPending}
+            className="absolute top-4 right-4 z-10 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center gap-2 hover:scale-105 disabled:hover:scale-100"
+          >
+            <span>{generateQuestionMutation.isPending ? "⏳" : "🎯"}</span>
+            {generateQuestionMutation.isPending ? "Generating..." : "Generate Coding Question"}
+          </button>
+        )}
         
         <div className="h-full rounded-lg overflow-hidden">
           <MonacoEditor
@@ -195,46 +214,78 @@ ${data.question}
         </div>
       </div>
 
-      {/* Right Panel - Candidate Info Tabs (25% width) */}
+      {/* Right Panel - Role-based content (25% width) */}
       <div className="w-1/4 bg-violet-50 rounded-xl p-4">
-        {/* Tab Navigation */}
-        <div className="flex space-x-1 mb-4">
-          <button
-            onClick={() => handleTabSwitch("resume")}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-              activeTab === "resume"
-                ? "bg-violet-600 text-white"
-                : "bg-white text-gray-600 hover:bg-violet-100 hover:text-violet-700"
-            }`}
-          >
-            Resume
-          </button>
-          <button
-            onClick={() => handleTabSwitch("github")}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-              activeTab === "github"
-                ? "bg-violet-600 text-white"
-                : "bg-white text-gray-600 hover:bg-violet-100 hover:text-violet-700"
-            }`}
-          >
-            GitHub
-          </button>
-          <button
-            onClick={() => handleTabSwitch("linkedin")}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-              activeTab === "linkedin"
-                ? "bg-violet-600 text-white"
-                : "bg-white text-gray-600 hover:bg-violet-100 hover:text-violet-700"
-            }`}
-          >
-            LinkedIn
-          </button>
-        </div>
-
-        {/* Tab Content */}
-        <div className="tab-content h-full">
-          {renderTabContent()}
-        </div>
+        {isInterviewer ? (
+          <>
+            {/* Interviewer View - Candidate Info Tabs */}
+            <div className="flex space-x-1 mb-4">
+              <button
+                onClick={() => handleTabSwitch("resume")}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  activeTab === "resume"
+                    ? "bg-violet-600 text-white"
+                    : "bg-white text-gray-600 hover:bg-violet-100 hover:text-violet-700"
+                }`}
+              >
+                Resume
+              </button>
+              <button
+                onClick={() => handleTabSwitch("github")}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  activeTab === "github"
+                    ? "bg-violet-600 text-white"
+                    : "bg-white text-gray-600 hover:bg-violet-100 hover:text-violet-700"
+                }`}
+              >
+                GitHub
+              </button>
+              <button
+                onClick={() => handleTabSwitch("linkedin")}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  activeTab === "linkedin"
+                    ? "bg-violet-600 text-white"
+                    : "bg-white text-gray-600 hover:bg-violet-100 hover:text-violet-700"
+                }`}
+              >
+                LinkedIn
+              </button>
+            </div>
+            <div className="tab-content h-full">
+              {renderTabContent()}
+            </div>
+          </>
+        ) : isCandidate ? (
+          /* Candidate View - Instructions/Notes */
+          <div className="text-center p-6 bg-white rounded-lg shadow-sm h-full">
+            <div className="text-4xl mb-4">📝</div>
+            <div className="text-gray-600 font-medium text-lg mb-2">Interview Notes</div>
+            <div className="text-gray-400 text-sm mb-4">
+              Take notes during the interview
+            </div>
+            <textarea
+              className="w-full h-64 p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+              placeholder="Write your thoughts, approach, or any notes here..."
+            />
+          </div>
+        ) : (
+          /* Default View - No role specified */
+          <div className="text-center p-6 bg-white rounded-lg shadow-sm h-full">
+            <div className="text-4xl mb-4">👋</div>
+            <div className="text-gray-600 font-medium text-lg mb-2">Welcome</div>
+            <div className="text-gray-400 text-sm mb-4">
+              Add ?role=interviewer or ?role=candidate to the URL to access role-specific features
+            </div>
+            <div className="mt-4 space-y-2 text-left">
+              <div className="text-sm">
+                <strong>Interviewer:</strong> Access candidate info and question generation
+              </div>
+              <div className="text-sm">
+                <strong>Candidate:</strong> Take notes and focus on coding
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
