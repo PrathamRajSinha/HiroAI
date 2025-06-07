@@ -358,25 +358,7 @@ console.log(fibonacci(10));
           </div>
         )}
         
-        {/* Question Display Card */}
-        {currentQuestion && (
-          <div className="bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 p-6 rounded-xl mb-4 shadow-sm">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 bg-violet-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm">📝</span>
-              </div>
-              <div>
-                <h3 className="text-violet-700 font-semibold text-base">Interview Question</h3>
-                <p className="text-violet-600 text-xs">Read carefully and implement your solution below</p>
-              </div>
-            </div>
-            <div className="text-gray-800 whitespace-pre-wrap leading-relaxed text-sm bg-white p-4 rounded-lg border border-violet-100">
-              {currentQuestion}
-            </div>
-          </div>
-        )}
-        
-        <div className={`rounded-lg overflow-hidden ${currentQuestion ? 'h-[calc(100%-12rem)]' : 'h-full'}`}>
+        <div className="rounded-lg overflow-hidden h-full">
           <MonacoEditor
             value={generatedQuestion}
             language="javascript"
