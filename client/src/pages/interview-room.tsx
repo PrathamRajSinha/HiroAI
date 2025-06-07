@@ -10,12 +10,15 @@ type TabType = "resume" | "github" | "linkedin";
 export default function InterviewRoom() {
   const params = useParams();
   const [location] = useLocation();
-  const role = new URLSearchParams(location.split('?')[1] || '').get("role");
+  const searchParams = new URLSearchParams(window.location.search);
+  const role = searchParams.get("role");
   const roomId = params.roomId;
   
   console.log("Current role:", role);
   console.log("Room ID:", roomId);
   console.log("Full location:", location);
+  console.log("Role type:", typeof role);
+  console.log("Role === 'candidate':", role === "candidate");
   
   const [activeTab, setActiveTab] = useState<TabType>("resume");
   const [isMuted, setIsMuted] = useState(true);
@@ -40,7 +43,7 @@ console.log(fibonacci(10));
   
   console.log("isInterviewer:", isInterviewer);
   console.log("isCandidate:", isCandidate);
-  console.log("Should show button (!isCandidate):", !isCandidate);
+  console.log("Should show button:", role !== "candidate");
 
   const generateQuestionMutation = useMutation({
     mutationFn: async (topic: string) => {
