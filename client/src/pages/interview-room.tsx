@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { MonacoEditor } from "@/components/monaco-editor";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 type TabType = "resume" | "github" | "linkedin";
 
@@ -8,15 +11,43 @@ export default function InterviewRoom() {
   const [isMuted, setIsMuted] = useState(true);
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [editorValue, setEditorValue] = useState("");
+  const [generatedQuestion, setGeneratedQuestion] = useState<string>("");
+  const { toast } = useToast();
+
+  const generateQuestionMutation = useMutation({
+    mutationFn: async (topic: string) => {
+      return apiRequest("/api/generate-question", "POST", { topic });
+    },
+    onSuccess: (data: { question: string }) => {
+      const questionContent = `/*
+${data.question}
+*/
+
+// Write your solution below:
+
+`;
+      setGeneratedQuestion(questionContent);
+      toast({
+        title: "Question Generated!",
+        description: "A new coding question has been generated and displayed in the editor.",
+      });
+    },
+    onError: (error) => {
+      console.error("Error generating question:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate coding question. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleTabSwitch = (tab: TabType) => {
     setActiveTab(tab);
   };
 
   const generateCodingQuestion = () => {
-    // Placeholder function for generating coding questions
-    console.log("Generating coding question...");
-    // Future implementation: AI-powered question generation
+    generateQuestionMutation.mutate("React");
   };
 
   const toggleMute = () => {
@@ -136,14 +167,27 @@ export default function InterviewRoom() {
         {/* Floating Generate Question Button */}
         <button
           onClick={generateCodingQuestion}
-          className="absolute top-4 right-4 z-10 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center gap-2 hover:scale-105"
+          disabled={generateQuestionMutation.isPending}
+          className="absolute top-4 right-4 z-10 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center gap-2 hover:scale-105 disabled:hover:scale-100"
         >
-          <span>🎯</span>
-          Generate Coding Question
+          <span>{generateQuestionMutation.isPending ? "⏳" : "🎯"}</span>
+          {generateQuestionMutation.isPending ? "Generating..." : "Generate Coding Question"}
         </button>
         
         <div className="h-full rounded-lg overflow-hidden">
           <MonacoEditor
+            defaultValue={generatedQuestion || `// Welcome to the Interview Code Editor
+// Click "Generate Coding Question" to get started with an AI-generated question
+// This is where you can write and test code during the interview
+
+function fibonacci(n) {
+    if (n <= 1) return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+console.log(fibonacci(10));
+
+// Feel free to modify this code or write your own!`}
             language="javascript"
             theme="vs"
             onChange={setEditorValue}
