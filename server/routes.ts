@@ -23,7 +23,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
-      const prompt = `Generate a coding interview question for a frontend developer about ${topic}. The question should be clear and beginner-to-intermediate level. Include a brief description of what the candidate should implement, any specific requirements, and expected difficulty level. Make it practical and relevant to real-world development scenarios.`;
+      const prompt = `Generate a clean, well-formatted coding interview question for a frontend developer about ${topic}. 
+
+Requirements:
+- Use plain text formatting without markdown symbols like ** or ##
+- Structure with clear sections: Title, Description, Requirements, and Expected Output
+- Beginner-to-intermediate difficulty level
+- Practical and relevant to real-world scenarios
+- Use simple numbering (1., 2., 3.) for lists
+- Use bullet points with - for sub-items
+- Keep formatting clean and readable without special characters
+
+Format the response as a professional interview question that reads naturally.`;
       
       const result = await model.generateContent(prompt);
       const response = await result.response;
@@ -76,11 +87,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
-      const prompt = `You're an interview assistant. Given the candidate's code, generate a feedback summary highlighting what the candidate did well, any mistakes, and possible improvements. Here's the code:
+      const prompt = `You're an interview assistant. Analyze the candidate's code and provide clean, professional feedback without markdown formatting.
 
+Code to analyze:
 ${code}
 
-Please provide constructive feedback in a professional tone that would be helpful for both the interviewer and candidate.`;
+Requirements:
+- Use plain text without ** or ## symbols
+- Structure feedback clearly with sections like: Strengths, Areas for Improvement, Overall Assessment
+- Use simple numbering (1., 2., 3.) and bullet points with -
+- Keep tone constructive and professional
+- Focus on code quality, logic, and best practices
+- Avoid special formatting characters
+
+Provide feedback that helps both interviewer and candidate understand the code quality.`;
       
       const result = await model.generateContent(prompt);
       const response = await result.response;
