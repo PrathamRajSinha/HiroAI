@@ -254,10 +254,18 @@ export default function InterviewRoom() {
       await updateQuestionWithCode(questionId, syncedCode, feedback);
       setLastSubmittedQuestionId(questionId);
       
-      toast({
-        title: "Answer Submitted",
-        description: `AI feedback generated with overall score: ${feedback.scores.overall}/10`,
-      });
+      // Only show feedback score to interviewers, simple confirmation for candidates
+      if (isInterviewer) {
+        toast({
+          title: "Answer Submitted",
+          description: `AI feedback generated with overall score: ${feedback.scores.overall}/10`,
+        });
+      } else {
+        toast({
+          title: "Answer Submitted",
+          description: "Your code has been submitted for review",
+        });
+      }
       
       // Refresh question history
       const history = await getQuestionHistory();
