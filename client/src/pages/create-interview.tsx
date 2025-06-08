@@ -188,6 +188,11 @@ export default function CreateInterview() {
           >
             Go to Interview Room
           </button>
+          <Link href="/dashboard">
+            <Button className="w-full bg-blue-600 hover:bg-blue-700">
+              View Interview Dashboard
+            </Button>
+          </Link>
           <button
             onClick={() => {
               setIsRoomCreated(false);
