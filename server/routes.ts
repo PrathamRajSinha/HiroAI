@@ -23,18 +23,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
-      const prompt = `Generate a clean, well-formatted ${type} interview question for a frontend developer at ${difficulty} level. 
+      let prompt = `Generate a clean, well-formatted ${type} interview question for a frontend developer at ${difficulty} level.
 
 Requirements:
 - Use plain text formatting without markdown symbols like ** or ##
-- Structure with clear sections: Title, Description, Requirements, and Expected Output
-- Beginner-to-intermediate difficulty level
-- Practical and relevant to real-world scenarios
+- Keep formatting clean and readable without special characters
 - Use simple numbering (1., 2., 3.) for lists
 - Use bullet points with - for sub-items
-- Keep formatting clean and readable without special characters
+- Practical and relevant to real-world scenarios
 
-Format the response as a professional interview question that reads naturally.`;
+`;
+
+      if (type === "Coding") {
+        prompt += `For coding questions:
+- Include clear problem description and requirements
+- Specify expected functionality and constraints
+- Mention any specific technologies or patterns to use
+- Include example data if helpful`;
+      } else if (type === "Behavioral") {
+        prompt += `For behavioral questions:
+- Focus on past experiences and situations
+- Ask about teamwork, problem-solving, or conflict resolution
+- Use STAR method framework (Situation, Task, Action, Result)
+- Relate to frontend development scenarios`;
+      } else if (type === "Situational") {
+        prompt += `For situational questions:
+- Present hypothetical scenarios in frontend development
+- Focus on decision-making and problem-solving approach
+- Include technical trade-offs or team dynamics
+- Ask how they would handle specific challenges`;
+      }
+
+      prompt += `\n\nFormat the response as a professional interview question that reads naturally.`;
       
       const result = await model.generateContent(prompt);
       const response = await result.response;
