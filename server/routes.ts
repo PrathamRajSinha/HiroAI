@@ -741,31 +741,57 @@ Be specific about how well the code addresses the original question requirements
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      // Fetch interview data from Firestore
+      // Fetch interview data from Firestore or local storage
       let interviewData: any = {};
       let questionHistory: any[] = [];
       let jobContext: any = null;
 
       try {
         if (db) {
+          console.log(`Fetching data for room: ${roomId}`);
+          
           // Get interview data
           const interviewDoc = await db.collection('interviews').doc(roomId).get();
           if (interviewDoc.exists) {
             interviewData = interviewDoc.data();
+            console.log("Interview data found:", interviewData);
           }
 
           // Get question history
           const historySnapshot = await db.collection('interviews').doc(roomId).collection('history').orderBy('timestamp', 'desc').get();
           questionHistory = historySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          console.log(`Found ${questionHistory.length} questions in history`);
 
           // Get job context
           const jobContextDoc = await db.collection('interviews').doc(roomId).collection('jobContext').doc('current').get();
           if (jobContextDoc.exists) {
             jobContext = jobContextDoc.data();
+            console.log("Job context found:", jobContext);
           }
         }
       } catch (firestoreError) {
+        console.log("Firestore error:", firestoreError);
         console.log("Firestore not available, using local data");
+      }
+
+      // If no data from Firestore, get the current room question from local storage
+      if (questionHistory.length === 0) {
+        console.log("No history found in Firestore, checking current room data");
+        
+        // Get current question from room storage
+        const currentQuestion = await storage.getRoomQuestion(roomId);
+        if (currentQuestion && currentQuestion.trim()) {
+          questionHistory = [{
+            id: 'current',
+            question: currentQuestion,
+            questionType: 'Generated',
+            difficulty: 'Medium',
+            timestamp: Date.now(),
+            candidateCode: 'No code submitted',
+            aiFeedback: null
+          }];
+          console.log("Added current room question to history for report");
+        }
       }
 
       // Generate AI-powered overall summary
@@ -775,35 +801,45 @@ Be specific about how well the code addresses the original question requirements
 
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
-      const summaryPrompt = `As an expert technical interviewer, analyze this candidate's complete interview performance and provide a comprehensive 3-5 sentence summary.
+      let summaryPrompt;
+      
+      if (questionHistory.length === 0) {
+        summaryPrompt = `Generate a brief professional summary indicating that this interview report was generated but no completed questions or responses were found for analysis. 
+
+Interview Context:
+${jobContext ? `Position: ${jobContext.jobTitle} (${jobContext.seniorityLevel} level)` : 'No position context available'}
+
+State that the interview may be in progress or the questions haven't been submitted yet. Keep it professional and neutral.`;
+      } else {
+        summaryPrompt = `As an expert technical interviewer, analyze this candidate's interview performance and provide a comprehensive 3-5 sentence summary.
 
 Interview Details:
 ${jobContext ? `
 Role: ${jobContext.jobTitle} (${jobContext.seniorityLevel} level)
 Tech Stack: ${jobContext.techStack}
 Interview Type: ${jobContext.roleType}
-` : ''}
+` : 'Position: General Technical Interview'}
 
-Questions and Responses:
+Questions and Responses (${questionHistory.length} total):
 ${questionHistory.map((q, i) => `
 Question ${i + 1} (${q.questionType || 'General'} - ${q.difficulty || 'Medium'}):
 ${q.question}
 
-Candidate's Code:
+Candidate's Response:
 ${q.candidateCode || 'No code submitted'}
 
-AI Feedback Score: ${q.aiFeedback?.scores?.overall || 'N/A'}/10
-${q.aiFeedback?.summary || ''}
+${q.aiFeedback ? `AI Analysis: ${q.aiFeedback.summary || 'Feedback pending'}
+Overall Score: ${q.aiFeedback.scores?.overall || 'N/A'}/10` : 'AI feedback not yet available'}
 `).join('\n')}
 
-Provide a professional summary that covers:
-1. Overall technical competency
-2. Problem-solving approach
-3. Code quality and best practices
-4. Communication and thought process
-5. Final recommendation (Recommended/Not Recommended/Conditional)
+Provide a professional summary covering:
+1. Overall technical competency based on available responses
+2. Problem-solving approach demonstrated
+3. Code quality and best practices (if code was submitted)
+4. Final assessment recommendation
 
-Keep the tone professional and constructive.`;
+Keep the tone professional and constructive. If limited data is available, acknowledge this in the summary.`;
+      }
 
       const summaryResult = await model.generateContent(summaryPrompt);
       const overallSummary = summaryResult.response.text();

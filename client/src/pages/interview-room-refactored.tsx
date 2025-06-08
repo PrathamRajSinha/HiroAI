@@ -483,7 +483,7 @@ export default function InterviewRoom() {
                 document.body.removeChild(iframe);
                 console.log('PDF generated successfully');
               })
-              .catch((error) => {
+              .catch((error: any) => {
                 console.error('PDF generation error:', error);
                 document.body.removeChild(iframe);
                 toast({
