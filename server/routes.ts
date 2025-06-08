@@ -682,10 +682,11 @@ Return the response as this exact JSON structure:
   "summary": "1-sentence summary of strengths/weaknesses",
   "scores": {
     "correctness": [score 1-10],
+    "relevance": [score 1-10],
     "efficiency": [score 1-10], 
     "quality": [score 1-10],
     "readability": [score 1-10],
-    "overall": [average score 1-10]
+    "overall": [weighted score 1-10]
   },
   "fullExplanation": "Detailed 2-3 sentence explanation of the solution quality and specific improvements",
   "suggestion": "Optional 2-line suggestion to improve the answer"
@@ -693,10 +694,11 @@ Return the response as this exact JSON structure:
 
 Evaluation criteria:
 - Correctness: Does the code correctly solve the specific problem stated in the question?
+- Relevance: How well does the solution address the actual question requirements and constraints?
 - Efficiency: Time and space complexity relative to optimal solutions
 - Quality: Code structure, error handling, edge cases
 - Readability: Clear variable names, comments, logical flow
-- Overall: Weighted average considering the question's requirements
+- Overall: Weighted score based on contextual importance (will be calculated automatically)
 
 Be specific about how well the code addresses the original question requirements.`;
 
@@ -719,7 +721,54 @@ Be specific about how well the code addresses the original question requirements
       scores.correctness = Math.max(1, Math.min(10, Math.round(scores.correctness)));
       scores.efficiency = Math.max(1, Math.min(10, Math.round(scores.efficiency)));
       scores.readability = Math.max(1, Math.min(10, Math.round(scores.readability)));
-      scores.overall = Math.round((scores.quality + scores.correctness + scores.efficiency + scores.readability) / 4 * 10) / 10;
+      
+      // Add relevance score if not present (for backward compatibility)
+      if (!scores.relevance) {
+        scores.relevance = scores.correctness; // Use correctness as fallback for relevance
+      }
+      scores.relevance = Math.max(1, Math.min(10, Math.round(scores.relevance)));
+
+      // Implement weighted scoring logic with contextual importance
+      let overall;
+      
+      // If correctness or relevance < 3, cap overall at 3
+      if (scores.correctness < 3 || scores.relevance < 3) {
+        overall = Math.min(3, Math.max(scores.correctness, scores.relevance));
+      } else {
+        // Weighted average calculation
+        const weights = {
+          correctness: 0.30,   // 30%
+          relevance: 0.30,     // 30%
+          efficiency: 0.15,    // 15%
+          readability: 0.15,   // 15%
+          quality: 0.10        // 10%
+        };
+        
+        overall = (
+          scores.correctness * weights.correctness +
+          scores.relevance * weights.relevance +
+          scores.efficiency * weights.efficiency +
+          scores.readability * weights.readability +
+          scores.quality * weights.quality
+        );
+      }
+      
+      scores.overall = Math.round(overall * 10) / 10;
+
+      // Generate AI note based on final score
+      let scoreNote = "";
+      if (scores.overall < 3) {
+        scoreNote = "Poor understanding of question";
+      } else if (scores.overall >= 3 && scores.overall < 5) {
+        scoreNote = "Partial or misaligned answer";
+      } else if (scores.overall >= 5 && scores.overall < 7) {
+        scoreNote = "Acceptable with room for improvement";
+      } else if (scores.overall >= 7) {
+        scoreNote = "Strong answer with good alignment";
+      }
+      
+      // Add the score note to the feedback
+      feedback.scoreNote = scoreNote;
 
       res.json(feedback);
 

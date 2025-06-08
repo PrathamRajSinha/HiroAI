@@ -24,6 +24,7 @@ export interface CodeFeedback {
   summary: string;
   scores: {
     correctness: number;
+    relevance: number;
     efficiency: number;
     quality: number;
     readability: number;
@@ -31,6 +32,7 @@ export interface CodeFeedback {
   };
   fullExplanation: string;
   suggestion?: string;
+  scoreNote?: string;
 }
 
 export interface QuestionHistory {

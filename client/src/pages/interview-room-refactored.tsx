@@ -706,13 +706,13 @@ export default function InterviewRoom() {
                                       {item.aiFeedback.summary}
                                     </div>
                                     
-                                    {/* Enhanced Scorecard */}
+                                    {/* Enhanced Scorecard with Weighted Scoring */}
                                     <div className="bg-white rounded-lg p-3 border border-blue-200">
-                                      <div className="text-xs font-semibold text-gray-600 mb-2">Performance Scores</div>
+                                      <div className="text-xs font-semibold text-gray-600 mb-2">Performance Scores (Weighted)</div>
                                       <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-2">
                                           <div className="flex justify-between items-center">
-                                            <span className="text-xs text-gray-600">Correctness:</span>
+                                            <span className="text-xs text-gray-600">Correctness (30%):</span>
                                             <div className="flex items-center gap-1">
                                               <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                                                 <div 
@@ -724,7 +724,19 @@ export default function InterviewRoom() {
                                             </div>
                                           </div>
                                           <div className="flex justify-between items-center">
-                                            <span className="text-xs text-gray-600">Quality:</span>
+                                            <span className="text-xs text-gray-600">Relevance (30%):</span>
+                                            <div className="flex items-center gap-1">
+                                              <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                                <div 
+                                                  className="h-full bg-indigo-500 rounded-full" 
+                                                  style={{ width: `${((item.aiFeedback.scores.relevance || item.aiFeedback.scores.correctness) / 10) * 100}%` }}
+                                                />
+                                              </div>
+                                              <span className="text-xs font-semibold text-gray-800">{item.aiFeedback.scores.relevance || item.aiFeedback.scores.correctness}/10</span>
+                                            </div>
+                                          </div>
+                                          <div className="flex justify-between items-center">
+                                            <span className="text-xs text-gray-600">Quality (10%):</span>
                                             <div className="flex items-center gap-1">
                                               <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                                                 <div 
@@ -738,7 +750,7 @@ export default function InterviewRoom() {
                                         </div>
                                         <div className="space-y-2">
                                           <div className="flex justify-between items-center">
-                                            <span className="text-xs text-gray-600">Efficiency:</span>
+                                            <span className="text-xs text-gray-600">Efficiency (15%):</span>
                                             <div className="flex items-center gap-1">
                                               <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                                                 <div 
@@ -750,7 +762,7 @@ export default function InterviewRoom() {
                                             </div>
                                           </div>
                                           <div className="flex justify-between items-center">
-                                            <span className="text-xs text-gray-600">Readability:</span>
+                                            <span className="text-xs text-gray-600">Readability (15%):</span>
                                             <div className="flex items-center gap-1">
                                               <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                                                 <div 
@@ -764,10 +776,10 @@ export default function InterviewRoom() {
                                         </div>
                                       </div>
                                       
-                                      {/* Overall Score */}
+                                      {/* Overall Score with Assessment */}
                                       <div className="mt-3 pt-3 border-t border-gray-200">
-                                        <div className="flex justify-between items-center">
-                                          <span className="text-sm font-medium text-gray-800">Overall Score:</span>
+                                        <div className="flex justify-between items-center mb-2">
+                                          <span className="text-sm font-medium text-gray-800">Weighted Overall Score:</span>
                                           <div className="flex items-center gap-2">
                                             <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
                                               <div 
@@ -778,6 +790,20 @@ export default function InterviewRoom() {
                                             <span className="text-sm font-bold text-indigo-600">{item.aiFeedback.scores.overall}/10</span>
                                           </div>
                                         </div>
+                                        {/* AI Assessment Note */}
+                                        {item.aiFeedback.scoreNote && (
+                                          <div className={`text-xs px-2 py-1 rounded-full text-center font-medium ${
+                                            item.aiFeedback.scores.overall < 3 
+                                              ? 'bg-red-100 text-red-700' 
+                                              : item.aiFeedback.scores.overall < 5 
+                                              ? 'bg-yellow-100 text-yellow-700'
+                                              : item.aiFeedback.scores.overall < 7 
+                                              ? 'bg-blue-100 text-blue-700'
+                                              : 'bg-green-100 text-green-700'
+                                          }`}>
+                                            {item.aiFeedback.scoreNote}
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
                                     
