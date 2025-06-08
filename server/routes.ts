@@ -3,10 +3,27 @@ import { createServer, type Server } from "http";
 import { WebSocketServer } from "ws";
 import { storage } from "./storage";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import multer from "multer";
+import * as pdfjsLib from 'pdfjs-dist';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize Gemini AI
   const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY || "");
+
+  // Configure multer for file uploads
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype === 'application/pdf') {
+        cb(null, true);
+      } else {
+        cb(new Error('Only PDF files are allowed'));
+      }
+    },
+  });
 
   // Generate coding interview question
   app.post("/api/generate-question", async (req, res) => {

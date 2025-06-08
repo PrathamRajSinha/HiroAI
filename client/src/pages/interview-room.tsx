@@ -8,9 +8,6 @@ import { useInterviewRoom } from "@/hooks/useFirestore";
 import { useCodeSync } from "@/hooks/useCodeSync";
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-
 type TabType = "resume" | "github" | "linkedin" | "question" | "generate";
 
 export default function InterviewRoom() {
@@ -142,24 +139,26 @@ console.log(fibonacci(10));
 
   // Helper functions for extracting content from different sources
   const extractTextFromPDF = async (file: File): Promise<string> => {
+    // For now, we'll use a backend approach to handle PDF extraction
+    // This avoids client-side PDF.js worker configuration issues
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-      let fullText = '';
+      const formData = new FormData();
+      formData.append('pdf', file);
       
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          .map((item: any) => item.str)
-          .join(' ');
-        fullText += pageText + '\n';
+      const response = await fetch('/api/extract-pdf-text', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to extract PDF text');
       }
       
-      return fullText.trim();
+      const data = await response.json();
+      return data.text;
     } catch (error) {
       console.error('Error extracting text from PDF:', error);
-      throw new Error('Failed to extract text from PDF');
+      throw new Error('Failed to extract text from PDF. Please copy and paste your resume content into the LinkedIn summary field and use "Ask from LinkedIn" instead.');
     }
   };
 
@@ -203,7 +202,12 @@ console.log(fibonacci(10));
           if (!resumeFile) {
             throw new Error('No resume file uploaded');
           }
-          content = await extractTextFromPDF(resumeFile);
+          try {
+            content = await extractTextFromPDF(resumeFile);
+          } catch (pdfError) {
+            // Fallback: ask user to manually provide resume content
+            throw new Error('PDF extraction failed. Please copy and paste your resume content into the LinkedIn summary field and use "Ask from LinkedIn" instead.');
+          }
           break;
           
         case 'github':
