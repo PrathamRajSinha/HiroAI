@@ -137,6 +137,33 @@ console.log(fibonacci(10));
     },
   });
 
+  const generateFromLinkedInMutation = useMutation({
+    mutationFn: async (url: string) => {
+      return apiRequest("/api/gen-from-linkedin", "POST", { url, roomId });
+    },
+    onSuccess: async (data: { questions: string[] }) => {
+      // Save questions to Firebase Firestore for real-time sync
+      if (data.questions && data.questions.length > 0) {
+        await updateQuestion(data.questions.join('\n\n'), "LinkedIn Profile", "Medium");
+      }
+      
+      toast({
+        title: "LinkedIn Questions Generated!",
+        description: `Generated ${data.questions.length} questions from LinkedIn profile.`,
+      });
+      setIsGeneratingFromProfile(false);
+    },
+    onError: (error) => {
+      console.error("Error generating questions from LinkedIn:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate questions from LinkedIn profile. Please try again.",
+        variant: "destructive",
+      });
+      setIsGeneratingFromProfile(false);
+    },
+  });
+
   // Helper functions for extracting content from different sources
   const extractTextFromPDF = async (file: File): Promise<string> => {
     // Use the backend PDF extraction endpoint to handle PDF processing
@@ -237,6 +264,25 @@ console.log(fibonacci(10));
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to extract content",
+        variant: "destructive",
+      });
+      setIsGeneratingFromProfile(false);
+    }
+  };
+
+  const generateFromLinkedInProfile = async () => {
+    setIsGeneratingFromProfile(true);
+    
+    try {
+      if (!linkedinUrl.trim()) {
+        throw new Error('No LinkedIn URL provided');
+      }
+      
+      generateFromLinkedInMutation.mutate(linkedinUrl);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to process LinkedIn URL",
         variant: "destructive",
       });
       setIsGeneratingFromProfile(false);
@@ -412,13 +458,28 @@ console.log(fibonacci(10));
                 />
               </div>
               {linkedinUrl && (
-                <button
-                  onClick={() => window.open(linkedinUrl, '_blank')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                >
-                  <span>👤</span>
-                  View Profile
-                </button>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => window.open(linkedinUrl, '_blank')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                  >
+                    <span>👤</span>
+                    View Profile
+                  </button>
+                  
+                  <button
+                    onClick={() => generateFromLinkedInProfile()}
+                    disabled={isGeneratingFromProfile || !linkedinUrl.trim()}
+                    className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
+                  >
+                    <span className="text-base">🎯</span>
+                    <span>
+                      {isGeneratingFromProfile && generateFromLinkedInMutation.isPending
+                        ? "Fetching Profile & Generating..." 
+                        : "Ask From LinkedIn"}
+                    </span>
+                  </button>
+                </div>
               )}
             </div>
           </div>
