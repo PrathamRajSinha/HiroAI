@@ -133,6 +133,84 @@ Provide feedback that helps both interviewer and candidate understand the code q
     }
   });
 
+  // Generate questions from profile sources
+  app.post("/api/gen-from-source", async (req, res) => {
+    try {
+      const { type, content, roomId } = req.body;
+      
+      if (!type || !content) {
+        return res.status(400).json({ error: "Type and content are required" });
+      }
+
+      if (!["resume", "github", "linkedin"].includes(type)) {
+        return res.status(400).json({ error: "Invalid source type" });
+      }
+
+      if (!process.env.GOOGLE_GEMINI_API_KEY) {
+        return res.status(500).json({ error: "Google Gemini API key not configured" });
+      }
+
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      
+      let sourceDescription = "";
+      let contextualPrompt = "";
+      
+      switch (type) {
+        case "resume":
+          sourceDescription = "resume";
+          contextualPrompt = "Focus on their listed skills, experience, projects, and technologies. Ask about specific achievements, technical challenges they've faced, and how they've applied their skills in real-world scenarios.";
+          break;
+        case "github":
+          sourceDescription = "GitHub repository README";
+          contextualPrompt = "Focus on the project's technical stack, architecture, features, and implementation details. Ask about design decisions, challenges faced during development, and specific technical aspects of their work.";
+          break;
+        case "linkedin":
+          sourceDescription = "LinkedIn professional summary";
+          contextualPrompt = "Focus on their professional experience, career progression, and highlighted skills. Ask about leadership experiences, cross-functional collaboration, and how they've grown in their roles.";
+          break;
+      }
+
+      const prompt = `Given this ${sourceDescription}, generate exactly 2 contextual interview questions that challenge the candidate on their background and experience.
+
+${sourceDescription.toUpperCase()} CONTENT:
+${content}
+
+REQUIREMENTS:
+- Generate exactly 2 questions
+- ${contextualPrompt}
+- Use plain text formatting without markdown symbols like ** or ##
+- Make questions specific to their background, not generic
+- Each question should be substantial and thought-provoking
+- Questions should be appropriate for a technical interview
+- Separate the two questions with a blank line
+- Do not number the questions
+
+Format: Present each question as a complete, professional interview question that an interviewer would naturally ask.`;
+      
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const generatedText = response.text();
+
+      // Split the response into individual questions
+      const questions = generatedText
+        .split('\n\n')
+        .filter(q => q.trim().length > 0)
+        .map(q => q.trim());
+
+      // Store the combined questions for the room if roomId is provided
+      if (roomId && questions.length > 0) {
+        const combinedQuestions = questions.join('\n\n');
+        console.log(`Storing profile-based questions for room ${roomId}:`, combinedQuestions.substring(0, 100) + "...");
+        await storage.setRoomQuestion(roomId, combinedQuestions);
+      }
+
+      res.json({ questions });
+    } catch (error) {
+      console.error("Error generating questions from profile:", error);
+      res.status(500).json({ error: "Failed to generate questions from profile" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

@@ -452,6 +452,65 @@ console.log(fibonacci(10));
             )}
           </div>
         );
+      case "generate":
+        return (
+          <div className="bg-white rounded-lg shadow-sm h-full p-4 overflow-y-auto">
+            <div className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
+              <span className="text-xl">🎯</span>
+              Generate Questions from Profile
+            </div>
+            <div className="space-y-4">
+              <div className="p-4 bg-violet-50 rounded-lg border border-violet-200">
+                <p className="text-sm text-violet-700 mb-2 font-medium">
+                  Generate contextual interview questions based on candidate's profile
+                </p>
+                <p className="text-xs text-violet-600">
+                  Each button will extract relevant information and generate 2 tailored questions
+                </p>
+              </div>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={() => generateFromProfile('resume')}
+                  disabled={isGeneratingFromProfile || !resumeFile}
+                  className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
+                >
+                  <span className="text-base">📄</span>
+                  <span>{isGeneratingFromProfile ? "Generating..." : "Ask from Resume"}</span>
+                  {!resumeFile && <span className="text-xs opacity-75">(Upload required)</span>}
+                </button>
+                
+                <button
+                  onClick={() => generateFromProfile('github')}
+                  disabled={isGeneratingFromProfile || !githubUrl.trim()}
+                  className="w-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
+                >
+                  <span className="text-base">💻</span>
+                  <span>{isGeneratingFromProfile ? "Generating..." : "Ask from GitHub"}</span>
+                  {!githubUrl.trim() && <span className="text-xs opacity-75">(URL required)</span>}
+                </button>
+                
+                <button
+                  onClick={() => generateFromProfile('linkedin')}
+                  disabled={isGeneratingFromProfile || !linkedinSummary.trim()}
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
+                >
+                  <span className="text-base">💼</span>
+                  <span>{isGeneratingFromProfile ? "Generating..." : "Ask from LinkedIn"}</span>
+                  {!linkedinSummary.trim() && <span className="text-xs opacity-75">(Summary required)</span>}
+                </button>
+              </div>
+              
+              {generateFromProfileMutation.isPending && (
+                <div className="text-center p-4 text-gray-500">
+                  <div className="text-2xl mb-2">⏳</div>
+                  <div className="text-sm">Analyzing profile and generating questions...</div>
+                  <div className="text-xs mt-1">This may take a few moments</div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
     }
   };
 
@@ -608,7 +667,7 @@ console.log(fibonacci(10));
         {isInterviewer ? (
           <>
             {/* Interviewer View - Candidate Info Tabs */}
-            <div className="grid grid-cols-2 gap-2 mb-4">
+            <div className="grid grid-cols-3 gap-2 mb-4">
               <button
                 onClick={() => handleTabSwitch("resume")}
                 className={`px-3 py-2.5 text-xs font-medium rounded-lg transition-all duration-200 ${
@@ -648,6 +707,16 @@ console.log(fibonacci(10));
                 }`}
               >
                 📝 Question
+              </button>
+              <button
+                onClick={() => handleTabSwitch("generate")}
+                className={`px-3 py-2.5 text-xs font-medium rounded-lg transition-all duration-200 col-span-2 ${
+                  activeTab === "generate"
+                    ? "bg-gradient-to-r from-violet-600 to-violet-700 text-white shadow-md"
+                    : "bg-white text-gray-600 hover:bg-violet-100 hover:text-violet-700 border border-violet-200"
+                }`}
+              >
+                🎯 Generate Questions
               </button>
             </div>
             <div className="tab-content h-[calc(100%-4rem)]">
