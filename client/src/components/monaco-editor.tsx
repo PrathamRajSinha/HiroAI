@@ -154,5 +154,5 @@ console.log(fibonacci(10));
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  return <div ref={editorRef} className="h-full w-full" />;
+  return <div ref={editorRef} className="h-full w-full" style={{ minHeight: '300px' }} />;
 }
