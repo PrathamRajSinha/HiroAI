@@ -304,21 +304,21 @@ Format: Present each question as a complete, professional interview question tha
         // Generate questions using Gemini AI
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         
-        const prompt = `Generate exactly 2 thoughtful interview questions for a candidate with this LinkedIn profile:
+        const prompt = `Based on this LinkedIn profile data, generate exactly 2 concise interview questions:
 
 ${profileText}
 
 REQUIREMENTS:
 - Generate exactly 2 questions
+- Keep each question under 25 words for better readability
 - Focus on their professional experience, skills, and career progression
 - Make questions specific to their background, not generic
-- Each question should be substantial and thought-provoking
-- Questions should be appropriate for a technical interview
-- Use plain text formatting without markdown symbols like ** or ##
+- Questions should be direct and actionable
+- Use plain text formatting without markdown symbols
 - Separate the two questions with a blank line
 - Do not number the questions
 
-Format: Present each question as a complete, professional interview question that an interviewer would naturally ask.`;
+Format: Present each question as a concise, direct interview question.`;
         
         const result = await model.generateContent(prompt);
         const response = await result.response;
@@ -416,21 +416,21 @@ Format: Present each question as a complete, professional interview question tha
         // Generate questions using Gemini AI
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         
-        const prompt = `Based on this developer's GitHub profile and public repositories, generate exactly 2 relevant interview questions:
+        const prompt = `Based on this developer's GitHub profile and repositories, generate exactly 2 concise interview questions:
 
 ${fullProfileText}
 
 REQUIREMENTS:
 - Generate exactly 2 questions
+- Keep each question under 25 words for better readability
 - Focus on their coding experience, project choices, and technical skills
 - Make questions specific to their repositories and background, not generic
-- Each question should be substantial and thought-provoking
-- Questions should be appropriate for a technical interview
-- Use plain text formatting without markdown symbols like ** or ##
+- Questions should be direct and actionable
+- Use plain text formatting without markdown symbols
 - Separate the two questions with a blank line
 - Do not number the questions
 
-Format: Present each question as a complete, professional interview question that an interviewer would naturally ask.`;
+Format: Present each question as a concise, direct interview question.`;
         
         const result = await model.generateContent(prompt);
         const response = await result.response;
@@ -491,22 +491,22 @@ Format: Present each question as a complete, professional interview question tha
         // Generate questions using Gemini AI
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         
-        const prompt = `Generate exactly 2 technical or behavioral interview questions based on this candidate's resume:
+        const prompt = `Generate exactly 2 concise interview questions based on this candidate's resume:
 
 ${resumeText}
 
 REQUIREMENTS:
 - Generate exactly 2 questions
-- Focus on their experience, skills, projects, and career progression shown in the resume
+- Keep each question under 25 words for better readability
+- Focus on key experience, skills, or notable projects from the resume
 - Make questions specific to their background, not generic
-- Mix technical and behavioral questions based on their role and experience
-- Each question should be substantial and thought-provoking
-- Questions should be appropriate for a professional interview
-- Use plain text formatting without markdown symbols like ** or ##
+- Mix technical and behavioral questions based on their role
+- Questions should be direct and actionable
+- Use plain text formatting without markdown symbols
 - Separate the two questions with a blank line
 - Do not number the questions
 
-Format: Present each question as a complete, professional interview question that an interviewer would naturally ask.`;
+Format: Present each question as a concise, direct interview question.`;
         
         const result = await model.generateContent(prompt);
         const response = await result.response;
