@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,8 +9,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Eye, Plus, Search, Users, Calendar, Clock, Trophy } from "lucide-react";
 
 interface InterviewSession {
@@ -37,16 +35,6 @@ export default function Dashboard() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [newInterview, setNewInterview] = useState({
-    candidateName: "",
-    roleTitle: "",
-    interviewerName: "",
-    jobTitle: "",
-    seniorityLevel: "Mid",
-    techStack: "",
-    roleType: "Coding"
-  });
 
   // Fetch all interviews
   const { data: interviews = [], isLoading, refetch } = useQuery({
@@ -54,37 +42,6 @@ export default function Dashboard() {
     queryFn: async () => {
       const response = await apiRequest('/api/interviews', 'GET');
       return response.interviews || [];
-    }
-  });
-
-  // Create new interview session
-  const createInterviewMutation = useMutation({
-    mutationFn: async (interviewData: any) => {
-      return apiRequest('/api/interviews', 'POST', interviewData);
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Interview Created",
-        description: "New interview session has been created successfully.",
-      });
-      setShowCreateDialog(false);
-      setNewInterview({
-        candidateName: "",
-        roleTitle: "",
-        interviewerName: "",
-        jobTitle: "",
-        seniorityLevel: "Mid",
-        techStack: "",
-        roleType: "Coding"
-      });
-      refetch();
-    },
-    onError: (error) => {
-      toast({
-        title: "Creation Failed",
-        description: "Failed to create interview session. Please try again.",
-        variant: "destructive",
-      });
     }
   });
 
@@ -118,19 +75,6 @@ export default function Dashboard() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleCreateInterview = () => {
-    if (!newInterview.candidateName || !newInterview.roleTitle || !newInterview.interviewerName) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    createInterviewMutation.mutate(newInterview);
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Completed': return 'bg-green-100 text-green-800';
@@ -161,93 +105,12 @@ export default function Dashboard() {
               <p className="text-gray-600 mt-2">Manage and review all interview sessions</p>
             </div>
             
-            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-              <DialogTrigger asChild>
-                <Button className="bg-violet-600 hover:bg-violet-700">
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Interview
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Create New Interview</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="candidateName">Candidate Name *</Label>
-                    <Input
-                      id="candidateName"
-                      placeholder="Enter candidate's full name"
-                      value={newInterview.candidateName}
-                      onChange={(e) => setNewInterview({...newInterview, candidateName: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="roleTitle">Role Title *</Label>
-                    <Input
-                      id="roleTitle"
-                      placeholder="e.g., Frontend Engineer"
-                      value={newInterview.roleTitle}
-                      onChange={(e) => setNewInterview({...newInterview, roleTitle: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="interviewerName">Interviewer Name *</Label>
-                    <Input
-                      id="interviewerName"
-                      placeholder="Enter interviewer's name"
-                      value={newInterview.interviewerName}
-                      onChange={(e) => setNewInterview({...newInterview, interviewerName: e.target.value})}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="seniorityLevel">Seniority</Label>
-                      <Select value={newInterview.seniorityLevel} onValueChange={(value) => setNewInterview({...newInterview, seniorityLevel: value})}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Junior">Junior</SelectItem>
-                          <SelectItem value="Mid">Mid</SelectItem>
-                          <SelectItem value="Senior">Senior</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="roleType">Interview Type</Label>
-                      <Select value={newInterview.roleType} onValueChange={(value) => setNewInterview({...newInterview, roleType: value})}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Coding">Coding</SelectItem>
-                          <SelectItem value="Behavioral">Behavioral</SelectItem>
-                          <SelectItem value="System Design">System Design</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="techStack">Tech Stack</Label>
-                    <Input
-                      id="techStack"
-                      placeholder="e.g., React, TypeScript, Node.js"
-                      value={newInterview.techStack}
-                      onChange={(e) => setNewInterview({...newInterview, techStack: e.target.value})}
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleCreateInterview} disabled={createInterviewMutation.isPending}>
-                      {createInterviewMutation.isPending ? "Creating..." : "Create Interview"}
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Link href="/">
+              <Button className="bg-violet-600 hover:bg-violet-700">
+                <Plus className="h-4 w-4 mr-2" />
+                New Interview
+              </Button>
+            </Link>
           </div>
         </div>
 
