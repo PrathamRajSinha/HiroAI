@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { doc, onSnapshot, setDoc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot, setDoc, getDoc, collection, addDoc, query, orderBy, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export interface InterviewData {
@@ -10,6 +10,15 @@ export interface InterviewData {
   code?: string;
   lastUpdatedBy?: 'interviewer' | 'candidate';
   timestamp?: number;
+}
+
+export interface QuestionHistory {
+  id: string;
+  question: string;
+  questionType: string;
+  difficulty: string;
+  timestamp: number;
+  candidateResponse?: string;
 }
 
 export function useInterviewRoom(roomId: string) {
@@ -50,13 +59,25 @@ export function useInterviewRoom(roomId: string) {
     if (!roomId) return;
 
     try {
+      const timestamp = Date.now();
+      
+      // Update current question
       const docRef = doc(db, "interviews", roomId);
       await setDoc(docRef, {
         question,
         questionType,
         difficulty,
-        timestamp: Date.now(),
+        timestamp,
       }, { merge: true });
+
+      // Add to history
+      const historyRef = collection(db, "interviews", roomId, "history");
+      await addDoc(historyRef, {
+        question,
+        questionType,
+        difficulty,
+        timestamp,
+      });
     } catch (err) {
       console.error("Error updating question:", err);
       setError("Failed to save question");
@@ -94,6 +115,24 @@ export function useInterviewRoom(roomId: string) {
     }
   };
 
+  const getQuestionHistory = async (): Promise<QuestionHistory[]> => {
+    if (!roomId) return [];
+
+    try {
+      const historyRef = collection(db, "interviews", roomId, "history");
+      const q = query(historyRef, orderBy("timestamp", "desc"));
+      const querySnapshot = await getDocs(q);
+      
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as QuestionHistory));
+    } catch (err) {
+      console.error("Error fetching question history:", err);
+      return [];
+    }
+  };
+
   return {
     data,
     loading,
@@ -101,5 +140,6 @@ export function useInterviewRoom(roomId: string) {
     updateQuestion,
     updateSummary,
     updateCode,
+    getQuestionHistory,
   };
 }

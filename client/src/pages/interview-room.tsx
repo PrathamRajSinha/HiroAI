@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation, useParams } from "wouter";
-import { useInterviewRoom } from "@/hooks/useFirestore";
+import { useInterviewRoom, QuestionHistory } from "@/hooks/useFirestore";
 import { useCodeSync } from "@/hooks/useCodeSync";
 import * as pdfjsLib from 'pdfjs-dist';
 
@@ -39,7 +39,12 @@ export default function InterviewRoom() {
   const isCandidate = role === "candidate";
   
   // Firebase Firestore integration
-  const { data: interviewData, loading: firestoreLoading, error: firestoreError, updateQuestion, updateSummary } = useInterviewRoom(roomId || "");
+  const { data: interviewData, loading: firestoreLoading, error: firestoreError, updateQuestion, updateSummary, getQuestionHistory } = useInterviewRoom(roomId || "");
+  
+  // Previous questions state
+  const [questionHistory, setQuestionHistory] = useState<QuestionHistory[]>([]);
+  const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
+  const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set());
   
   // Real-time code synchronization
   const { code: syncedCode, isUpdating: isCodeSyncing, handleCodeChange } = useCodeSync({
@@ -402,6 +407,28 @@ console.log(fibonacci(10));
     }
   };
 
+  const toggleQuestionExpansion = (questionId: string) => {
+    const newExpanded = new Set(expandedQuestions);
+    if (newExpanded.has(questionId)) {
+      newExpanded.delete(questionId);
+    } else {
+      newExpanded.add(questionId);
+    }
+    setExpandedQuestions(newExpanded);
+  };
+
+  const formatTimestamp = (timestamp: number) => {
+    return new Date(timestamp).toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+
+  const truncateQuestion = (question: string, maxLength: number = 80) => {
+    if (question.length <= maxLength) return question;
+    return question.substring(0, maxLength) + "...";
+  };
+
   // Update state when Firebase data changes
   useEffect(() => {
     if (interviewData.summary) {
@@ -413,6 +440,28 @@ console.log(fibonacci(10));
   useEffect(() => {
     console.log("Firestore data updated:", interviewData);
   }, [interviewData]);
+
+  // Load question history when component mounts or room changes
+  useEffect(() => {
+    const loadHistory = async () => {
+      if (roomId) {
+        const history = await getQuestionHistory();
+        setQuestionHistory(history);
+      }
+    };
+    loadHistory();
+  }, [roomId, getQuestionHistory]);
+
+  // Reload history when a new question is added
+  useEffect(() => {
+    if (interviewData.question && interviewData.timestamp) {
+      const loadHistory = async () => {
+        const history = await getQuestionHistory();
+        setQuestionHistory(history);
+      };
+      loadHistory();
+    }
+  }, [interviewData.question, interviewData.timestamp, getQuestionHistory]);
 
   const handleTabSwitch = (tab: TabType) => {
     setActiveTab(tab);
