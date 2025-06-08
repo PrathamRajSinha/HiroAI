@@ -352,6 +352,118 @@ Format: Present each question as a complete, professional interview question tha
     }
   });
 
+  // Generate questions from GitHub profile using GitHub API
+  app.post("/api/gen-from-github", async (req, res) => {
+    try {
+      const { username, roomId } = req.body;
+      
+      if (!username) {
+        return res.status(400).json({ error: "GitHub username is required" });
+      }
+
+      if (!process.env.GOOGLE_GEMINI_API_KEY) {
+        return res.status(500).json({ error: "Google Gemini API key not configured" });
+      }
+
+      // Fetch GitHub profile data using GitHub API
+      try {
+        // Get user profile
+        const profileResponse = await fetch(`https://api.github.com/users/${username}`);
+        
+        if (!profileResponse.ok) {
+          if (profileResponse.status === 404) {
+            throw new Error(`GitHub user '${username}' not found`);
+          }
+          throw new Error(`GitHub API error: ${profileResponse.status}`);
+        }
+
+        const profileData = await profileResponse.json();
+        
+        // Get top repositories
+        const reposResponse = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=3`);
+        let reposData = [];
+        
+        if (reposResponse.ok) {
+          reposData = await reposResponse.json();
+        }
+        
+        // Extract relevant profile information
+        const profileText = [
+          profileData.name ? `Name: ${profileData.name}` : '',
+          profileData.login ? `Username: ${profileData.login}` : '',
+          profileData.bio ? `Bio: ${profileData.bio}` : '',
+          profileData.company ? `Company: ${profileData.company}` : '',
+          profileData.location ? `Location: ${profileData.location}` : '',
+          profileData.public_repos ? `Public Repositories: ${profileData.public_repos}` : '',
+          profileData.followers ? `Followers: ${profileData.followers}` : '',
+          profileData.following ? `Following: ${profileData.following}` : '',
+        ].filter((item: string) => item.length > 0).join('\n');
+
+        // Add repository information
+        let repoText = '';
+        if (reposData.length > 0) {
+          repoText = '\nTop Recent Repositories:\n' + reposData.map((repo: any) => 
+            `- ${repo.name}${repo.description ? ': ' + repo.description : ''}${repo.language ? ' (Language: ' + repo.language + ')' : ''}${repo.stargazers_count ? ' - ' + repo.stargazers_count + ' stars' : ''}`
+          ).join('\n');
+        }
+
+        const fullProfileText = profileText + repoText;
+
+        if (!fullProfileText.trim()) {
+          throw new Error('Unable to extract profile information from GitHub');
+        }
+
+        // Generate questions using Gemini AI
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        
+        const prompt = `Based on this developer's GitHub profile and public repositories, generate exactly 2 relevant interview questions:
+
+${fullProfileText}
+
+REQUIREMENTS:
+- Generate exactly 2 questions
+- Focus on their coding experience, project choices, and technical skills
+- Make questions specific to their repositories and background, not generic
+- Each question should be substantial and thought-provoking
+- Questions should be appropriate for a technical interview
+- Use plain text formatting without markdown symbols like ** or ##
+- Separate the two questions with a blank line
+- Do not number the questions
+
+Format: Present each question as a complete, professional interview question that an interviewer would naturally ask.`;
+        
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const generatedText = response.text();
+
+        // Split the response into individual questions
+        const questions = generatedText
+          .split('\n\n')
+          .filter((q: string) => q.trim().length > 0)
+          .map((q: string) => q.trim());
+
+        // Store the combined questions for the room if roomId is provided
+        if (roomId && questions.length > 0) {
+          const combinedQuestions = questions.join('\n\n');
+          console.log(`Storing GitHub-based questions for room ${roomId}:`, combinedQuestions.substring(0, 100) + "...");
+          await storage.setRoomQuestion(roomId, combinedQuestions);
+        }
+
+        res.json({ questions });
+
+      } catch (apiError) {
+        console.error("GitHub profile fetching error:", apiError);
+        res.status(500).json({ 
+          error: "Failed to fetch GitHub profile data. Please check the username and try again." 
+        });
+      }
+
+    } catch (error) {
+      console.error("Error generating questions from GitHub:", error);
+      res.status(500).json({ error: "Failed to generate questions from GitHub profile" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

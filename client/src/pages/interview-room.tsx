@@ -165,6 +165,35 @@ console.log(fibonacci(10));
     },
   });
 
+  const generateFromGitHubMutation = useMutation({
+    mutationFn: async (username: string) => {
+      return apiRequest("/api/gen-from-github", "POST", { username, roomId });
+    },
+    onSuccess: async (data: { questions: string[] }) => {
+      // Save questions to Firebase Firestore for real-time sync
+      if (data.questions && data.questions.length > 0) {
+        console.log("Saving GitHub questions to Firestore:", data.questions);
+        await updateQuestion(data.questions.join('\n\n'), "GitHub Profile", "Medium");
+        console.log("Questions saved successfully");
+      }
+      
+      toast({
+        title: "GitHub Questions Generated!",
+        description: `Generated ${data.questions.length} questions from GitHub profile.`,
+      });
+      setIsGeneratingFromProfile(false);
+    },
+    onError: (error) => {
+      console.error("Error generating questions from GitHub:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate questions from GitHub profile. Please try again.",
+        variant: "destructive",
+      });
+      setIsGeneratingFromProfile(false);
+    },
+  });
+
   // Helper functions for extracting content from different sources
   const extractTextFromPDF = async (file: File): Promise<string> => {
     // Use the backend PDF extraction endpoint to handle PDF processing
@@ -286,6 +315,32 @@ console.log(fibonacci(10));
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to process LinkedIn URL",
+        variant: "destructive",
+      });
+      setIsGeneratingFromProfile(false);
+    }
+  };
+
+  const generateFromGitHubProfile = async () => {
+    setIsGeneratingFromProfile(true);
+    
+    try {
+      if (!githubUrl.trim()) {
+        throw new Error('No GitHub URL provided');
+      }
+      
+      // Extract username from GitHub URL
+      const match = githubUrl.match(/github\.com\/([^\/]+)/);
+      if (!match) {
+        throw new Error('Invalid GitHub URL format');
+      }
+      
+      const username = match[1];
+      generateFromGitHubMutation.mutate(username);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to process GitHub URL",
         variant: "destructive",
       });
       setIsGeneratingFromProfile(false);
@@ -417,17 +472,32 @@ console.log(fibonacci(10));
                 />
               </div>
               {githubUrl && (
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-gray-700">Repository Link:</div>
-                  <a
-                    href={githubUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-violet-600 hover:text-violet-800 text-sm underline break-all"
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium text-gray-700">Repository Link:</div>
+                    <a
+                      href={githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-violet-600 hover:text-violet-800 text-sm underline break-all"
+                    >
+                      <span>🔗</span>
+                      {githubUrl}
+                    </a>
+                  </div>
+                  
+                  <button
+                    onClick={() => generateFromGitHubProfile()}
+                    disabled={isGeneratingFromProfile || !githubUrl.trim()}
+                    className="w-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
                   >
-                    <span>🔗</span>
-                    {githubUrl}
-                  </a>
+                    <span className="text-base">🎯</span>
+                    <span>
+                      {isGeneratingFromProfile && generateFromGitHubMutation.isPending
+                        ? "Fetching Profile & Generating..." 
+                        : "Ask From GitHub"}
+                    </span>
+                  </button>
                 </div>
               )}
             </div>
