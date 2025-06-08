@@ -4,10 +4,26 @@ import { WebSocketServer } from "ws";
 import { storage } from "./storage";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import multer from "multer";
+import * as admin from "firebase-admin";
 import * as fs from 'fs';
 import * as path from 'path';
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize Firebase Admin SDK
+  let db: admin.firestore.Firestore;
+  try {
+    if (admin.apps.length === 0) {
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+        projectId: process.env.FIREBASE_PROJECT_ID || "ai-interview-platform"
+      });
+    }
+    db = admin.firestore();
+  } catch (error) {
+    console.log("Firebase Admin not configured, questions will only be stored locally");
+    db = null as any;
+  }
+
   // Initialize Gemini AI
   const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY || "");
 
@@ -335,6 +351,20 @@ Format: Present each question as a concise, direct interview question.`;
           const combinedQuestions = questions.join('\n\n');
           console.log(`Storing LinkedIn-based questions for room ${roomId}:`, combinedQuestions.substring(0, 100) + "...");
           await storage.setRoomQuestion(roomId, combinedQuestions);
+          
+          // Also update Firestore for real-time sync
+          if (db) {
+            try {
+              await db.collection('interviews').doc(roomId).set({
+                question: combinedQuestions,
+                questionType: 'LinkedIn Profile',
+                difficulty: 'Medium',
+                timestamp: Date.now()
+              }, { merge: true });
+            } catch (firestoreError) {
+              console.error("Error updating Firestore:", firestoreError);
+            }
+          }
         }
 
         res.json({ questions });
@@ -447,6 +477,20 @@ Format: Present each question as a concise, direct interview question.`;
           const combinedQuestions = questions.join('\n\n');
           console.log(`Storing GitHub-based questions for room ${roomId}:`, combinedQuestions.substring(0, 100) + "...");
           await storage.setRoomQuestion(roomId, combinedQuestions);
+          
+          // Also update Firestore for real-time sync
+          if (db) {
+            try {
+              await db.collection('interviews').doc(roomId).set({
+                question: combinedQuestions,
+                questionType: 'GitHub Profile',
+                difficulty: 'Medium',
+                timestamp: Date.now()
+              }, { merge: true });
+            } catch (firestoreError) {
+              console.error("Error updating Firestore:", firestoreError);
+            }
+          }
         }
 
         res.json({ questions });
@@ -523,6 +567,18 @@ Format: Present each question as a concise, direct interview question.`;
           const combinedQuestions = questions.join('\n\n');
           console.log(`Storing resume-based questions for room ${roomId}:`, combinedQuestions.substring(0, 100) + "...");
           await storage.setRoomQuestion(roomId, combinedQuestions);
+          
+          // Also update Firestore for real-time sync
+          try {
+            await db.collection('interviews').doc(roomId).set({
+              question: combinedQuestions,
+              questionType: 'Resume Analysis',
+              difficulty: 'Medium',
+              timestamp: Date.now()
+            }, { merge: true });
+          } catch (firestoreError) {
+            console.error("Error updating Firestore:", firestoreError);
+          }
         }
 
         res.json({ questions });
