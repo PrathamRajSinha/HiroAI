@@ -481,13 +481,13 @@ console.log(fibonacci(10));
                 <button
                   onClick={() => generateFromProfile('resume')}
                   disabled={isGeneratingFromProfile || !resumeFile}
-                  className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
                 >
                   <span className="text-base">📄</span>
                   <span>
                     {isGeneratingFromProfile && generateFromProfileMutation.variables?.type === 'resume' 
-                      ? "Extracting PDF & Generating..." 
-                      : "Ask from Resume"}
+                      ? "Processing..." 
+                      : "Guide me to LinkedIn"}
                   </span>
                   {!resumeFile && <span className="text-xs opacity-75">(Upload required)</span>}
                 </button>

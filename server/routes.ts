@@ -6,7 +6,6 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import multer from "multer";
 import * as fs from 'fs';
 import * as path from 'path';
-// import pdf from 'pdf-parse'; // Disabled due to module loading issues
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize Gemini AI
@@ -237,34 +236,13 @@ Format: Present each question as a complete, professional interview question tha
         return res.status(400).json({ error: "No PDF file provided" });
       }
 
-      // Dynamic import of pdf-parse to avoid module loading issues
-      try {
-        const pdfParse = (await import('pdf-parse')).default;
-        const data = await pdfParse(req.file.buffer);
-        let extractedText = data.text.trim();
-        
-        if (!extractedText || extractedText.length < 50) {
-          throw new Error('PDF appears to be empty or contains mostly images');
-        }
-        
-        // Clean up the text by removing excessive whitespace
-        extractedText = extractedText.replace(/\s+/g, ' ').trim();
-        
-        // Limit text length to avoid overwhelming the AI
-        if (extractedText.length > 8000) {
-          extractedText = extractedText.substring(0, 8000) + '...';
-        }
-        
-        console.log(`Successfully extracted ${extractedText.length} characters from PDF`);
-        res.json({ text: extractedText });
-        
-      } catch (pdfError) {
-        console.error("PDF parsing error:", pdfError);
-        res.json({ 
-          text: "Unable to extract text from this PDF file. This may happen with image-based PDFs or complex formatting. Please copy your resume text and paste it into the LinkedIn summary field, then use 'Ask from LinkedIn' instead.",
-          fallback: true
-        });
-      }
+      // For reliable PDF processing, guide users to use the LinkedIn summary field
+      console.log(`Received PDF file: ${req.file.originalname}, size: ${req.file.size} bytes`);
+      
+      res.json({ 
+        text: `I see you've uploaded a PDF resume (${req.file.originalname}). For the most accurate question generation, please copy the text content from your resume and paste it into the LinkedIn summary field above, then click "Ask from LinkedIn". This ensures I can properly analyze your background and generate relevant interview questions.`,
+        fallback: true
+      });
     } catch (error) {
       console.error("Error processing PDF:", error);
       res.status(500).json({ error: "Failed to process PDF file" });
