@@ -65,7 +65,8 @@ export function VideoCall({ roomId, role }: VideoCallProps) {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-1 relative bg-gray-900 rounded-lg overflow-hidden">
+      {/* Video Container with fixed aspect ratio */}
+      <div className="relative bg-gray-900 rounded-lg overflow-hidden" style={{ aspectRatio: '16/9', maxHeight: '180px' }}>
         {/* Local Video */}
         <video
           ref={localVideoRef}
@@ -75,13 +76,13 @@ export function VideoCall({ roomId, role }: VideoCallProps) {
           className="w-full h-full object-cover"
         />
         
-        {/* Remote Video (placeholder for now) */}
-        <div className="absolute top-2 right-2 w-20 h-16 bg-gray-800 rounded border-2 border-gray-600 flex items-center justify-center">
+        {/* Remote Video (picture-in-picture) */}
+        <div className="absolute top-2 right-2 w-16 h-12 bg-gray-800 rounded border border-gray-600 flex items-center justify-center overflow-hidden">
           <video
             ref={remoteVideoRef}
             autoPlay
             playsInline
-            className="w-full h-full object-cover rounded"
+            className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 flex items-center justify-center text-white text-xs">
             Remote
@@ -99,12 +100,12 @@ export function VideoCall({ roomId, role }: VideoCallProps) {
 
         {/* Role Badge */}
         <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
-          {role} - Room: {roomId}
+          {role}
         </div>
       </div>
 
       {/* Controls */}
-      <div className="mt-2 flex justify-center gap-2">
+      <div className="mt-3 flex justify-center gap-2">
         <Button
           size="sm"
           variant={isVideoEnabled ? "default" : "destructive"}
