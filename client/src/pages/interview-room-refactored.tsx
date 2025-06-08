@@ -80,6 +80,20 @@ export default function InterviewRoom() {
     loadHistory();
   }, [roomId, getQuestionHistory]);
 
+  // Load job context when component mounts
+  useEffect(() => {
+    const loadJobContext = async () => {
+      if (roomId) {
+        const context = await getJobContext();
+        setJobContext(context);
+        if (!context && isInterviewer) {
+          setShowJobContextDialog(true);
+        }
+      }
+    };
+    loadJobContext();
+  }, [roomId, getJobContext, isInterviewer]);
+
   // Reload history when a new question is added
   useEffect(() => {
     if (interviewData.question && interviewData.timestamp) {
@@ -93,8 +107,8 @@ export default function InterviewRoom() {
 
   // Mutations
   const generateQuestionMutation = useMutation({
-    mutationFn: async ({ type, difficulty }: { type: string; difficulty: string }) => {
-      return apiRequest("/api/generate-question", "POST", { type, difficulty, roomId });
+    mutationFn: async ({ type, difficulty, jobContext }: { type: string; difficulty: string; jobContext?: JobContext | null }) => {
+      return apiRequest("/api/generate-question", "POST", { type, difficulty, roomId, jobContext });
     },
     onSuccess: async (data: { question: string }) => {
       await updateQuestion(data.question, questionType, difficulty);
@@ -368,7 +382,29 @@ export default function InterviewRoom() {
   };
 
   const generateSmartQuestion = (type: string, difficulty: string) => {
-    generateQuestionMutation.mutate({ type, difficulty });
+    generateQuestionMutation.mutate({ type, difficulty, jobContext });
+  };
+
+  // Job Context Setup Functions
+  const handleJobContextSave = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    
+    const newJobContext: JobContext = {
+      jobTitle: formData.get('jobTitle') as string,
+      techStack: formData.get('techStack') as string,
+      seniorityLevel: formData.get('seniorityLevel') as 'Junior' | 'Mid' | 'Senior',
+      roleType: formData.get('roleType') as 'Coding' | 'Behavioral' | 'System Design',
+    };
+
+    await saveJobContext(newJobContext);
+    setJobContext(newJobContext);
+    setShowJobContextDialog(false);
+    
+    toast({
+      title: "Job Context Saved",
+      description: "Interview questions will now be personalized for this role.",
+    });
   };
 
   const generateSummary = () => {
@@ -921,10 +957,86 @@ export default function InterviewRoom() {
         {isInterviewer && (
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <Brain className="h-5 w-5" />
-                Interview Controls
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <Brain className="h-5 w-5" />
+                  Interview Controls
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  {jobContext && (
+                    <Badge variant="secondary" className="text-xs">
+                      <Briefcase className="h-3 w-3 mr-1" />
+                      {jobContext.seniorityLevel} {jobContext.jobTitle}
+                    </Badge>
+                  )}
+                  <Dialog open={showJobContextDialog} onOpenChange={setShowJobContextDialog}>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Setup Job Context</DialogTitle>
+                      </DialogHeader>
+                      <form onSubmit={handleJobContextSave} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="jobTitle">Job Title</Label>
+                          <Input
+                            id="jobTitle"
+                            name="jobTitle"
+                            placeholder="e.g., Frontend Engineer"
+                            defaultValue={jobContext?.jobTitle}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="techStack">Tech Stack (comma-separated)</Label>
+                          <Input
+                            id="techStack"
+                            name="techStack"
+                            placeholder="e.g., React, TypeScript, Node.js"
+                            defaultValue={jobContext?.techStack}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="seniorityLevel">Seniority Level</Label>
+                          <Select name="seniorityLevel" defaultValue={jobContext?.seniorityLevel || "Mid"}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select level" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Junior">Junior</SelectItem>
+                              <SelectItem value="Mid">Mid</SelectItem>
+                              <SelectItem value="Senior">Senior</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="roleType">Role Type</Label>
+                          <Select name="roleType" defaultValue={jobContext?.roleType || "Coding"}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Coding">Coding</SelectItem>
+                              <SelectItem value="Behavioral">Behavioral</SelectItem>
+                              <SelectItem value="System Design">System Design</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button type="button" variant="outline" onClick={() => setShowJobContextDialog(false)}>
+                            Cancel
+                          </Button>
+                          <Button type="submit">Save Context</Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-3">

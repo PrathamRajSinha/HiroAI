@@ -45,7 +45,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate coding interview question
   app.post("/api/generate-question", async (req, res) => {
     try {
-      const { type, difficulty, roomId } = req.body;
+      const { type, difficulty, roomId, jobContext } = req.body;
       
       if (!type || !difficulty) {
         return res.status(400).json({ error: "Type and difficulty are required" });
@@ -57,7 +57,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
-      let prompt = `Generate a clean, well-formatted ${type} interview question for a frontend developer at ${difficulty} level.
+      let prompt = "";
+      
+      if (jobContext) {
+        prompt = `Generate a ${difficulty} ${type} interview question for a ${jobContext.seniorityLevel} ${jobContext.jobTitle} who will work with ${jobContext.techStack}. Focus the question on realistic skills they'll use on the job.
+
+Job Context:
+- Position: ${jobContext.jobTitle}
+- Level: ${jobContext.seniorityLevel}
+- Tech Stack: ${jobContext.techStack}
+- Role Type: ${jobContext.roleType}
+
+Requirements:
+- Use plain text formatting without markdown symbols like ** or ##
+- Keep formatting clean and readable without special characters
+- Use simple numbering (1., 2., 3.) for lists
+- Use bullet points with - for sub-items
+- Practical and relevant to real-world scenarios specific to their role
+- Focus on technologies and challenges they'll actually encounter
+
+`;
+      } else {
+        prompt = `Generate a clean, well-formatted ${type} interview question for a frontend developer at ${difficulty} level.
 
 Requirements:
 - Use plain text formatting without markdown symbols like ** or ##
@@ -67,6 +88,7 @@ Requirements:
 - Practical and relevant to real-world scenarios
 
 `;
+      }
 
       if (type === "Coding") {
         prompt += `For coding questions:
