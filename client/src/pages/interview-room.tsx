@@ -704,6 +704,74 @@ console.log(fibonacci(10));
                 <div className="text-xs mt-1">Generate a question to get started</div>
               </div>
             )}
+            
+            {/* Previous Questions Section */}
+            <div className="mt-4 bg-white rounded-lg shadow-sm border border-gray-200">
+              <button
+                onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
+                className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🕓</span>
+                  <span className="text-sm font-medium text-gray-800">Previous Questions</span>
+                  <span className="text-xs text-gray-500">({questionHistory.length})</span>
+                </div>
+                <span className={`text-gray-400 transition-transform ${isHistoryExpanded ? 'rotate-180' : ''}`}>
+                  ▼
+                </span>
+              </button>
+              
+              {isHistoryExpanded && (
+                <div className="px-4 pb-4 space-y-2 max-h-64 overflow-y-auto">
+                  {questionHistory.length === 0 ? (
+                    <div className="text-center py-4 text-gray-500">
+                      <div className="text-sm">No questions generated yet</div>
+                    </div>
+                  ) : (
+                    questionHistory.map((item) => {
+                      const isExpanded = expandedQuestions.has(item.id);
+                      return (
+                        <div key={item.id} className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <div className="flex gap-1">
+                              <span className="px-2 py-1 bg-violet-100 text-violet-700 rounded text-xs font-medium">
+                                {item.questionType}
+                              </span>
+                              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                                {item.difficulty}
+                              </span>
+                            </div>
+                            <span className="text-xs text-gray-500">{formatTimestamp(item.timestamp)}</span>
+                          </div>
+                          
+                          <div className="text-sm text-gray-700">
+                            {isExpanded ? item.question : truncateQuestion(item.question)}
+                          </div>
+                          
+                          {item.question.length > 80 && (
+                            <button
+                              onClick={() => toggleQuestionExpansion(item.id)}
+                              className="text-xs text-violet-600 hover:text-violet-800 mt-1 font-medium"
+                            >
+                              {isExpanded ? 'Show Less' : 'View More'}
+                            </button>
+                          )}
+                          
+                          {item.candidateResponse && (
+                            <div className="mt-2 pt-2 border-t border-gray-200">
+                              <div className="text-xs text-gray-500 mb-1">Candidate Response:</div>
+                              <div className="text-xs text-gray-600 bg-white p-2 rounded border">
+                                {item.candidateResponse}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         );
       case "generate":
