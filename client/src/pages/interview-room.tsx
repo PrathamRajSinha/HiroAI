@@ -6,8 +6,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation, useParams } from "wouter";
 import { useInterviewRoom } from "@/hooks/useFirestore";
 import { useCodeSync } from "@/hooks/useCodeSync";
+import * as pdfjsLib from 'pdfjs-dist';
 
-type TabType = "resume" | "github" | "linkedin" | "question";
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
+type TabType = "resume" | "github" | "linkedin" | "question" | "generate";
 
 export default function InterviewRoom() {
   const params = useParams();
@@ -31,6 +35,8 @@ export default function InterviewRoom() {
   const [linkedinUrl, setLinkedinUrl] = useState<string>("");
   const [questionType, setQuestionType] = useState<string>("Coding");
   const [difficulty, setDifficulty] = useState<string>("Medium");
+  const [linkedinSummary, setLinkedinSummary] = useState<string>("");
+  const [isGeneratingFromProfile, setIsGeneratingFromProfile] = useState<boolean>(false);
   
   // Role detection
   const isInterviewer = role === "interviewer";
@@ -106,6 +112,128 @@ console.log(fibonacci(10));
       });
     },
   });
+
+  const generateFromProfileMutation = useMutation({
+    mutationFn: async ({ type, content }: { type: "resume" | "github" | "linkedin"; content: string }) => {
+      return apiRequest("/api/gen-from-source", "POST", { type, content, roomId });
+    },
+    onSuccess: async (data: { questions: string[] }) => {
+      // Save the first question to Firebase Firestore for real-time sync
+      if (data.questions && data.questions.length > 0) {
+        await updateQuestion(data.questions.join('\n\n'), "Profile-based", "Medium");
+      }
+      
+      toast({
+        title: "Questions Generated!",
+        description: `Generated ${data.questions.length} contextual questions from profile.`,
+      });
+      setIsGeneratingFromProfile(false);
+    },
+    onError: (error) => {
+      console.error("Error generating questions from profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate questions from profile. Please try again.",
+        variant: "destructive",
+      });
+      setIsGeneratingFromProfile(false);
+    },
+  });
+
+  // Helper functions for extracting content from different sources
+  const extractTextFromPDF = async (file: File): Promise<string> => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+      let fullText = '';
+      
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(' ');
+        fullText += pageText + '\n';
+      }
+      
+      return fullText.trim();
+    } catch (error) {
+      console.error('Error extracting text from PDF:', error);
+      throw new Error('Failed to extract text from PDF');
+    }
+  };
+
+  const fetchGitHubReadme = async (repoUrl: string): Promise<string> => {
+    try {
+      // Extract owner and repo from GitHub URL
+      const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+      if (!match) {
+        throw new Error('Invalid GitHub URL format');
+      }
+      
+      const [, owner, repo] = match;
+      const cleanRepo = repo.replace(/\.git$/, '');
+      
+      // Try to fetch README.md
+      const apiUrl = `https://api.github.com/repos/${owner}/${cleanRepo}/readme`;
+      const response = await fetch(apiUrl);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch README from GitHub');
+      }
+      
+      const data = await response.json();
+      const content = atob(data.content.replace(/\s/g, ''));
+      
+      return content;
+    } catch (error) {
+      console.error('Error fetching GitHub README:', error);
+      throw new Error('Failed to fetch GitHub README');
+    }
+  };
+
+  const generateFromProfile = async (sourceType: "resume" | "github" | "linkedin") => {
+    setIsGeneratingFromProfile(true);
+    
+    try {
+      let content = '';
+      
+      switch (sourceType) {
+        case 'resume':
+          if (!resumeFile) {
+            throw new Error('No resume file uploaded');
+          }
+          content = await extractTextFromPDF(resumeFile);
+          break;
+          
+        case 'github':
+          if (!githubUrl) {
+            throw new Error('No GitHub URL provided');
+          }
+          content = await fetchGitHubReadme(githubUrl);
+          break;
+          
+        case 'linkedin':
+          if (!linkedinSummary.trim()) {
+            throw new Error('No LinkedIn summary provided');
+          }
+          content = linkedinSummary;
+          break;
+          
+        default:
+          throw new Error('Invalid source type');
+      }
+      
+      generateFromProfileMutation.mutate({ type: sourceType, content });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to extract content",
+        variant: "destructive",
+      });
+      setIsGeneratingFromProfile(false);
+    }
+  };
 
   // Update state when Firebase data changes
   useEffect(() => {
@@ -261,6 +389,18 @@ console.log(fibonacci(10));
                   onChange={(e) => setLinkedinUrl(e.target.value)}
                   placeholder="https://linkedin.com/in/username"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Professional Summary
+                </label>
+                <textarea
+                  value={linkedinSummary}
+                  onChange={(e) => setLinkedinSummary(e.target.value)}
+                  placeholder="Paste the candidate's LinkedIn summary/about section here..."
+                  rows={6}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm resize-none"
                 />
               </div>
               {linkedinUrl && (
