@@ -40,56 +40,76 @@ console.log(fibonacci(10));
   useEffect(() => {
     if (!editorRef.current) return;
 
-    // Load Monaco Editor from CDN
-    const script = document.createElement("script");
-    script.src = "https://unpkg.com/monaco-editor@0.44.0/min/vs/loader.js";
-    script.onload = () => {
-      window.require.config({
-        paths: { vs: "https://unpkg.com/monaco-editor@0.44.0/min/vs" },
-      });
+    let isEditorCreated = false;
 
-      window.require(["vs/editor/editor.main"], () => {
-        if (editorRef.current && !monacoInstance.current) {
-          monacoInstance.current = window.monaco.editor.create(
-            editorRef.current,
-            {
-              value: value || defaultValue,
-              language,
-              theme,
-              automaticLayout: true,
-              minimap: { enabled: false },
-              fontSize: 14,
-              lineNumbers: "on",
-              roundedSelection: false,
-              scrollBeyondLastLine: false,
-              readOnly,
-            }
-          );
-
-          // Set up onChange listener
-          if (onChange) {
-            monacoInstance.current.onDidChangeModelContent(() => {
-              const value = monacoInstance.current.getValue();
-              onChange(value);
-            });
+    const initializeEditor = () => {
+      if (editorRef.current && !monacoInstance.current && !isEditorCreated) {
+        isEditorCreated = true;
+        monacoInstance.current = window.monaco.editor.create(
+          editorRef.current,
+          {
+            value: value || defaultValue,
+            language,
+            theme,
+            automaticLayout: true,
+            minimap: { enabled: false },
+            fontSize: 14,
+            lineNumbers: "on",
+            roundedSelection: false,
+            scrollBeyondLastLine: false,
+            readOnly,
           }
+        );
+
+        // Set up onChange listener
+        if (onChange) {
+          monacoInstance.current.onDidChangeModelContent(() => {
+            const value = monacoInstance.current.getValue();
+            onChange(value);
+          });
         }
-      });
+      }
     };
 
-    // Only add script if it doesn't exist
-    if (!document.querySelector('script[src*="monaco-editor"]')) {
-      document.head.appendChild(script);
+    // Check if Monaco is already loaded
+    if (window.monaco) {
+      initializeEditor();
+    } else {
+      // Load Monaco Editor from CDN
+      const existingScript = document.querySelector('script[src*="monaco-editor"]');
+      
+      if (!existingScript) {
+        const script = document.createElement("script");
+        script.src = "https://unpkg.com/monaco-editor@0.44.0/min/vs/loader.js";
+        script.onload = () => {
+          window.require.config({
+            paths: { vs: "https://unpkg.com/monaco-editor@0.44.0/min/vs" },
+          });
+
+          window.require(["vs/editor/editor.main"], () => {
+            initializeEditor();
+          });
+        };
+        document.head.appendChild(script);
+      } else {
+        // Script exists, wait for it to load
+        const checkMonaco = setInterval(() => {
+          if (window.monaco) {
+            clearInterval(checkMonaco);
+            initializeEditor();
+          }
+        }, 100);
+      }
     }
 
-    // Cleanup
+    // Cleanup only when component unmounts
     return () => {
       if (monacoInstance.current) {
         monacoInstance.current.dispose();
         monacoInstance.current = null;
       }
     };
-  }, [defaultValue, language, theme, readOnly, onChange]);
+  }, []); // Remove dependencies to prevent re-initialization
 
   // Handle value updates
   useEffect(() => {
@@ -100,6 +120,28 @@ console.log(fibonacci(10));
       }
     }
   }, [value]);
+
+  // Handle language and theme updates
+  useEffect(() => {
+    if (monacoInstance.current) {
+      const model = monacoInstance.current.getModel();
+      if (model) {
+        window.monaco.editor.setModelLanguage(model, language);
+      }
+    }
+  }, [language]);
+
+  useEffect(() => {
+    if (monacoInstance.current) {
+      monacoInstance.current.updateOptions({ theme });
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    if (monacoInstance.current) {
+      monacoInstance.current.updateOptions({ readOnly });
+    }
+  }, [readOnly]);
 
   useEffect(() => {
     const handleResize = () => {
