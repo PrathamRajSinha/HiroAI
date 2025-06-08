@@ -101,20 +101,12 @@ console.log(fibonacci(10));
     },
   });
 
-  // Query to fetch room question for candidates
-  const roomQuestionQuery = useQuery({
-    queryKey: ["/api/room", roomId, "question"],
-    queryFn: () => apiRequest(`/api/room/${roomId}/question`, "GET"),
-    enabled: !!roomId,
-    refetchInterval: 3000, // Poll every 3 seconds for real-time updates
-  });
-
-  // Update the current question for candidates
+  // Update state when Firebase data changes
   useEffect(() => {
-    if (isCandidate && roomQuestionQuery.data?.question) {
-      setCurrentQuestion(roomQuestionQuery.data.question);
+    if (interviewData.summary) {
+      setGeneratedSummary(interviewData.summary);
     }
-  }, [roomQuestionQuery.data, isCandidate]);
+  }, [interviewData.summary]);
 
   const handleTabSwitch = (tab: TabType) => {
     setActiveTab(tab);
@@ -284,15 +276,32 @@ console.log(fibonacci(10));
               <span className="text-xl">📝</span>
               Current Question
             </div>
-            {roomQuestionQuery.data?.question ? (
-              <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg border">
-                {roomQuestionQuery.data.question}
+            {firestoreLoading ? (
+              <div className="text-center p-4 text-gray-500">
+                <div className="text-2xl mb-2">⏳</div>
+                <div className="text-sm">Loading...</div>
+              </div>
+            ) : interviewData.question ? (
+              <div className="space-y-3">
+                {interviewData.questionType && interviewData.difficulty && (
+                  <div className="flex gap-2">
+                    <span className="px-2 py-1 bg-violet-100 text-violet-700 rounded text-xs font-medium">
+                      {interviewData.questionType}
+                    </span>
+                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                      {interviewData.difficulty}
+                    </span>
+                  </div>
+                )}
+                <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg border">
+                  {interviewData.question}
+                </div>
               </div>
             ) : (
               <div className="text-center p-4 text-gray-500">
                 <div className="text-2xl mb-2">📋</div>
                 <div className="text-sm">No question generated yet</div>
-                <div className="text-xs mt-1">Click "Generate Coding Question" to create one</div>
+                <div className="text-xs mt-1">Generate a question to get started</div>
               </div>
             )}
           </div>
@@ -476,7 +485,17 @@ console.log(fibonacci(10));
         ) : isCandidate ? (
           /* Candidate View - Show current question or waiting state */
           <div className="p-6 bg-white rounded-lg shadow-sm h-full overflow-y-auto border border-violet-100">
-            {roomQuestionQuery.data?.question ? (
+            {firestoreLoading ? (
+              <div className="text-center p-8">
+                <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xl">⏳</span>
+                </div>
+                <div className="text-gray-700 font-semibold text-lg mb-2">Loading...</div>
+                <div className="text-gray-500 text-sm">
+                  Connecting to interview room...
+                </div>
+              </div>
+            ) : interviewData.question ? (
               <div>
                 <div className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-3">
                   <div className="w-8 h-8 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full flex items-center justify-center">
@@ -484,8 +503,20 @@ console.log(fibonacci(10));
                   </div>
                   <span>Current Question</span>
                 </div>
+                
+                {interviewData.questionType && interviewData.difficulty && (
+                  <div className="flex gap-2 mb-4">
+                    <span className="px-3 py-1 bg-violet-100 text-violet-700 rounded-full text-xs font-medium">
+                      {interviewData.questionType}
+                    </span>
+                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                      {interviewData.difficulty}
+                    </span>
+                  </div>
+                )}
+                
                 <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gradient-to-r from-gray-50 to-violet-50 p-4 rounded-lg border border-violet-100">
-                  {roomQuestionQuery.data.question}
+                  {interviewData.question}
                 </div>
                 <div className="mt-4 p-3 bg-violet-50 rounded-lg border border-violet-200">
                   <p className="text-xs text-violet-700 font-medium">
@@ -493,14 +524,14 @@ console.log(fibonacci(10));
                   </p>
                 </div>
               </div>
-            ) : roomQuestionQuery.isLoading ? (
+            ) : firestoreError ? (
               <div className="text-center p-8">
-                <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xl">⏳</span>
+                <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xl">⚠️</span>
                 </div>
-                <div className="text-gray-700 font-semibold text-lg mb-2">Loading...</div>
-                <div className="text-gray-500 text-sm">
-                  Checking for interview questions
+                <div className="text-red-700 font-semibold text-lg mb-2">Connection Error</div>
+                <div className="text-red-600 text-sm">
+                  {firestoreError}
                 </div>
               </div>
             ) : (
@@ -510,7 +541,7 @@ console.log(fibonacci(10));
                 </div>
                 <div className="text-gray-700 font-semibold text-lg mb-2">Waiting for Question</div>
                 <div className="text-gray-500 text-sm">
-                  The interviewer will generate a coding question shortly
+                  The interviewer will generate a question shortly
                 </div>
               </div>
             )}
