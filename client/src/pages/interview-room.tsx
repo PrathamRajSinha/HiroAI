@@ -32,7 +32,9 @@ export default function InterviewRoom() {
   const [questionType, setQuestionType] = useState<string>("Coding");
   const [difficulty, setDifficulty] = useState<string>("Medium");
   
-
+  // Role detection
+  const isInterviewer = role === "interviewer";
+  const isCandidate = role === "candidate";
   
   // Firebase Firestore integration
   const { data: interviewData, loading: firestoreLoading, error: firestoreError, updateQuestion, updateSummary } = useInterviewRoom(roomId || "");
@@ -57,10 +59,6 @@ console.log(fibonacci(10));
 
 // Feel free to modify this code or write your own!`);
   const { toast } = useToast();
-  
-  console.log("isInterviewer:", isInterviewer);
-  console.log("isCandidate:", isCandidate);
-  console.log("Should show button:", role !== "candidate");
 
   const generateQuestionMutation = useMutation({
     mutationFn: async ({ type, difficulty }: { type: string; difficulty: string }) => {
@@ -449,6 +447,24 @@ console.log(fibonacci(10));
 
       {/* Right Panel - Role-based content (25% width) */}
       <div className="w-[25%] bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-4 border border-violet-100 shadow-sm">
+        {/* Role and Sync Status Header */}
+        <div className="mb-4 p-3 bg-white rounded-lg border border-violet-200 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">{isInterviewer ? "👨‍💼" : "👨‍💻"}</span>
+              <span className="text-sm font-medium text-violet-700">
+                {isInterviewer ? "Interviewer" : "Candidate"}
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className={`w-2 h-2 rounded-full ${isCodeSyncing ? 'bg-blue-500 animate-pulse' : 'bg-green-500'}`}></div>
+              <span className="text-xs text-gray-600">
+                {isCodeSyncing ? "Syncing" : "Live"}
+              </span>
+            </div>
+          </div>
+        </div>
+        
         {isInterviewer ? (
           <>
             {/* Interviewer View - Candidate Info Tabs */}
