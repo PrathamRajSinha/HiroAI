@@ -51,6 +51,11 @@ export default function InterviewRoom() {
   // Job context state
   const [jobContext, setJobContext] = useState<JobContext | null>(null);
   const [showJobContextDialog, setShowJobContextDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [candidateName, setCandidateName] = useState("");
+  const [candidateEmail, setCandidateEmail] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   
   // Firebase Firestore integration
   const { data: interviewData, loading: firestoreLoading, error: firestoreError, updateQuestion, updateSummary, getQuestionHistory, updateQuestionWithCode, saveJobContext, getJobContext } = useInterviewRoom(roomId || "");
@@ -409,6 +414,73 @@ export default function InterviewRoom() {
 
   const generateSummary = () => {
     generateSummaryMutation.mutate();
+  };
+
+  // Export report mutations
+  const exportReportMutation = useMutation({
+    mutationFn: async ({ format, candidateName, candidateEmail, companyName }: { 
+      format: 'pdf' | 'email'; 
+      candidateName: string; 
+      candidateEmail: string; 
+      companyName: string;
+    }) => {
+      return apiRequest("/api/export-report", "POST", { 
+        roomId, 
+        format, 
+        candidateName, 
+        candidateEmail, 
+        companyName 
+      });
+    },
+    onSuccess: (data) => {
+      if (data.format === 'pdf') {
+        // Trigger PDF download
+        const link = document.createElement('a');
+        link.href = data.downloadUrl;
+        link.download = `interview-report-${candidateName.replace(/\s+/g, '-')}.pdf`;
+        link.click();
+      }
+      toast({
+        title: "Report Generated",
+        description: data.format === 'pdf' ? "PDF report downloaded successfully" : "Report sent via email",
+      });
+      setShowExportDialog(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Export Failed",
+        description: "Failed to generate report. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleExportReport = (format: 'pdf' | 'email') => {
+    if (!candidateName.trim() || !companyName.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in candidate name and company name.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (format === 'email' && !candidateEmail.trim()) {
+      toast({
+        title: "Missing Email",
+        description: "Please provide candidate email for email delivery.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGeneratingReport(true);
+    exportReportMutation.mutate({ 
+      format, 
+      candidateName, 
+      candidateEmail, 
+      companyName 
+    });
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1083,6 +1155,77 @@ export default function InterviewRoom() {
                   {generateSummaryMutation.isPending ? "⏳" : "🧠"} Summary
                 </Button>
               </div>
+              
+              <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline"
+                    className="w-full border-green-600 text-green-600 hover:bg-green-50"
+                  >
+                    📤 Export Report
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Export Interview Report</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="candidateName">Candidate Name *</Label>
+                      <Input
+                        id="candidateName"
+                        placeholder="Enter candidate's full name"
+                        value={candidateName}
+                        onChange={(e) => setCandidateName(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="candidateEmail">Candidate Email</Label>
+                      <Input
+                        id="candidateEmail"
+                        type="email"
+                        placeholder="candidate@email.com"
+                        value={candidateEmail}
+                        onChange={(e) => setCandidateEmail(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="companyName">Company Name *</Label>
+                      <Input
+                        id="companyName"
+                        placeholder="Your company name"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2 pt-4">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setShowExportDialog(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={() => handleExportReport('pdf')}
+                        disabled={exportReportMutation.isPending}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        📄 Download PDF
+                      </Button>
+                      <Button 
+                        onClick={() => handleExportReport('email')}
+                        disabled={exportReportMutation.isPending}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        ✉️ Email Report
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
         )}
