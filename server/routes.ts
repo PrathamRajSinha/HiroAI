@@ -464,6 +464,94 @@ Format: Present each question as a complete, professional interview question tha
     }
   });
 
+  // Generate questions from resume PDF using pdf-parse
+  app.post("/api/gen-from-resume", upload.single('resume'), async (req, res) => {
+    try {
+      const { roomId } = req.body;
+      const file = req.file;
+      
+      if (!file) {
+        return res.status(400).json({ error: "Resume file is required" });
+      }
+
+      if (!process.env.GOOGLE_GEMINI_API_KEY) {
+        return res.status(500).json({ error: "Google Gemini API key not configured" });
+      }
+
+      // Extract text from PDF using pdfjs-dist
+      try {
+        const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf');
+        
+        // Load PDF document
+        const pdfDoc = await pdfjsLib.getDocument({ data: file.buffer }).promise;
+        let resumeText = '';
+        
+        // Extract text from all pages
+        for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+          const page = await pdfDoc.getPage(pageNum);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items
+            .map((item: any) => item.str)
+            .join(' ');
+          resumeText += pageText + '\n';
+        }
+
+        if (!resumeText.trim()) {
+          throw new Error('Unable to extract text from PDF file');
+        }
+
+        // Generate questions using Gemini AI
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        
+        const prompt = `Generate exactly 2 technical or behavioral interview questions based on this candidate's resume:
+
+${resumeText}
+
+REQUIREMENTS:
+- Generate exactly 2 questions
+- Focus on their experience, skills, projects, and career progression shown in the resume
+- Make questions specific to their background, not generic
+- Mix technical and behavioral questions based on their role and experience
+- Each question should be substantial and thought-provoking
+- Questions should be appropriate for a professional interview
+- Use plain text formatting without markdown symbols like ** or ##
+- Separate the two questions with a blank line
+- Do not number the questions
+
+Format: Present each question as a complete, professional interview question that an interviewer would naturally ask.`;
+        
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const generatedText = response.text();
+
+        // Split the response into individual questions
+        const questions = generatedText
+          .split('\n\n')
+          .filter((q: string) => q.trim().length > 0)
+          .map((q: string) => q.trim());
+
+        // Store the combined questions for the room if roomId is provided
+        if (roomId && questions.length > 0) {
+          const combinedQuestions = questions.join('\n\n');
+          console.log(`Storing resume-based questions for room ${roomId}:`, combinedQuestions.substring(0, 100) + "...");
+          await storage.setRoomQuestion(roomId, combinedQuestions);
+        }
+
+        res.json({ questions });
+
+      } catch (pdfError) {
+        console.error("PDF processing error:", pdfError);
+        res.status(500).json({ 
+          error: "Failed to process PDF file. Please ensure the file is a valid PDF with readable text." 
+        });
+      }
+
+    } catch (error) {
+      console.error("Error generating questions from resume:", error);
+      res.status(500).json({ error: "Failed to generate questions from resume" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

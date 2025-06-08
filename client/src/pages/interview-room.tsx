@@ -194,6 +194,48 @@ console.log(fibonacci(10));
     },
   });
 
+  const generateFromResumeMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('resume', file);
+      formData.append('roomId', roomId || '');
+      
+      const response = await fetch('/api/gen-from-resume', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to process resume');
+      }
+      
+      return response.json();
+    },
+    onSuccess: async (data: { questions: string[] }) => {
+      // Save questions to Firebase Firestore for real-time sync
+      if (data.questions && data.questions.length > 0) {
+        console.log("Saving Resume questions to Firestore:", data.questions);
+        await updateQuestion(data.questions.join('\n\n'), "Resume Analysis", "Medium");
+        console.log("Questions saved successfully");
+      }
+      
+      toast({
+        title: "Resume Questions Generated!",
+        description: `Generated ${data.questions.length} questions from resume analysis.`,
+      });
+      setIsGeneratingFromProfile(false);
+    },
+    onError: (error) => {
+      console.error("Error generating questions from resume:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate questions from resume. Please try again.",
+        variant: "destructive",
+      });
+      setIsGeneratingFromProfile(false);
+    },
+  });
+
   // Helper functions for extracting content from different sources
   const extractTextFromPDF = async (file: File): Promise<string> => {
     // Use the backend PDF extraction endpoint to handle PDF processing
@@ -347,6 +389,25 @@ console.log(fibonacci(10));
     }
   };
 
+  const generateFromResume = async () => {
+    setIsGeneratingFromProfile(true);
+    
+    try {
+      if (!resumeFile) {
+        throw new Error('No resume file uploaded');
+      }
+      
+      generateFromResumeMutation.mutate(resumeFile);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to process resume",
+        variant: "destructive",
+      });
+      setIsGeneratingFromProfile(false);
+    }
+  };
+
   // Update state when Firebase data changes
   useEffect(() => {
     if (interviewData.summary) {
@@ -442,11 +503,25 @@ console.log(fibonacci(10));
                     Remove
                   </button>
                 </div>
-                <iframe
-                  src={resumeUrl}
-                  className="flex-1 w-full border border-gray-200 rounded"
-                  title="Resume PDF"
-                />
+                <div className="flex-1 flex flex-col">
+                  <iframe
+                    src={resumeUrl}
+                    className="flex-1 w-full border border-gray-200 rounded mb-3"
+                    title="Resume PDF"
+                  />
+                  <button
+                    onClick={() => generateFromResume()}
+                    disabled={isGeneratingFromProfile || !resumeFile}
+                    className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
+                  >
+                    <span className="text-base">🎯</span>
+                    <span>
+                      {isGeneratingFromProfile && generateFromResumeMutation.isPending
+                        ? "Analyzing Resume & Generating..." 
+                        : "Ask From Resume"}
+                    </span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
