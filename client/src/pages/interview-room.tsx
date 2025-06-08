@@ -456,25 +456,25 @@ console.log(fibonacci(10));
           <div className="bg-white rounded-lg shadow-sm h-full p-4 overflow-y-auto">
             <div className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
               <span className="text-xl">💻</span>
-              GitHub Repository
+              GitHub Profile
             </div>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Repository URL
+                  Profile URL
                 </label>
                 <input
                   type="url"
                   value={githubUrl}
                   onChange={(e) => setGithubUrl(e.target.value)}
-                  placeholder="https://github.com/username/repo"
+                  placeholder="https://github.com/username"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm"
                 />
               </div>
               {githubUrl && (
                 <div className="space-y-3">
                   <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-700">Repository Link:</div>
+                    <div className="text-sm font-medium text-gray-700">Profile Link:</div>
                     <a
                       href={githubUrl}
                       target="_blank"
