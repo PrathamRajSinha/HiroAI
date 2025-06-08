@@ -1022,6 +1022,19 @@ function generateReportHtml(data: {
         @media print {
             body { margin: 0; padding: 15px; }
             .question-section { break-inside: avoid; }
+            .header { break-inside: avoid; }
+            .candidate-info { break-inside: avoid; }
+            .summary-section { break-inside: avoid; }
+        }
+        
+        /* Ensure content visibility */
+        * {
+            box-sizing: border-box;
+        }
+        
+        .question-section {
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
     </style>
 </head>

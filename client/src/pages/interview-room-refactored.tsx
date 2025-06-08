@@ -436,27 +436,68 @@ export default function InterviewRoom() {
     },
     onSuccess: (data) => {
       if (data.format === 'pdf' && data.htmlContent) {
-        // Generate PDF using html2pdf
-        const element = document.createElement('div');
-        element.innerHTML = data.htmlContent;
-        element.style.display = 'none';
-        document.body.appendChild(element);
+        console.log('HTML Content received:', data.htmlContent.substring(0, 500));
+        
+        // Create a temporary iframe to properly render the HTML
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.left = '-9999px';
+        iframe.style.top = '-9999px';
+        iframe.style.width = '800px';
+        iframe.style.height = '600px';
+        document.body.appendChild(iframe);
 
-        const options = {
-          margin: 0.5,
-          filename: `interview-report-${candidateName.replace(/\s+/g, '-')}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2 },
-          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-        };
+        // Write the HTML content to the iframe
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (iframeDoc) {
+          iframeDoc.open();
+          iframeDoc.write(data.htmlContent);
+          iframeDoc.close();
 
-        html2pdf().set(options).from(element).save().then(() => {
-          document.body.removeChild(element);
-        });
+          // Wait for content to load then generate PDF
+          setTimeout(() => {
+            const options = {
+              margin: 10,
+              filename: `interview-report-${candidateName.replace(/\s+/g, '-')}.pdf`,
+              image: { type: 'jpeg', quality: 0.98 },
+              html2canvas: { 
+                scale: 1.5,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                scrollX: 0,
+                scrollY: 0
+              },
+              jsPDF: { 
+                unit: 'mm', 
+                format: 'a4', 
+                orientation: 'portrait'
+              }
+            };
+
+            html2pdf()
+              .set(options)
+              .from(iframeDoc.body)
+              .save()
+              .then(() => {
+                document.body.removeChild(iframe);
+                console.log('PDF generated successfully');
+              })
+              .catch((error) => {
+                console.error('PDF generation error:', error);
+                document.body.removeChild(iframe);
+                toast({
+                  title: "PDF Generation Failed",
+                  description: "There was an issue generating the PDF. Please try again.",
+                  variant: "destructive",
+                });
+              });
+          }, 1000); // Wait for styles to load
+        }
       }
       toast({
         title: "Report Generated",
-        description: data.format === 'pdf' ? "PDF report downloaded successfully" : "Report sent via email",
+        description: data.format === 'pdf' ? "PDF report is being generated..." : "Report sent via email",
       });
       setShowExportDialog(false);
       setIsGeneratingReport(false);
