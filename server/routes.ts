@@ -11,10 +11,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate coding interview question
   app.post("/api/generate-question", async (req, res) => {
     try {
-      const { topic, roomId } = req.body;
+      const { type, difficulty, roomId } = req.body;
       
-      if (!topic) {
-        return res.status(400).json({ error: "Topic is required" });
+      if (!type || !difficulty) {
+        return res.status(400).json({ error: "Type and difficulty are required" });
       }
 
       if (!process.env.GOOGLE_GEMINI_API_KEY) {
@@ -23,7 +23,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
-      const prompt = `Generate a clean, well-formatted coding interview question for a frontend developer about ${topic}. 
+      const prompt = `Generate a clean, well-formatted ${type} interview question for a frontend developer at ${difficulty} level. 
 
 Requirements:
 - Use plain text formatting without markdown symbols like ** or ##

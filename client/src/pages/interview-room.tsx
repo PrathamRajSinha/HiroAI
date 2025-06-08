@@ -28,6 +28,8 @@ export default function InterviewRoom() {
   const [resumeUrl, setResumeUrl] = useState<string>("");
   const [githubUrl, setGithubUrl] = useState<string>("");
   const [linkedinUrl, setLinkedinUrl] = useState<string>("");
+  const [questionType, setQuestionType] = useState<string>("Coding");
+  const [difficulty, setDifficulty] = useState<string>("Medium");
   const [generatedQuestion, setGeneratedQuestion] = useState<string>(`// Welcome to the Interview Code Editor
 // Click "Generate Coding Question" to get started with an AI-generated question
 // This is where you can write and test code during the interview
@@ -50,8 +52,8 @@ console.log(fibonacci(10));
   console.log("Should show button:", role !== "candidate");
 
   const generateQuestionMutation = useMutation({
-    mutationFn: async (topic: string) => {
-      return apiRequest("/api/generate-question", "POST", { topic, roomId });
+    mutationFn: async ({ type, difficulty }: { type: string; difficulty: string }) => {
+      return apiRequest("/api/generate-question", "POST", { type, difficulty, roomId });
     },
     onSuccess: (data: { question: string }) => {
       // Set the current question for display above the editor
@@ -117,8 +119,8 @@ console.log(fibonacci(10));
     setActiveTab(tab);
   };
 
-  const generateCodingQuestion = () => {
-    generateQuestionMutation.mutate("React");
+  const generateSmartQuestion = (type: string, difficulty: string) => {
+    generateQuestionMutation.mutate({ type, difficulty });
   };
 
   const generateSummary = () => {
@@ -336,25 +338,58 @@ console.log(fibonacci(10));
 
       {/* Center Panel - Monaco Editor (60% width) */}
       <div className="w-[60%] bg-white rounded-xl shadow-lg p-4 border border-gray-200 relative">
-        {/* Floating Action Buttons - Show for interviewers and default users, hide for candidates */}
+        {/* Question Generation Section - Show for interviewers and default users, hide for candidates */}
         {role !== "candidate" && (
-          <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
-            <button
-              onClick={generateCodingQuestion}
-              disabled={generateQuestionMutation.isPending}
-              className="bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 disabled:from-violet-400 disabled:to-violet-500 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center gap-2 hover:scale-[1.02] disabled:hover:scale-100 border border-violet-500"
-            >
-              <span className="text-base">{generateQuestionMutation.isPending ? "⏳" : "🎯"}</span>
-              <span>{generateQuestionMutation.isPending ? "Generating..." : "Generate Question"}</span>
-            </button>
-            <button
-              onClick={generateSummary}
-              disabled={generateSummaryMutation.isPending}
-              className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-purple-400 disabled:to-purple-500 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center gap-2 hover:scale-[1.02] disabled:hover:scale-100 border border-purple-500"
-            >
-              <span className="text-base">{generateSummaryMutation.isPending ? "⏳" : "🧠"}</span>
-              <span>{generateSummaryMutation.isPending ? "Generating..." : "Summary"}</span>
-            </button>
+          <div className="bg-violet-50 p-4 rounded-xl space-y-3 mb-4">
+            <h3 className="text-lg font-semibold text-violet-800">Generate a Question</h3>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-violet-700 mb-1">Question Type</label>
+                <select
+                  value={questionType}
+                  onChange={(e) => setQuestionType(e.target.value)}
+                  className="w-full px-3 py-2 border border-violet-200 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm bg-white"
+                >
+                  <option value="Coding">Coding</option>
+                  <option value="Behavioral">Behavioral</option>
+                  <option value="Situational">Situational</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-violet-700 mb-1">Difficulty</label>
+                <select
+                  value={difficulty}
+                  onChange={(e) => setDifficulty(e.target.value)}
+                  className="w-full px-3 py-2 border border-violet-200 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm bg-white"
+                >
+                  <option value="Easy">Easy</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Hard">Hard</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="flex gap-2">
+              <button
+                onClick={() => generateSmartQuestion(questionType, difficulty)}
+                disabled={generateQuestionMutation.isPending}
+                className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-purple-400 disabled:to-purple-500 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center gap-2 hover:scale-[1.02] disabled:hover:scale-100"
+              >
+                <span className="text-base">{generateQuestionMutation.isPending ? "⏳" : "✨"}</span>
+                <span>{generateQuestionMutation.isPending ? "Generating..." : "Generate"}</span>
+              </button>
+              
+              <button
+                onClick={generateSummary}
+                disabled={generateSummaryMutation.isPending}
+                className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:from-indigo-400 disabled:to-indigo-500 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center gap-2 hover:scale-[1.02] disabled:hover:scale-100"
+              >
+                <span className="text-base">{generateSummaryMutation.isPending ? "⏳" : "🧠"}</span>
+                <span>{generateSummaryMutation.isPending ? "Generating..." : "Summary"}</span>
+              </button>
+            </div>
           </div>
         )}
         
