@@ -39,6 +39,11 @@ export default function InterviewRoom() {
   const [difficulty, setDifficulty] = useState<string>("Medium");
   const [isGeneratingFromProfile, setIsGeneratingFromProfile] = useState<boolean>(false);
   
+  // Generated questions for each source
+  const [generatedResumeQuestions, setGeneratedResumeQuestions] = useState<string[]>([]);
+  const [generatedGitHubQuestions, setGeneratedGitHubQuestions] = useState<string[]>([]);
+  const [generatedLinkedInQuestions, setGeneratedLinkedInQuestions] = useState<string[]>([]);
+  
   // Firebase Firestore integration
   const { data: interviewData, loading: firestoreLoading, error: firestoreError, updateQuestion, updateSummary, getQuestionHistory, updateQuestionWithCode } = useInterviewRoom(roomId || "");
   
@@ -150,7 +155,7 @@ export default function InterviewRoom() {
     },
     onSuccess: async (data: { questions: string[] }) => {
       if (data.questions && data.questions.length > 0) {
-        await updateQuestion(data.questions.join('\n\n'), "LinkedIn Analysis", "Medium");
+        setGeneratedLinkedInQuestions(data.questions);
       }
       
       toast({
@@ -175,7 +180,7 @@ export default function InterviewRoom() {
     },
     onSuccess: async (data: { questions: string[] }) => {
       if (data.questions && data.questions.length > 0) {
-        await updateQuestion(data.questions.join('\n\n'), "GitHub Analysis", "Medium");
+        setGeneratedGitHubQuestions(data.questions);
       }
       
       toast({
@@ -213,7 +218,7 @@ export default function InterviewRoom() {
     },
     onSuccess: async (data: { questions: string[] }) => {
       if (data.questions && data.questions.length > 0) {
-        await updateQuestion(data.questions.join('\n\n'), "Resume Analysis", "Medium");
+        setGeneratedResumeQuestions(data.questions);
       }
       
       toast({
@@ -702,6 +707,38 @@ export default function InterviewRoom() {
                     </Button>
                   </div>
                 )}
+                
+                {/* Generated Questions Section */}
+                {generatedResumeQuestions.length > 0 && (
+                  <div className="mt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-800">Generated Questions</h3>
+                      <Badge variant="secondary">{generatedResumeQuestions.length} questions</Badge>
+                    </div>
+                    <div className="space-y-4">
+                      {generatedResumeQuestions.map((question, index) => (
+                        <Card key={index} className="border border-orange-200 bg-orange-50">
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-orange-800 mb-2">Question {index + 1}</div>
+                                <div className="text-sm text-gray-700 whitespace-pre-wrap">{question}</div>
+                              </div>
+                              <Button
+                                onClick={() => updateQuestion(question, "Resume Analysis", "Medium")}
+                                size="sm"
+                                variant="outline"
+                                className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                              >
+                                Use This
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -738,6 +775,38 @@ export default function InterviewRoom() {
                 >
                   {isGeneratingFromProfile ? "Generating..." : "Generate Questions from GitHub"}
                 </Button>
+                
+                {/* Generated Questions Section */}
+                {generatedGitHubQuestions.length > 0 && (
+                  <div className="mt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-800">Generated Questions</h3>
+                      <Badge variant="secondary">{generatedGitHubQuestions.length} questions</Badge>
+                    </div>
+                    <div className="space-y-4">
+                      {generatedGitHubQuestions.map((question, index) => (
+                        <Card key={index} className="border border-gray-200 bg-gray-50">
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-800 mb-2">Question {index + 1}</div>
+                                <div className="text-sm text-gray-700 whitespace-pre-wrap">{question}</div>
+                              </div>
+                              <Button
+                                onClick={() => updateQuestion(question, "GitHub Analysis", "Medium")}
+                                size="sm"
+                                variant="outline"
+                                className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                              >
+                                Use This
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
