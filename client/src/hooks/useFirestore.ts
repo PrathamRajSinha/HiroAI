@@ -7,6 +7,8 @@ export interface InterviewData {
   summary?: string;
   questionType?: string;
   difficulty?: string;
+  code?: string;
+  lastUpdatedBy?: 'interviewer' | 'candidate';
   timestamp?: number;
 }
 
@@ -76,11 +78,28 @@ export function useInterviewRoom(roomId: string) {
     }
   };
 
+  const updateCode = async (code: string, userRole: 'interviewer' | 'candidate') => {
+    if (!roomId) return;
+
+    try {
+      const docRef = doc(db, "interviews", roomId);
+      await setDoc(docRef, {
+        code,
+        lastUpdatedBy: userRole,
+        timestamp: Date.now(),
+      }, { merge: true });
+    } catch (err) {
+      console.error("Error updating code:", err);
+      setError("Failed to save code");
+    }
+  };
+
   return {
     data,
     loading,
     error,
     updateQuestion,
     updateSummary,
+    updateCode,
   };
 }

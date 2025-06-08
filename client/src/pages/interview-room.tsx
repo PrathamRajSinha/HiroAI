@@ -5,6 +5,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation, useParams } from "wouter";
 import { useInterviewRoom } from "@/hooks/useFirestore";
+import { useCodeSync } from "@/hooks/useCodeSync";
 
 type TabType = "resume" | "github" | "linkedin" | "question";
 
@@ -31,8 +32,18 @@ export default function InterviewRoom() {
   const [questionType, setQuestionType] = useState<string>("Coding");
   const [difficulty, setDifficulty] = useState<string>("Medium");
   
+
+  
   // Firebase Firestore integration
   const { data: interviewData, loading: firestoreLoading, error: firestoreError, updateQuestion, updateSummary } = useInterviewRoom(roomId || "");
+  
+  // Real-time code synchronization
+  const { code: syncedCode, isUpdating: isCodeSyncing, handleCodeChange } = useCodeSync({
+    roomId: roomId || "",
+    userRole: isInterviewer ? 'interviewer' : 'candidate',
+    initialCode: "// Welcome to the coding interview!\n// Write your solution here...\n\nfunction solution() {\n  // Your code here\n}\n"
+  });
+  
   const [generatedQuestion, setGeneratedQuestion] = useState<string>(`// Welcome to the Interview Code Editor
 // Click "Generate Coding Question" to get started with an AI-generated question
 // This is where you can write and test code during the interview
@@ -46,9 +57,6 @@ console.log(fibonacci(10));
 
 // Feel free to modify this code or write your own!`);
   const { toast } = useToast();
-  
-  const isInterviewer = role === "interviewer";
-  const isCandidate = role === "candidate";
   
   console.log("isInterviewer:", isInterviewer);
   console.log("isCandidate:", isCandidate);
@@ -403,12 +411,20 @@ console.log(fibonacci(10));
           </div>
         )}
         
-        <div className="rounded-lg overflow-hidden h-full">
+        <div className="rounded-lg overflow-hidden h-full relative">
+          {/* Sync Status Indicator */}
+          {isCodeSyncing && (
+            <div className="absolute top-2 right-2 z-10 bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+              Syncing...
+            </div>
+          )}
+          
           <MonacoEditor
-            value={generatedQuestion}
+            value={syncedCode}
             language="javascript"
             theme="vs"
-            onChange={setEditorValue}
+            onChange={handleCodeChange}
           />
         </div>
         
