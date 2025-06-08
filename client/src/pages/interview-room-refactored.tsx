@@ -4,14 +4,18 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation, useParams } from "wouter";
-import { useInterviewRoom, QuestionHistory } from "@/hooks/useFirestore";
+import { useInterviewRoom, QuestionHistory, JobContext } from "@/hooks/useFirestore";
 import { useCodeSync } from "@/hooks/useCodeSync";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { FileText, Github, Linkedin, MessageCircle, History, ChevronDown, ChevronRight, Code, Brain, Video } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FileText, Github, Linkedin, MessageCircle, History, ChevronDown, ChevronRight, Code, Brain, Video, Briefcase, Settings } from "lucide-react";
 import { VideoCall } from "@/components/video-call";
 import * as pdfjsLib from 'pdfjs-dist';
 
@@ -44,8 +48,12 @@ export default function InterviewRoom() {
   const [generatedGitHubQuestions, setGeneratedGitHubQuestions] = useState<string[]>([]);
   const [generatedLinkedInQuestions, setGeneratedLinkedInQuestions] = useState<string[]>([]);
   
+  // Job context state
+  const [jobContext, setJobContext] = useState<JobContext | null>(null);
+  const [showJobContextDialog, setShowJobContextDialog] = useState(false);
+  
   // Firebase Firestore integration
-  const { data: interviewData, loading: firestoreLoading, error: firestoreError, updateQuestion, updateSummary, getQuestionHistory, updateQuestionWithCode } = useInterviewRoom(roomId || "");
+  const { data: interviewData, loading: firestoreLoading, error: firestoreError, updateQuestion, updateSummary, getQuestionHistory, updateQuestionWithCode, saveJobContext, getJobContext } = useInterviewRoom(roomId || "");
   
   // Previous questions state
   const [questionHistory, setQuestionHistory] = useState<QuestionHistory[]>([]);

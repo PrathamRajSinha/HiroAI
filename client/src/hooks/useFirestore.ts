@@ -12,6 +12,14 @@ export interface InterviewData {
   timestamp?: number;
 }
 
+export interface JobContext {
+  jobTitle: string;
+  techStack: string;
+  seniorityLevel: 'Junior' | 'Mid' | 'Senior';
+  roleType: 'Coding' | 'Behavioral' | 'System Design';
+  timestamp?: number;
+}
+
 export interface CodeFeedback {
   summary: string;
   scores: {
@@ -165,6 +173,40 @@ export function useInterviewRoom(roomId: string) {
     }
   };
 
+  const saveJobContext = async (jobContext: JobContext) => {
+    if (!roomId) return;
+
+    try {
+      const docRef = doc(db, "interviews", roomId);
+      await setDoc(docRef, {
+        jobContext: {
+          ...jobContext,
+          timestamp: Date.now(),
+        },
+      }, { merge: true });
+    } catch (err) {
+      console.error("Error saving job context:", err);
+      setError("Failed to save job context");
+    }
+  };
+
+  const getJobContext = async (): Promise<JobContext | null> => {
+    if (!roomId) return null;
+
+    try {
+      const docRef = doc(db, "interviews", roomId);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists() && docSnap.data().jobContext) {
+        return docSnap.data().jobContext as JobContext;
+      }
+      return null;
+    } catch (err) {
+      console.error("Error fetching job context:", err);
+      return null;
+    }
+  };
+
   return {
     data,
     loading,
@@ -174,5 +216,7 @@ export function useInterviewRoom(roomId: string) {
     updateCode,
     getQuestionHistory,
     updateQuestionWithCode,
+    saveJobContext,
+    getJobContext,
   };
 }
