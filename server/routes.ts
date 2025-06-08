@@ -4,7 +4,6 @@ import { WebSocketServer } from "ws";
 import { storage } from "./storage";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import multer from "multer";
-import * as pdfjsLib from 'pdfjs-dist';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize Gemini AI
@@ -225,6 +224,25 @@ Format: Present each question as a complete, professional interview question tha
     } catch (error) {
       console.error("Error generating questions from profile:", error);
       res.status(500).json({ error: "Failed to generate questions from profile" });
+    }
+  });
+
+  // Extract text from PDF files
+  app.post("/api/extract-pdf-text", upload.single('pdf'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No PDF file provided" });
+      }
+
+      // For now, return a message asking user to manually copy text
+      // This avoids the PDF.js worker configuration complexity
+      res.json({ 
+        text: "PDF text extraction is currently unavailable. Please copy and paste your resume content into the LinkedIn summary field and use 'Ask from LinkedIn' instead.",
+        fallback: true
+      });
+    } catch (error) {
+      console.error("Error processing PDF:", error);
+      res.status(500).json({ error: "Failed to process PDF file" });
     }
   });
 

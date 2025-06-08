@@ -139,23 +139,36 @@ console.log(fibonacci(10));
 
   // Helper functions for extracting content from different sources
   const extractTextFromPDF = async (file: File): Promise<string> => {
-    // For now, we'll use a backend approach to handle PDF extraction
-    // This avoids client-side PDF.js worker configuration issues
     try {
-      const formData = new FormData();
-      formData.append('pdf', file);
-      
-      const response = await fetch('/api/extract-pdf-text', {
-        method: 'POST',
-        body: formData,
+      // Configure PDF.js worker with a more reliable approach
+      if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      const loadingTask = pdfjsLib.getDocument({
+        data: arrayBuffer,
+        verbosity: 0, // Reduce console output
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to extract PDF text');
+      const pdf = await loadingTask.promise;
+      let fullText = '';
+      
+      for (let i = 1; i <= Math.min(pdf.numPages, 5); i++) { // Limit to first 5 pages
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .filter((item: any) => item.str && item.str.trim())
+          .map((item: any) => item.str)
+          .join(' ');
+        fullText += pageText + '\n';
       }
       
-      const data = await response.json();
-      return data.text;
+      if (!fullText.trim()) {
+        throw new Error('No text content found in PDF');
+      }
+      
+      return fullText.trim();
     } catch (error) {
       console.error('Error extracting text from PDF:', error);
       throw new Error('Failed to extract text from PDF. Please copy and paste your resume content into the LinkedIn summary field and use "Ask from LinkedIn" instead.');
