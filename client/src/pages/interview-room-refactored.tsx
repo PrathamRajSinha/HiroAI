@@ -908,7 +908,7 @@ export default function InterviewRoom() {
       </div>
 
       {/* Middle Panel - Code Editor */}
-      <div className={`flex flex-col gap-4 ${isInterviewer ? 'w-[35%]' : 'w-[55%]'}`}>
+      <div className={`flex flex-col gap-4 ${isInterviewer ? 'w-[35%]' : 'w-[45%]'}`}>
         {/* Generate Controls - Only show for interviewer */}
         {isInterviewer && (
           <Card>
@@ -1072,10 +1072,6 @@ export default function InterviewRoom() {
                   <CardContent className="pt-6 h-full flex flex-col">
                     {interviewData.question ? (
                       <div className="space-y-4 flex-1">
-                        <div className="flex gap-2 mb-4">
-                          <Badge variant="secondary" className="text-sm px-3 py-1">{interviewData.questionType}</Badge>
-                          <Badge variant="outline" className="text-sm px-3 py-1">{interviewData.difficulty}</Badge>
-                        </div>
                         <div className="text-base text-gray-800 whitespace-pre-wrap bg-gray-50 p-6 rounded-lg border leading-relaxed flex-1">
                           {interviewData.question}
                         </div>
