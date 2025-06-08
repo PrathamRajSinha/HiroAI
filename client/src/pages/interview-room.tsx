@@ -732,7 +732,7 @@ console.log(fibonacci(10));
   return (
     <div className="h-screen w-screen flex gap-4 p-4 bg-gray-50">
       {/* Left Panel - Video Call (15% width) */}
-      <div className="w-[15%] h-[60%] bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-3 relative border border-gray-200 shadow-sm">
+      <div className="w-[15%] h-full bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-3 relative border border-gray-200 shadow-sm">
         {roomId ? (
           <>
             <iframe
@@ -860,7 +860,7 @@ console.log(fibonacci(10));
       </div>
 
       {/* Right Panel - Role-based content (25% width) */}
-      <div className="w-[25%] bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-4 border border-violet-100 shadow-sm">
+      <div className="w-[25%] h-full bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-4 border border-violet-100 shadow-sm flex flex-col">
         {/* Role and Sync Status Header */}
         <div className="mb-4 p-3 bg-white rounded-lg border border-violet-200 shadow-sm">
           <div className="flex items-center justify-between">
@@ -934,13 +934,13 @@ console.log(fibonacci(10));
                 🎯 Generate Questions
               </button>
             </div>
-            <div className="tab-content h-[calc(100%-4rem)]">
+            <div className="flex-1 min-h-0">
               {renderTabContent()}
             </div>
           </>
         ) : isCandidate ? (
           /* Candidate View - Show current question or waiting state */
-          <div className="p-6 bg-white rounded-lg shadow-sm h-full overflow-y-auto border border-violet-100">
+          <div className="flex-1 p-6 bg-white rounded-lg shadow-sm overflow-y-auto border border-violet-100">
             {firestoreLoading ? (
               <div className="text-center p-8">
                 <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full flex items-center justify-center">
