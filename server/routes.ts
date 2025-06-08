@@ -1479,26 +1479,40 @@ function generateReportHtml(data: {
                 ${question.aiFeedback.scores ? `
                 <div class="scores-grid">
                     <div class="score-item">
-                        <div class="score-label">Correctness</div>
+                        <div class="score-label">Correctness (30%)</div>
                         <div class="score-value">${question.aiFeedback.scores.correctness}/10</div>
                     </div>
                     <div class="score-item">
-                        <div class="score-label">Efficiency</div>
+                        <div class="score-label">Relevance (30%)</div>
+                        <div class="score-value">${question.aiFeedback.scores.relevance || question.aiFeedback.scores.correctness}/10</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-label">Efficiency (15%)</div>
                         <div class="score-value">${question.aiFeedback.scores.efficiency}/10</div>
                     </div>
                     <div class="score-item">
-                        <div class="score-label">Quality</div>
-                        <div class="score-value">${question.aiFeedback.scores.quality}/10</div>
-                    </div>
-                    <div class="score-item">
-                        <div class="score-label">Readability</div>
+                        <div class="score-label">Readability (15%)</div>
                         <div class="score-value">${question.aiFeedback.scores.readability}/10</div>
                     </div>
                     <div class="score-item">
-                        <div class="score-label">Overall</div>
-                        <div class="score-value">${question.aiFeedback.scores.overall}/10</div>
+                        <div class="score-label">Quality (10%)</div>
+                        <div class="score-value">${question.aiFeedback.scores.quality}/10</div>
+                    </div>
+                    <div class="score-item" style="background: #f0f9ff; border-color: #0ea5e9;">
+                        <div class="score-label">Weighted Overall</div>
+                        <div class="score-value" style="color: #0ea5e9;">${question.aiFeedback.scores.overall}/10</div>
                     </div>
                 </div>
+                ${question.aiFeedback.scoreNote ? `
+                <div style="margin-top: 15px; padding: 10px; background: ${
+                  question.aiFeedback.scores.overall < 3 ? '#fef2f2; border-left: 4px solid #ef4444; color: #dc2626;' 
+                  : question.aiFeedback.scores.overall < 5 ? '#fffbeb; border-left: 4px solid #f59e0b; color: #d97706;'
+                  : question.aiFeedback.scores.overall < 7 ? '#eff6ff; border-left: 4px solid #3b82f6; color: #2563eb;'
+                  : '#f0fdf4; border-left: 4px solid #10b981; color: #059669;'
+                } border-radius: 4px; font-weight: 600; text-align: center;">
+                    ${question.aiFeedback.scoreNote}
+                </div>
+                ` : ''}
                 ` : ''}
                 
                 <div class="feedback-text">
