@@ -480,21 +480,32 @@ Format: Present each question as a complete, professional interview question tha
 
       // Extract text from PDF using pdfjs-dist
       try {
-        const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf');
+        const pdfjs = await import('pdfjs-dist');
         
-        // Load PDF document
-        const pdfDoc = await pdfjsLib.getDocument({ data: file.buffer }).promise;
+        // Load PDF document from buffer
+        const loadingTask = pdfjs.getDocument({ data: file.buffer });
+        const pdfDoc = await loadingTask.promise;
+        
         let resumeText = '';
         
         // Extract text from all pages
         for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
           const page = await pdfDoc.getPage(pageNum);
           const textContent = await page.getTextContent();
+          
+          // Combine text items with spaces
           const pageText = textContent.items
-            .map((item: any) => item.str)
-            .join(' ');
-          resumeText += pageText + '\n';
+            .map((item: any) => item.str || '')
+            .join(' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+          
+          if (pageText) {
+            resumeText += pageText + '\n\n';
+          }
         }
+        
+        resumeText = resumeText.trim();
 
         if (!resumeText.trim()) {
           throw new Error('Unable to extract text from PDF file');
