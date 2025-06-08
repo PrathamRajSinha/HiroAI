@@ -757,12 +757,62 @@ console.log(fibonacci(10));
                             </button>
                           )}
                           
-                          {item.candidateResponse && (
+                          {item.candidateCode && (
                             <div className="mt-2 pt-2 border-t border-gray-200">
-                              <div className="text-xs text-gray-500 mb-1">Candidate Response:</div>
-                              <div className="text-xs text-gray-600 bg-white p-2 rounded border">
-                                {item.candidateResponse}
+                              <div className="text-xs text-gray-500 mb-1">Candidate Code:</div>
+                              <div className="text-xs text-gray-600 bg-gray-900 text-gray-100 p-2 rounded border font-mono text-xs overflow-x-auto">
+                                <pre className="whitespace-pre-wrap">{item.candidateCode}</pre>
                               </div>
+                              
+                              {item.aiFeedback && (
+                                <div className="mt-2">
+                                  <div className="text-xs text-gray-500 mb-1">AI Feedback:</div>
+                                  <div className="bg-blue-50 p-3 rounded border">
+                                    <div className="text-sm font-medium text-blue-900 mb-2">
+                                      {item.aiFeedback.summary}
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-2 mb-2">
+                                      <div className="flex justify-between text-xs">
+                                        <span>Quality:</span>
+                                        <span className="font-medium">{item.aiFeedback.scores.quality}/10</span>
+                                      </div>
+                                      <div className="flex justify-between text-xs">
+                                        <span>Correctness:</span>
+                                        <span className="font-medium">{item.aiFeedback.scores.correctness}/10</span>
+                                      </div>
+                                      <div className="flex justify-between text-xs">
+                                        <span>Efficiency:</span>
+                                        <span className="font-medium">{item.aiFeedback.scores.efficiency}/10</span>
+                                      </div>
+                                      <div className="flex justify-between text-xs">
+                                        <span>Readability:</span>
+                                        <span className="font-medium">{item.aiFeedback.scores.readability}/10</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="flex justify-between text-sm font-medium text-blue-800 pt-1 border-t border-blue-200">
+                                      <span>Overall Score:</span>
+                                      <span>{item.aiFeedback.scores.overall}/10</span>
+                                    </div>
+                                    
+                                    {expandedQuestions.has(item.id + '-feedback') && (
+                                      <div className="mt-2 pt-2 border-t border-blue-200">
+                                        <div className="text-xs text-blue-700 whitespace-pre-wrap">
+                                          {item.aiFeedback.fullExplanation}
+                                        </div>
+                                      </div>
+                                    )}
+                                    
+                                    <button
+                                      onClick={() => toggleQuestionExpansion(item.id + '-feedback')}
+                                      className="text-xs text-blue-600 hover:text-blue-800 mt-2 font-medium"
+                                    >
+                                      {expandedQuestions.has(item.id + '-feedback') ? 'Hide Details' : 'Show Details'}
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { doc, onSnapshot, setDoc, getDoc, collection, addDoc, query, orderBy, getDocs } from "firebase/firestore";
+import { doc, onSnapshot, setDoc, getDoc, collection, addDoc, query, orderBy, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export interface InterviewData {
@@ -12,13 +12,26 @@ export interface InterviewData {
   timestamp?: number;
 }
 
+export interface CodeFeedback {
+  summary: string;
+  scores: {
+    quality: number;
+    correctness: number;
+    efficiency: number;
+    readability: number;
+    overall: number;
+  };
+  fullExplanation: string;
+}
+
 export interface QuestionHistory {
   id: string;
   question: string;
   questionType: string;
   difficulty: string;
   timestamp: number;
-  candidateResponse?: string;
+  candidateCode?: string;
+  aiFeedback?: CodeFeedback;
 }
 
 export function useInterviewRoom(roomId: string) {
@@ -133,6 +146,24 @@ export function useInterviewRoom(roomId: string) {
     }
   };
 
+  const updateQuestionWithCode = async (questionId: string, candidateCode: string, aiFeedback?: CodeFeedback) => {
+    if (!roomId) return;
+
+    try {
+      const questionRef = doc(db, "interviews", roomId, "history", questionId);
+      const updateData: Partial<QuestionHistory> = { candidateCode };
+      
+      if (aiFeedback) {
+        updateData.aiFeedback = aiFeedback;
+      }
+      
+      await updateDoc(questionRef, updateData);
+    } catch (err) {
+      console.error("Error updating question with code:", err);
+      throw err;
+    }
+  };
+
   return {
     data,
     loading,
@@ -141,5 +172,6 @@ export function useInterviewRoom(roomId: string) {
     updateSummary,
     updateCode,
     getQuestionHistory,
+    updateQuestionWithCode,
   };
 }
