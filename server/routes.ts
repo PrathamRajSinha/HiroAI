@@ -876,6 +876,295 @@ Keep the tone professional and constructive. If limited data is available, ackno
     }
   });
 
+  // Dashboard API endpoints
+  
+  // Get all interviews for dashboard
+  app.get("/api/interviews", async (req, res) => {
+    try {
+      let interviews: any[] = [];
+
+      if (db) {
+        const interviewsSnapshot = await db.collection('interviews').orderBy('timestamp', 'desc').get();
+        interviews = interviewsSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            candidateName: data.candidateName || 'Unknown Candidate',
+            candidateId: data.candidateId || doc.id,
+            roleTitle: data.roleTitle || 'Software Engineer',
+            roundNumber: data.roundNumber || 1,
+            interviewerName: data.interviewerName || 'Unknown Interviewer',
+            date: data.timestamp ? new Date(data.timestamp).toLocaleDateString() : new Date().toLocaleDateString(),
+            timestamp: data.timestamp || Date.now(),
+            status: data.status || 'In Progress',
+            jobContext: data.jobContext,
+            summary: data.summary,
+            overallScore: data.overallScore
+          };
+        });
+      } else {
+        // Fallback for when Firebase is not available
+        console.log("Firebase not available, returning empty interviews list");
+      }
+
+      res.json({ interviews });
+    } catch (error) {
+      console.error("Error fetching interviews:", error);
+      res.status(500).json({ error: "Failed to fetch interviews" });
+    }
+  });
+
+  // Create new interview session
+  app.post("/api/interviews", async (req, res) => {
+    try {
+      const { candidateName, roleTitle, interviewerName, jobTitle, seniorityLevel, techStack, roleType } = req.body;
+      
+      if (!candidateName || !roleTitle || !interviewerName) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const roomId = Math.random().toString(36).substring(2, 10);
+      const candidateId = `candidate_${Math.random().toString(36).substring(2, 10)}`;
+      
+      const interviewData = {
+        candidateName,
+        candidateId,
+        roleTitle,
+        roundNumber: 1,
+        interviewerName,
+        timestamp: Date.now(),
+        status: 'Scheduled',
+        jobContext: {
+          jobTitle: jobTitle || roleTitle,
+          seniorityLevel: seniorityLevel || 'Mid',
+          techStack: techStack || 'General',
+          roleType: roleType || 'Coding'
+        }
+      };
+
+      if (db) {
+        await db.collection('interviews').doc(roomId).set(interviewData);
+        
+        // Also set job context in the room's subcollection
+        await db.collection('interviews').doc(roomId).collection('jobContext').doc('current').set(interviewData.jobContext);
+      }
+
+      res.json({ 
+        roomId,
+        interviewId: roomId,
+        ...interviewData
+      });
+    } catch (error) {
+      console.error("Error creating interview:", error);
+      res.status(500).json({ error: "Failed to create interview" });
+    }
+  });
+
+  // Get interview review data
+  app.get("/api/interviews/:id/review", async (req, res) => {
+    try {
+      const { id } = req.params;
+      let reviewData: any = null;
+
+      if (db) {
+        // Get main interview document
+        const interviewDoc = await db.collection('interviews').doc(id).get();
+        if (!interviewDoc.exists) {
+          return res.status(404).json({ error: "Interview not found" });
+        }
+
+        const interviewData = interviewDoc.data();
+        
+        // Get question history
+        const historySnapshot = await db.collection('interviews').doc(id).collection('history').orderBy('timestamp', 'desc').get();
+        const questions = historySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Get job context
+        const jobContextDoc = await db.collection('interviews').doc(id).collection('jobContext').doc('current').get();
+        const jobContext = jobContextDoc.exists ? jobContextDoc.data() : null;
+
+        // Get candidate profile data (if available)
+        const profileDoc = await db.collection('interviews').doc(id).collection('profile').doc('data').get();
+        const candidateProfile = profileDoc.exists ? profileDoc.data() : null;
+
+        // Create rounds history (for now, just current round)
+        const rounds = [{
+          roundNumber: interviewData?.roundNumber || 1,
+          date: interviewData?.timestamp ? new Date(interviewData.timestamp).toLocaleDateString() : new Date().toLocaleDateString(),
+          status: interviewData?.status || 'In Progress',
+          questionsCount: questions.length,
+          averageScore: questions.length > 0 && questions[0].aiFeedback ? questions[0].aiFeedback.scores?.overall : null,
+          verdict: interviewData?.verdict
+        }];
+
+        reviewData = {
+          id,
+          candidateName: interviewData?.candidateName || 'Unknown Candidate',
+          candidateId: interviewData?.candidateId || id,
+          roleTitle: interviewData?.roleTitle || 'Software Engineer',
+          roundNumber: interviewData?.roundNumber || 1,
+          interviewerName: interviewData?.interviewerName || 'Unknown Interviewer',
+          timestamp: interviewData?.timestamp || Date.now(),
+          status: interviewData?.status || 'In Progress',
+          jobContext: jobContext || {
+            jobTitle: 'Software Engineer',
+            seniorityLevel: 'Mid',
+            techStack: 'General',
+            roleType: 'Coding'
+          },
+          questions,
+          candidateProfile,
+          rounds,
+          overallSummary: interviewData?.summary,
+          manualNotes: interviewData?.manualNotes
+        };
+      }
+
+      if (!reviewData) {
+        return res.status(404).json({ error: "Interview not found" });
+      }
+
+      res.json(reviewData);
+    } catch (error) {
+      console.error("Error fetching interview review:", error);
+      res.status(500).json({ error: "Failed to fetch interview review" });
+    }
+  });
+
+  // Save manual notes
+  app.put("/api/interviews/:id/notes", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { notes } = req.body;
+
+      if (db) {
+        await db.collection('interviews').doc(id).update({
+          manualNotes: notes,
+          notesUpdated: Date.now()
+        });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error saving notes:", error);
+      res.status(500).json({ error: "Failed to save notes" });
+    }
+  });
+
+  // Create next round
+  app.post("/api/interviews/next-round", async (req, res) => {
+    try {
+      const { interviewId, candidateId } = req.body;
+      
+      if (!interviewId || !candidateId) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      let previousInterview: any = null;
+
+      if (db) {
+        const prevDoc = await db.collection('interviews').doc(interviewId).get();
+        if (prevDoc.exists) {
+          previousInterview = prevDoc.data();
+        }
+      }
+
+      if (!previousInterview) {
+        return res.status(404).json({ error: "Previous interview not found" });
+      }
+
+      // Create new room for next round
+      const newRoomId = Math.random().toString(36).substring(2, 10);
+      
+      const nextRoundData = {
+        candidateName: previousInterview.candidateName,
+        candidateId: candidateId,
+        roleTitle: previousInterview.roleTitle,
+        roundNumber: (previousInterview.roundNumber || 1) + 1,
+        interviewerName: previousInterview.interviewerName,
+        timestamp: Date.now(),
+        status: 'Scheduled',
+        jobContext: previousInterview.jobContext,
+        previousRound: interviewId
+      };
+
+      if (db) {
+        await db.collection('interviews').doc(newRoomId).set(nextRoundData);
+        
+        // Set job context for new round
+        if (nextRoundData.jobContext) {
+          await db.collection('interviews').doc(newRoomId).collection('jobContext').doc('current').set(nextRoundData.jobContext);
+        }
+      }
+
+      res.json({ 
+        roomId: newRoomId,
+        interviewId: newRoomId,
+        ...nextRoundData
+      });
+    } catch (error) {
+      console.error("Error creating next round:", error);
+      res.status(500).json({ error: "Failed to create next round" });
+    }
+  });
+
+  // Generate suggestions for next round
+  app.post("/api/interviews/:id/suggestions", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      if (!process.env.GOOGLE_GEMINI_API_KEY) {
+        return res.status(500).json({ error: "Google Gemini API key not configured" });
+      }
+
+      let interviewData: any = null;
+      let questionHistory: any[] = [];
+
+      if (db) {
+        const interviewDoc = await db.collection('interviews').doc(id).get();
+        if (interviewDoc.exists) {
+          interviewData = interviewDoc.data();
+        }
+
+        const historySnapshot = await db.collection('interviews').doc(id).collection('history').orderBy('timestamp', 'desc').get();
+        questionHistory = historySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      }
+
+      if (!interviewData) {
+        return res.status(404).json({ error: "Interview not found" });
+      }
+
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      
+      const suggestionPrompt = `Based on this candidate's interview performance, suggest 3-5 specific topics or question types for the next interview round.
+
+Candidate: ${interviewData.candidateName}
+Position: ${interviewData.jobContext?.jobTitle || 'Software Engineer'}
+Current Round: ${interviewData.roundNumber || 1}
+
+Performance Analysis:
+${questionHistory.map((q, i) => `
+Question ${i + 1}: ${q.questionType} (${q.difficulty})
+${q.aiFeedback ? `Score: ${q.aiFeedback.scores?.overall || 'N/A'}/10` : 'No feedback available'}
+${q.aiFeedback?.summary || ''}
+`).join('\n')}
+
+Provide suggestions in this format:
+1. [Focus Area] - [Specific reasoning based on performance]
+2. [Focus Area] - [Specific reasoning based on performance]
+
+Focus on areas that need improvement or deeper exploration based on the scores and feedback.`;
+
+      const result = await model.generateContent(suggestionPrompt);
+      const suggestions = result.response.text();
+
+      res.json({ suggestions });
+    } catch (error) {
+      console.error("Error generating suggestions:", error);
+      res.status(500).json({ error: "Failed to generate suggestions" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
