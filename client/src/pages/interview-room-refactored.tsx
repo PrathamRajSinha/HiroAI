@@ -889,8 +889,8 @@ export default function InterviewRoom() {
               </div>
             )}
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="h-96 rounded-lg overflow-hidden">
+          <CardContent className="p-0 flex-1 flex flex-col">
+            <div className="flex-1 rounded-lg overflow-hidden min-h-0">
               <MonacoEditor
                 value={syncedCode}
                 language="javascript"
