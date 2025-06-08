@@ -1,0 +1,81 @@
+Refactor the Interview Room UI for clarity, minimalism, and role-specific experience.
+
+🔁 1. Layout based on Role:
+If role === "interviewer":
+
+Shrink Monaco editor to 35–40% width OR allow it to be collapsed.
+
+Show a “📜 Question History” tab in the right panel (explained below).
+
+Display the “Generate Summary” and “Generate Question” tools in the top bar or a side card.
+
+If role === "candidate":
+
+Monaco editor is full width (50–60%)
+
+Right panel only shows “Current Question” and resume tabs
+
+🧠 2. Convert Right-Side Panel to Proper Tabs:
+Use shadcn/ui or custom Tailwind Tabs component
+
+Tabs: Resume, GitHub, LinkedIn, Current Question, Question History
+
+Style: rounded active tab, icons optional, use bg-violet-100 text-violet-800 font-semibold for active tab
+
+📜 3. Question History Panel:
+Fetch previous questions from Firestore: /interviews/{roomId}/history
+
+Display each item as:
+
+Question text
+
+Tags for difficulty + type
+
+Candidate’s final code (read-only Monaco)
+
+AI scorecard (see below)
+
+Optional: full AI feedback collapsible
+
+📊 4. Summary Scorecard UI (for each code answer):
+When interviewer views a question:
+
+Display a summary card with:
+
+yaml
+Copy
+Edit
+Code Quality: 8/10
+Correctness: 7/10
+Efficiency: 5/10
+Readability: 9/10
+Overall: 7.5/10
+Below it, show:
+
+AI Summary: “Code works correctly but is inefficient. Recursion used without memoization.”
+
+Button: 🔍 View Full Analysis to expand full Gemini text
+
+Style: bg-white, p-4, rounded-lg, shadow, use Tailwind spacing
+
+🧾 5. Coding Interface Improvements:
+Add a Submit Answer button below Monaco for candidate role
+
+When clicked:
+
+Save code under /history
+
+Trigger Gemini to generate scores + summary
+
+On interviewer view, attach this feedback visibly below each Q&A pair
+
+🎨 6. General Styling Cleanup:
+Use Tailwind for clean spacing (p-4, gap-6)
+
+Fonts: use text-xl font-bold for headers, text-sm text-gray-600 for metadata
+
+Colors: Stick to primary violet (violet-500), neutral white, gray-100, gray-900
+
+Cards: bg-white, rounded-xl, shadow-md
+
+✅ Ensure responsiveness and avoid overflow issues on mobile or small windows.

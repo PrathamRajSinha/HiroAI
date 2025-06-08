@@ -1,0 +1,732 @@
+import { useState, useEffect } from "react";
+import { MonacoEditor } from "@/components/monaco-editor";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { useLocation, useParams } from "wouter";
+import { useInterviewRoom, QuestionHistory } from "@/hooks/useFirestore";
+import { useCodeSync } from "@/hooks/useCodeSync";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { FileText, Github, Linkedin, MessageCircle, History, ChevronDown, ChevronRight, Code, Brain, Video } from "lucide-react";
+import * as pdfjsLib from 'pdfjs-dist';
+
+type TabType = "question" | "history" | "resume" | "github" | "linkedin";
+
+export default function InterviewRoom() {
+  const params = useParams();
+  const [location] = useLocation();
+  const searchParams = new URLSearchParams(window.location.search);
+  const role = searchParams.get("role");
+  const roomId = params.roomId;
+  
+  // Role detection
+  const isInterviewer = role === "interviewer";
+  const isCandidate = role === "candidate";
+  
+  // State management
+  const [activeTab, setActiveTab] = useState<TabType>(isInterviewer ? "history" : "question");
+  const [generatedSummary, setGeneratedSummary] = useState<string>("");
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeUrl, setResumeUrl] = useState<string>("");
+  const [githubUrl, setGithubUrl] = useState<string>("");
+  const [linkedinUrl, setLinkedinUrl] = useState<string>("");
+  const [questionType, setQuestionType] = useState<string>("Coding");
+  const [difficulty, setDifficulty] = useState<string>("Medium");
+  const [isGeneratingFromProfile, setIsGeneratingFromProfile] = useState<boolean>(false);
+  
+  // Firebase Firestore integration
+  const { data: interviewData, loading: firestoreLoading, error: firestoreError, updateQuestion, updateSummary, getQuestionHistory, updateQuestionWithCode } = useInterviewRoom(roomId || "");
+  
+  // Previous questions state
+  const [questionHistory, setQuestionHistory] = useState<QuestionHistory[]>([]);
+  const [isSubmittingAnswer, setIsSubmittingAnswer] = useState(false);
+  const [lastSubmittedQuestionId, setLastSubmittedQuestionId] = useState<string | null>(null);
+  
+  // Real-time code synchronization
+  const { code: syncedCode, isUpdating: isCodeSyncing, handleCodeChange } = useCodeSync({
+    roomId: roomId || "",
+    userRole: isInterviewer ? 'interviewer' : 'candidate',
+    initialCode: "// Welcome to the coding interview!\n// Write your solution here...\n\nfunction solution() {\n  // Your code here\n}\n"
+  });
+  
+  const { toast } = useToast();
+
+  // Load question history when component mounts or room changes
+  useEffect(() => {
+    const loadHistory = async () => {
+      if (roomId) {
+        const history = await getQuestionHistory();
+        setQuestionHistory(history);
+      }
+    };
+    loadHistory();
+  }, [roomId, getQuestionHistory]);
+
+  // Reload history when a new question is added
+  useEffect(() => {
+    if (interviewData.question && interviewData.timestamp) {
+      const loadHistory = async () => {
+        const history = await getQuestionHistory();
+        setQuestionHistory(history);
+      };
+      loadHistory();
+    }
+  }, [interviewData.question, interviewData.timestamp, getQuestionHistory]);
+
+  // Mutations
+  const generateQuestionMutation = useMutation({
+    mutationFn: async ({ type, difficulty }: { type: string; difficulty: string }) => {
+      return apiRequest("/api/generate-question", "POST", { type, difficulty, roomId });
+    },
+    onSuccess: async (data: { question: string }) => {
+      await updateQuestion(data.question, questionType, difficulty);
+      toast({
+        title: "Question Generated",
+        description: "New coding question has been generated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to generate question. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const generateSummaryMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("/api/generate-summary", "POST", { code: syncedCode });
+    },
+    onSuccess: (data: { summary: string }) => {
+      setGeneratedSummary(data.summary);
+      toast({
+        title: "Summary Generated",
+        description: "Code analysis summary has been generated.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to generate summary. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const submitAnswerMutation = useMutation({
+    mutationFn: async ({ code, question, questionId }: { code: string; question: string; questionId: string }) => {
+      const response = await fetch('/api/analyze-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code, question }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to analyze code');
+      }
+
+      const feedback = await response.json();
+      return { feedback, questionId };
+    },
+    onSuccess: async ({ feedback, questionId }) => {
+      await updateQuestionWithCode(questionId, syncedCode, feedback);
+      setLastSubmittedQuestionId(questionId);
+      
+      toast({
+        title: "Answer Submitted",
+        description: `AI feedback generated with overall score: ${feedback.scores.overall}/10`,
+      });
+      
+      // Refresh question history
+      const history = await getQuestionHistory();
+      setQuestionHistory(history);
+      
+      setIsSubmittingAnswer(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsSubmittingAnswer(false);
+    }
+  });
+
+  // Helper functions
+  const formatTimestamp = (timestamp: number) => {
+    return new Date(timestamp).toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+
+  const truncateQuestion = (question: string, maxLength: number = 80) => {
+    if (question.length <= maxLength) return question;
+    return question.substring(0, maxLength) + "...";
+  };
+
+  const handleSubmitAnswer = async () => {
+    if (!interviewData.question || !syncedCode.trim() || !roomId) {
+      toast({
+        title: "Error",
+        description: "No question or code to submit",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmittingAnswer(true);
+
+    try {
+      // Find the most recent question in history to get its ID
+      const history = await getQuestionHistory();
+      const currentQuestionEntry = history.find(
+        (item) => item.question === interviewData.question && item.timestamp === interviewData.timestamp
+      );
+
+      if (!currentQuestionEntry) {
+        throw new Error("Could not find current question in history");
+      }
+
+      submitAnswerMutation.mutate({
+        code: syncedCode,
+        question: interviewData.question,
+        questionId: currentQuestionEntry.id,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit answer",
+        variant: "destructive",
+      });
+      setIsSubmittingAnswer(false);
+    }
+  };
+
+  const generateSmartQuestion = (type: string, difficulty: string) => {
+    generateQuestionMutation.mutate({ type, difficulty });
+  };
+
+  const generateSummary = () => {
+    generateSummaryMutation.mutate();
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === "application/pdf") {
+      setResumeFile(file);
+      const url = URL.createObjectURL(file);
+      setResumeUrl(url);
+    } else {
+      toast({
+        title: "Invalid File",
+        description: "Please upload a PDF file.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const clearResume = () => {
+    if (resumeUrl) {
+      URL.revokeObjectURL(resumeUrl);
+    }
+    setResumeFile(null);
+    setResumeUrl("");
+  };
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "question":
+        return (
+          <div className="p-4 space-y-4 h-full overflow-y-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5" />
+                  Current Question
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {interviewData.question ? (
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <Badge variant="secondary">{interviewData.questionType}</Badge>
+                      <Badge variant="outline">{interviewData.difficulty}</Badge>
+                    </div>
+                    <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg border">
+                      {interviewData.question}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <MessageCircle className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                    <div className="text-sm">No question generated yet</div>
+                    <div className="text-xs mt-1">Generate a question to get started</div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        );
+        
+      case "history":
+        return (
+          <div className="p-4 h-full overflow-y-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                  <History className="h-5 w-5" />
+                  Question History
+                  <Badge variant="outline" className="ml-auto">{questionHistory.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {questionHistory.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <History className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                    <div className="text-sm">No questions generated yet</div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {questionHistory.map((item) => (
+                      <Card key={item.id} className="border border-gray-200">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex gap-2">
+                              <Badge variant="secondary">{item.questionType}</Badge>
+                              <Badge variant="outline">{item.difficulty}</Badge>
+                            </div>
+                            <span className="text-xs text-gray-500">{formatTimestamp(item.timestamp)}</span>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <Collapsible>
+                            <CollapsibleTrigger className="flex items-center justify-between w-full text-left">
+                              <div className="text-sm text-gray-700">
+                                {truncateQuestion(item.question, 100)}
+                              </div>
+                              <ChevronDown className="h-4 w-4" />
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="mt-2">
+                              <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-3 rounded border">
+                                {item.question}
+                              </div>
+                            </CollapsibleContent>
+                          </Collapsible>
+                          
+                          {item.candidateCode && (
+                            <div className="space-y-2">
+                              <div className="text-xs font-medium text-gray-600">Candidate Code:</div>
+                              <div className="bg-gray-900 text-gray-100 p-3 rounded text-xs font-mono overflow-x-auto">
+                                <pre className="whitespace-pre-wrap">{item.candidateCode}</pre>
+                              </div>
+                              
+                              {item.aiFeedback && (
+                                <Card className="bg-blue-50 border-blue-200">
+                                  <CardHeader className="pb-2">
+                                    <div className="flex items-center justify-between">
+                                      <div className="text-sm font-medium text-blue-900">AI Code Analysis</div>
+                                    </div>
+                                  </CardHeader>
+                                  <CardContent className="space-y-3">
+                                    <div className="text-sm font-medium text-blue-900">
+                                      {item.aiFeedback.summary}
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div className="space-y-1">
+                                        <div className="flex justify-between text-xs">
+                                          <span>Code Quality:</span>
+                                          <span className="font-medium">{item.aiFeedback.scores.quality}/10</span>
+                                        </div>
+                                        <div className="flex justify-between text-xs">
+                                          <span>Correctness:</span>
+                                          <span className="font-medium">{item.aiFeedback.scores.correctness}/10</span>
+                                        </div>
+                                      </div>
+                                      <div className="space-y-1">
+                                        <div className="flex justify-between text-xs">
+                                          <span>Efficiency:</span>
+                                          <span className="font-medium">{item.aiFeedback.scores.efficiency}/10</span>
+                                        </div>
+                                        <div className="flex justify-between text-xs">
+                                          <span>Readability:</span>
+                                          <span className="font-medium">{item.aiFeedback.scores.readability}/10</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="flex justify-between text-sm font-bold text-blue-800 pt-2 border-t border-blue-200">
+                                      <span>Overall Score:</span>
+                                      <span>{item.aiFeedback.scores.overall}/10</span>
+                                    </div>
+                                    
+                                    <Collapsible>
+                                      <CollapsibleTrigger className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-800 font-medium">
+                                        <Brain className="h-3 w-3" />
+                                        View Full Analysis
+                                        <ChevronRight className="h-3 w-3" />
+                                      </CollapsibleTrigger>
+                                      <CollapsibleContent className="mt-2">
+                                        <div className="text-xs text-blue-700 whitespace-pre-wrap bg-white p-3 rounded border border-blue-200">
+                                          {item.aiFeedback.fullExplanation}
+                                        </div>
+                                      </CollapsibleContent>
+                                    </Collapsible>
+                                  </CardContent>
+                                </Card>
+                              )}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        );
+        
+      case "resume":
+        return (
+          <div className="p-4 h-full overflow-y-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Resume Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {!resumeFile ? (
+                  <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
+                    <FileText className="h-12 w-12 text-gray-400 mb-4" />
+                    <div className="text-gray-600 font-medium mb-4">Upload Resume</div>
+                    <input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="resume-upload"
+                    />
+                    <Button asChild>
+                      <label htmlFor="resume-upload" className="cursor-pointer">
+                        Choose PDF File
+                      </label>
+                    </Button>
+                    <p className="text-xs text-gray-500 mt-2">PDF files only</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-5 w-5 text-gray-600" />
+                        <div>
+                          <div className="font-medium text-sm">{resumeFile.name}</div>
+                          <div className="text-xs text-gray-500">
+                            {(resumeFile.size / 1024 / 1024).toFixed(2)} MB
+                          </div>
+                        </div>
+                      </div>
+                      <Button variant="destructive" size="sm" onClick={clearResume}>
+                        Remove
+                      </Button>
+                    </div>
+                    
+                    {resumeUrl && (
+                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        <iframe
+                          src={resumeUrl}
+                          className="w-full h-96"
+                          title="Resume Preview"
+                        />
+                      </div>
+                    )}
+                    
+                    <Button
+                      onClick={() => {/* Add resume analysis logic */}}
+                      disabled={isGeneratingFromProfile}
+                      className="w-full bg-orange-600 hover:bg-orange-700"
+                    >
+                      {isGeneratingFromProfile ? "Generating..." : "Generate Questions from Resume"}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        );
+        
+      case "github":
+        return (
+          <div className="p-4 h-full overflow-y-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                  <Github className="h-5 w-5" />
+                  GitHub Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    GitHub Profile URL
+                  </label>
+                  <input
+                    type="text"
+                    value={githubUrl}
+                    onChange={(e) => setGithubUrl(e.target.value)}
+                    placeholder="https://github.com/username"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                </div>
+                
+                <Button
+                  onClick={() => {/* Add GitHub analysis logic */}}
+                  disabled={isGeneratingFromProfile || !githubUrl.trim()}
+                  className="w-full bg-gray-700 hover:bg-gray-800"
+                >
+                  {isGeneratingFromProfile ? "Generating..." : "Generate Questions from GitHub"}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        );
+        
+      case "linkedin":
+        return (
+          <div className="p-4 h-full overflow-y-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                  <Linkedin className="h-5 w-5" />
+                  LinkedIn Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    LinkedIn Profile URL
+                  </label>
+                  <input
+                    type="text"
+                    value={linkedinUrl}
+                    onChange={(e) => setLinkedinUrl(e.target.value)}
+                    placeholder="https://linkedin.com/in/username"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                </div>
+                
+                <Button
+                  onClick={() => {/* Add LinkedIn analysis logic */}}
+                  disabled={isGeneratingFromProfile || !linkedinUrl.trim()}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                >
+                  {isGeneratingFromProfile ? "Generating..." : "Generate Questions from LinkedIn"}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        );
+        
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="h-screen w-screen flex gap-6 p-4 bg-gray-50">
+      {/* Left Panel - Video Call */}
+      <div className="w-64 h-full bg-white rounded-xl shadow-md border border-gray-200">
+        <div className="p-4 border-b border-gray-200">
+          <h2 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+            <Video className="h-4 w-4" />
+            Video Call
+          </h2>
+        </div>
+        {roomId ? (
+          <div className="p-4">
+            <div className="h-48 bg-gray-900 rounded-lg flex items-center justify-center">
+              <div className="text-center text-white">
+                <Video className="h-8 w-8 mx-auto mb-2" />
+                <div className="text-xs">Room: {roomId}</div>
+                <div className="text-xs text-gray-300 mt-1">Role: {role}</div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 text-center text-gray-500">
+            <div className="text-2xl mb-2">⚠️</div>
+            <div className="text-sm">No Room ID</div>
+          </div>
+        )}
+      </div>
+
+      {/* Middle Panel - Code Editor */}
+      <div className={`flex flex-col gap-4 ${isInterviewer ? 'w-[35%]' : 'flex-1'}`}>
+        {/* Generate Controls - Only show for interviewer */}
+        {isInterviewer && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <Brain className="h-5 w-5" />
+                Interview Controls
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <select
+                  value={questionType}
+                  onChange={(e) => setQuestionType(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                >
+                  <option value="Coding">Coding</option>
+                  <option value="Algorithm">Algorithm</option>
+                  <option value="System Design">System Design</option>
+                  <option value="Data Structures">Data Structures</option>
+                </select>
+                
+                <select
+                  value={difficulty}
+                  onChange={(e) => setDifficulty(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                >
+                  <option value="Easy">Easy</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Hard">Hard</option>
+                </select>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  onClick={() => generateSmartQuestion(questionType, difficulty)}
+                  disabled={generateQuestionMutation.isPending}
+                  className="bg-violet-600 hover:bg-violet-700"
+                >
+                  {generateQuestionMutation.isPending ? "⏳" : "✨"} Generate
+                </Button>
+                
+                <Button
+                  onClick={generateSummary}
+                  disabled={generateSummaryMutation.isPending}
+                  variant="outline"
+                >
+                  {generateSummaryMutation.isPending ? "⏳" : "🧠"} Summary
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
+        <Card className="flex-1">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <Code className="h-5 w-5" />
+                Code Editor
+              </CardTitle>
+              {/* Submit Answer Button - Only for candidates */}
+              {isCandidate && interviewData.question && (
+                <Button
+                  onClick={handleSubmitAnswer}
+                  disabled={isSubmittingAnswer || !syncedCode.trim()}
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {isSubmittingAnswer ? "⏳" : "✅"} 
+                  {isSubmittingAnswer ? "Analyzing..." : "Submit Answer"}
+                </Button>
+              )}
+            </div>
+            {isCodeSyncing && (
+              <div className="text-xs text-blue-600 flex items-center gap-1">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                Syncing...
+              </div>
+            )}
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="h-96 rounded-lg overflow-hidden">
+              <MonacoEditor
+                value={syncedCode}
+                language="javascript"
+                theme="vs"
+                onChange={handleCodeChange}
+              />
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Summary Card */}
+        {generatedSummary && (
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold">Code Feedback Summary</CardTitle>
+                <Button
+                  onClick={() => setGeneratedSummary("")}
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                >
+                  ✕
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-gray-600 whitespace-pre-wrap max-h-32 overflow-y-auto">
+                {generatedSummary}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Right Panel - Tabbed Interface */}
+      <div className={`bg-white rounded-xl shadow-md border border-gray-200 ${isInterviewer ? 'flex-1' : 'w-96'}`}>
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)} className="h-full flex flex-col">
+          <div className="border-b border-gray-200 p-4">
+            <TabsList className={`grid w-full ${isInterviewer ? 'grid-cols-5' : 'grid-cols-4'}`}>
+              <TabsTrigger value="question" className="flex items-center gap-1">
+                <MessageCircle className="h-4 w-4" />
+                Question
+              </TabsTrigger>
+              {isInterviewer && (
+                <TabsTrigger value="history" className="flex items-center gap-1">
+                  <History className="h-4 w-4" />
+                  History
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="resume" className="flex items-center gap-1">
+                <FileText className="h-4 w-4" />
+                Resume
+              </TabsTrigger>
+              <TabsTrigger value="github" className="flex items-center gap-1">
+                <Github className="h-4 w-4" />
+                GitHub
+              </TabsTrigger>
+              <TabsTrigger value="linkedin" className="flex items-center gap-1">
+                <Linkedin className="h-4 w-4" />
+                LinkedIn
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          
+          <div className="flex-1 overflow-hidden">
+            {renderTabContent()}
+          </div>
+        </Tabs>
+      </div>
+    </div>
+  );
+}

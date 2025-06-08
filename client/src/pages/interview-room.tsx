@@ -6,9 +6,15 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation, useParams } from "wouter";
 import { useInterviewRoom, QuestionHistory } from "@/hooks/useFirestore";
 import { useCodeSync } from "@/hooks/useCodeSync";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { FileText, Github, Linkedin, MessageCircle, History, ChevronDown, ChevronRight, Code, Brain } from "lucide-react";
 import * as pdfjsLib from 'pdfjs-dist';
 
-type TabType = "resume" | "github" | "linkedin" | "question" | "generate";
+type TabType = "resume" | "github" | "linkedin" | "question" | "history" | "generate";
 
 export default function InterviewRoom() {
   const params = useParams();
@@ -23,7 +29,7 @@ export default function InterviewRoom() {
   console.log("Role type:", typeof role);
   console.log("Role === 'candidate':", role === "candidate");
   
-  const [activeTab, setActiveTab] = useState<TabType>("resume");
+  const [activeTab, setActiveTab] = useState<TabType>("question");
   const [editorValue, setEditorValue] = useState("");
   const [generatedSummary, setGeneratedSummary] = useState<string>("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
