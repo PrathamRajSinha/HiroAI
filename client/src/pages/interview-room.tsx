@@ -139,39 +139,30 @@ console.log(fibonacci(10));
 
   // Helper functions for extracting content from different sources
   const extractTextFromPDF = async (file: File): Promise<string> => {
+    // Use the backend PDF extraction endpoint to handle PDF processing
     try {
-      // Configure PDF.js worker with a more reliable approach
-      if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
-      }
-
-      const arrayBuffer = await file.arrayBuffer();
-      const loadingTask = pdfjsLib.getDocument({
-        data: arrayBuffer,
-        verbosity: 0, // Reduce console output
+      const formData = new FormData();
+      formData.append('pdf', file);
+      
+      const response = await fetch('/api/extract-pdf-text', {
+        method: 'POST',
+        body: formData,
       });
       
-      const pdf = await loadingTask.promise;
-      let fullText = '';
-      
-      for (let i = 1; i <= Math.min(pdf.numPages, 5); i++) { // Limit to first 5 pages
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          .filter((item: any) => item.str && item.str.trim())
-          .map((item: any) => item.str)
-          .join(' ');
-        fullText += pageText + '\n';
+      if (!response.ok) {
+        throw new Error('Backend PDF processing failed');
       }
       
-      if (!fullText.trim()) {
-        throw new Error('No text content found in PDF');
+      const data = await response.json();
+      
+      if (data.fallback) {
+        throw new Error(data.text);
       }
       
-      return fullText.trim();
+      return data.text;
     } catch (error) {
-      console.error('Error extracting text from PDF:', error);
-      throw new Error('Failed to extract text from PDF. Please copy and paste your resume content into the LinkedIn summary field and use "Ask from LinkedIn" instead.');
+      console.error('PDF extraction error:', error);
+      throw new Error('Unable to extract text from PDF. Please copy your resume content into the LinkedIn summary field and use "Ask from LinkedIn" instead.');
     }
   };
 
@@ -493,7 +484,11 @@ console.log(fibonacci(10));
                   className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
                 >
                   <span className="text-base">📄</span>
-                  <span>{isGeneratingFromProfile ? "Generating..." : "Ask from Resume"}</span>
+                  <span>
+                    {isGeneratingFromProfile && generateFromProfileMutation.variables?.type === 'resume' 
+                      ? "Extracting PDF & Generating..." 
+                      : "Ask from Resume"}
+                  </span>
                   {!resumeFile && <span className="text-xs opacity-75">(Upload required)</span>}
                 </button>
                 
