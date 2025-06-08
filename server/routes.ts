@@ -7,6 +7,8 @@ import multer from "multer";
 import * as admin from "firebase-admin";
 import * as fs from 'fs';
 import * as path from 'path';
+import nodemailer from "nodemailer";
+import * as pdfParse from "pdf-parse-new";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize Firebase Admin SDK
@@ -730,7 +732,454 @@ Be specific about how well the code addresses the original question requirements
     }
   });
 
+  // Export interview report endpoint
+  app.post("/api/export-report", async (req, res) => {
+    try {
+      const { roomId, format, candidateName, candidateEmail, companyName } = req.body;
+      
+      if (!roomId || !format || !candidateName || !companyName) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Fetch interview data from Firestore
+      let interviewData: any = {};
+      let questionHistory: any[] = [];
+      let jobContext: any = null;
+
+      try {
+        if (db) {
+          // Get interview data
+          const interviewDoc = await db.collection('interviews').doc(roomId).get();
+          if (interviewDoc.exists) {
+            interviewData = interviewDoc.data();
+          }
+
+          // Get question history
+          const historySnapshot = await db.collection('interviews').doc(roomId).collection('history').orderBy('timestamp', 'desc').get();
+          questionHistory = historySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+          // Get job context
+          const jobContextDoc = await db.collection('interviews').doc(roomId).collection('jobContext').doc('current').get();
+          if (jobContextDoc.exists) {
+            jobContext = jobContextDoc.data();
+          }
+        }
+      } catch (firestoreError) {
+        console.log("Firestore not available, using local data");
+      }
+
+      // Generate AI-powered overall summary
+      if (!process.env.GOOGLE_GEMINI_API_KEY) {
+        return res.status(500).json({ error: "Google Gemini API key not configured" });
+      }
+
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      
+      const summaryPrompt = `As an expert technical interviewer, analyze this candidate's complete interview performance and provide a comprehensive 3-5 sentence summary.
+
+Interview Details:
+${jobContext ? `
+Role: ${jobContext.jobTitle} (${jobContext.seniorityLevel} level)
+Tech Stack: ${jobContext.techStack}
+Interview Type: ${jobContext.roleType}
+` : ''}
+
+Questions and Responses:
+${questionHistory.map((q, i) => `
+Question ${i + 1} (${q.questionType || 'General'} - ${q.difficulty || 'Medium'}):
+${q.question}
+
+Candidate's Code:
+${q.candidateCode || 'No code submitted'}
+
+AI Feedback Score: ${q.aiFeedback?.scores?.overall || 'N/A'}/10
+${q.aiFeedback?.summary || ''}
+`).join('\n')}
+
+Provide a professional summary that covers:
+1. Overall technical competency
+2. Problem-solving approach
+3. Code quality and best practices
+4. Communication and thought process
+5. Final recommendation (Recommended/Not Recommended/Conditional)
+
+Keep the tone professional and constructive.`;
+
+      const summaryResult = await model.generateContent(summaryPrompt);
+      const overallSummary = summaryResult.response.text();
+
+      // Generate HTML report
+      const reportHtml = generateReportHtml({
+        candidateName,
+        companyName,
+        jobContext,
+        questionHistory,
+        overallSummary,
+        interviewDate: new Date().toLocaleDateString()
+      });
+
+      if (format === 'pdf') {
+        // For PDF generation, we'll return the HTML and let the frontend handle PDF conversion
+        res.json({
+          format: 'pdf',
+          htmlContent: reportHtml,
+          downloadUrl: `/api/download-report/${roomId}` // We'll implement this for direct PDF download
+        });
+      } else if (format === 'email') {
+        // Send email with report
+        await sendEmailReport(candidateEmail, candidateName, companyName, reportHtml);
+        res.json({
+          format: 'email',
+          message: 'Report sent successfully'
+        });
+      }
+
+    } catch (error) {
+      console.error("Error generating report:", error);
+      res.status(500).json({ error: "Failed to generate report" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
+}
+
+// Helper function to generate HTML report
+function generateReportHtml(data: {
+  candidateName: string;
+  companyName: string;
+  jobContext: any;
+  questionHistory: any[];
+  overallSummary: string;
+  interviewDate: string;
+}) {
+  const { candidateName, companyName, jobContext, questionHistory, overallSummary, interviewDate } = data;
+  
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Report - ${candidateName}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #4f46e5;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4f46e5;
+            margin-bottom: 10px;
+        }
+        .report-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .candidate-info {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .info-item {
+            margin-bottom: 10px;
+        }
+        .label {
+            font-weight: bold;
+            color: #374151;
+        }
+        .value {
+            color: #6b7280;
+        }
+        .summary-section {
+            background: #ecfdf5;
+            border-left: 4px solid #10b981;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .summary-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #065f46;
+            margin-bottom: 15px;
+        }
+        .question-section {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+        .question-header {
+            background: #f3f4f6;
+            padding: 15px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .question-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+        .question-meta {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        .question-content {
+            padding: 20px;
+        }
+        .question-text {
+            background: #fafafa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        .code-section {
+            margin-bottom: 20px;
+        }
+        .code-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #374151;
+        }
+        .code-block {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .feedback-section {
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: 6px;
+            padding: 15px;
+        }
+        .scores-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .score-item {
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+        }
+        .score-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+        .score-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        .feedback-text {
+            line-height: 1.6;
+            color: #374151;
+        }
+        .final-recommendation {
+            background: #f0f9ff;
+            border: 2px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 30px;
+        }
+        .recommendation-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #0c4a6e;
+            margin-bottom: 10px;
+        }
+        @media print {
+            body { margin: 0; padding: 15px; }
+            .question-section { break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name">${companyName}</div>
+        <div class="report-title">Technical Interview Report</div>
+        <div style="color: #6b7280; font-size: 16px;">Generated on ${interviewDate}</div>
+    </div>
+
+    <div class="candidate-info">
+        <h2 style="margin-top: 0; color: #1f2937;">Candidate Information</h2>
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="label">Name:</span> <span class="value">${candidateName}</span>
+            </div>
+            ${jobContext ? `
+            <div class="info-item">
+                <span class="label">Position:</span> <span class="value">${jobContext.jobTitle}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Level:</span> <span class="value">${jobContext.seniorityLevel}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Tech Stack:</span> <span class="value">${jobContext.techStack}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Interview Type:</span> <span class="value">${jobContext.roleType}</span>
+            </div>
+            ` : ''}
+            <div class="info-item">
+                <span class="label">Total Questions:</span> <span class="value">${questionHistory.length}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="summary-section">
+        <div class="summary-title">Overall Performance Summary</div>
+        <div>${overallSummary}</div>
+    </div>
+
+    <h2 style="color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Question-by-Question Analysis</h2>
+
+    ${questionHistory.map((question, index) => `
+    <div class="question-section">
+        <div class="question-header">
+            <div class="question-title">Question ${index + 1}</div>
+            <div class="question-meta">
+                Type: ${question.questionType || 'General'} | 
+                Difficulty: ${question.difficulty || 'Medium'} | 
+                Timestamp: ${question.timestamp ? new Date(question.timestamp).toLocaleString() : 'N/A'}
+            </div>
+        </div>
+        <div class="question-content">
+            <div class="question-text">${question.question || 'No question text available'}</div>
+            
+            ${question.candidateCode ? `
+            <div class="code-section">
+                <div class="code-title">Candidate's Solution:</div>
+                <div class="code-block">${question.candidateCode}</div>
+            </div>
+            ` : '<p style="color: #6b7280; font-style: italic;">No code solution provided</p>'}
+            
+            ${question.aiFeedback ? `
+            <div class="feedback-section">
+                <h4 style="margin-top: 0; color: #92400e;">AI Performance Analysis</h4>
+                
+                ${question.aiFeedback.scores ? `
+                <div class="scores-grid">
+                    <div class="score-item">
+                        <div class="score-label">Correctness</div>
+                        <div class="score-value">${question.aiFeedback.scores.correctness}/10</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-label">Efficiency</div>
+                        <div class="score-value">${question.aiFeedback.scores.efficiency}/10</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-label">Quality</div>
+                        <div class="score-value">${question.aiFeedback.scores.quality}/10</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-label">Readability</div>
+                        <div class="score-value">${question.aiFeedback.scores.readability}/10</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-label">Overall</div>
+                        <div class="score-value">${question.aiFeedback.scores.overall}/10</div>
+                    </div>
+                </div>
+                ` : ''}
+                
+                <div class="feedback-text">
+                    <strong>Summary:</strong> ${question.aiFeedback.summary || 'No feedback summary available'}
+                </div>
+                
+                ${question.aiFeedback.fullExplanation ? `
+                <div class="feedback-text" style="margin-top: 15px;">
+                    <strong>Detailed Analysis:</strong> ${question.aiFeedback.fullExplanation}
+                </div>
+                ` : ''}
+                
+                ${question.aiFeedback.suggestion ? `
+                <div class="feedback-text" style="margin-top: 15px;">
+                    <strong>Improvement Suggestions:</strong> ${question.aiFeedback.suggestion}
+                </div>
+                ` : ''}
+            </div>
+            ` : '<p style="color: #6b7280; font-style: italic;">No AI feedback available</p>'}
+        </div>
+    </div>
+    `).join('')}
+
+    <div class="final-recommendation">
+        <div class="recommendation-title">Interview Evaluation Complete</div>
+        <p>This comprehensive report includes AI-powered analysis of the candidate's technical performance, problem-solving abilities, and code quality across all interview questions.</p>
+    </div>
+</body>
+</html>`;
+}
+
+// Helper function to send email report
+async function sendEmailReport(candidateEmail: string, candidateName: string, companyName: string, htmlContent: string) {
+  if (!process.env.SENDGRID_API_KEY && !process.env.SMTP_HOST) {
+    throw new Error("Email service not configured");
+  }
+
+  // Use nodemailer with SMTP or SendGrid
+  let transporter;
+  
+  if (process.env.SMTP_HOST) {
+    transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+      }
+    });
+  } else {
+    // Fallback to basic SMTP configuration
+    transporter = nodemailer.createTransport({
+      service: 'gmail', // This can be configured
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+  }
+
+  const mailOptions = {
+    from: process.env.EMAIL_FROM || `interviews@${companyName.toLowerCase().replace(/\s+/g, '')}.com`,
+    to: candidateEmail,
+    subject: `Interview Report - ${candidateName} | ${companyName}`,
+    html: htmlContent,
+    text: `Dear ${candidateName},\n\nPlease find your interview report attached. Thank you for your time and participation in our interview process.\n\nBest regards,\n${companyName} Hiring Team`
+  };
+
+  await transporter.sendMail(mailOptions);
 }

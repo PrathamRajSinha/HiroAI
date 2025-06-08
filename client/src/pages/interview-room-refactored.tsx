@@ -18,6 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileText, Github, Linkedin, MessageCircle, History, ChevronDown, ChevronRight, Code, Brain, Video, Briefcase, Settings } from "lucide-react";
 import { VideoCall } from "@/components/video-call";
 import * as pdfjsLib from 'pdfjs-dist';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
 
 type TabType = "question" | "history" | "resume" | "github" | "linkedin";
 
@@ -433,18 +435,31 @@ export default function InterviewRoom() {
       });
     },
     onSuccess: (data) => {
-      if (data.format === 'pdf') {
-        // Trigger PDF download
-        const link = document.createElement('a');
-        link.href = data.downloadUrl;
-        link.download = `interview-report-${candidateName.replace(/\s+/g, '-')}.pdf`;
-        link.click();
+      if (data.format === 'pdf' && data.htmlContent) {
+        // Generate PDF using html2pdf
+        const element = document.createElement('div');
+        element.innerHTML = data.htmlContent;
+        element.style.display = 'none';
+        document.body.appendChild(element);
+
+        const options = {
+          margin: 0.5,
+          filename: `interview-report-${candidateName.replace(/\s+/g, '-')}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+
+        html2pdf().set(options).from(element).save().then(() => {
+          document.body.removeChild(element);
+        });
       }
       toast({
         title: "Report Generated",
         description: data.format === 'pdf' ? "PDF report downloaded successfully" : "Report sent via email",
       });
       setShowExportDialog(false);
+      setIsGeneratingReport(false);
     },
     onError: (error) => {
       toast({
@@ -452,6 +467,7 @@ export default function InterviewRoom() {
         description: "Failed to generate report. Please try again.",
         variant: "destructive",
       });
+      setIsGeneratingReport(false);
     }
   });
 
