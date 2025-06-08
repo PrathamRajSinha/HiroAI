@@ -993,7 +993,7 @@ Keep the tone professional and constructive. If limited data is available, ackno
           date: interviewData?.timestamp ? new Date(interviewData.timestamp).toLocaleDateString() : new Date().toLocaleDateString(),
           status: interviewData?.status || 'In Progress',
           questionsCount: questions.length,
-          averageScore: questions.length > 0 && questions[0].aiFeedback ? questions[0].aiFeedback.scores?.overall : null,
+          averageScore: questions.length > 0 && (questions[0] as any).aiFeedback ? (questions[0] as any).aiFeedback.scores?.overall : null,
           verdict: interviewData?.verdict
         }];
 

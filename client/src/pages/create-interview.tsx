@@ -62,6 +62,13 @@ export default function CreateInterview() {
             <div className="text-6xl mb-4">🎯</div>
             <h1 className="text-2xl font-bold text-gray-800 mb-2">Create Interview Room</h1>
             <p className="text-gray-600">Set up a new technical interview session</p>
+            <div className="mt-4">
+              <Link href="/dashboard">
+                <Button variant="outline" size="sm">
+                  View Dashboard
+                </Button>
+              </Link>
+            </div>
           </div>
 
           <div className="space-y-6">

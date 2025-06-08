@@ -311,7 +311,7 @@ export default function InterviewReview() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {review.rounds.map((round, index) => (
+                  {review.rounds.map((round: any, index: number) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <p className="font-medium">Round {round.roundNumber}</p>
@@ -407,7 +407,7 @@ export default function InterviewReview() {
 
               {/* Questions Tab */}
               <TabsContent value="questions" className="space-y-6">
-                {review.questions.map((question, index) => (
+                {review.questions.map((question: any, index: number) => (
                   <Card key={question.id}>
                     <CardHeader>
                       <div className="flex items-start justify-between">
