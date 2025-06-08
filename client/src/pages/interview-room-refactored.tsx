@@ -301,24 +301,44 @@ export default function InterviewRoom() {
     setIsSubmittingAnswer(true);
 
     try {
-      // Find the most recent question in history to get its ID
+      // Get fresh history and find the current question
       const history = await getQuestionHistory();
-      const currentQuestionEntry = history.find(
-        (item) => item.question === interviewData.question && item.timestamp === interviewData.timestamp
+      console.log("Current question:", interviewData.question);
+      console.log("History:", history);
+      
+      let currentQuestionEntry = history.find(
+        (item) => item.question === interviewData.question
       );
 
-      if (!currentQuestionEntry) {
-        throw new Error("Could not find current question in history");
+      // If not found in history, use the most recent entry or create a temporary ID
+      if (!currentQuestionEntry && history.length > 0) {
+        currentQuestionEntry = history[0]; // Most recent question
+        console.log("Using most recent question from history");
       }
 
+      if (!currentQuestionEntry) {
+        // Create a fallback ID based on current data
+        const tempId = `temp-${Date.now()}`;
+        console.log("No question found in history, using temp ID:", tempId);
+        
+        submitAnswerMutation.mutate({
+          code: syncedCode,
+          question: interviewData.question,
+          questionId: tempId,
+        });
+        return;
+      }
+
+      console.log("Submitting answer for question ID:", currentQuestionEntry.id);
       submitAnswerMutation.mutate({
         code: syncedCode,
         question: interviewData.question,
         questionId: currentQuestionEntry.id,
       });
     } catch (error) {
+      console.error("Submit answer error:", error);
       toast({
-        title: "Error",
+        title: "Error", 
         description: "Failed to submit answer",
         variant: "destructive",
       });
@@ -724,7 +744,7 @@ export default function InterviewRoom() {
       </div>
 
       {/* Middle Panel - Code Editor */}
-      <div className={`flex flex-col gap-4 ${isInterviewer ? 'w-[35%]' : 'flex-1'}`}>
+      <div className={`flex flex-col gap-4 ${isInterviewer ? 'w-[35%]' : 'w-[55%]'}`}>
         {/* Generate Controls - Only show for interviewer */}
         {isInterviewer && (
           <Card>
@@ -844,7 +864,7 @@ export default function InterviewRoom() {
       </div>
 
       {/* Right Panel - Tabbed Interface */}
-      <div className={`bg-white rounded-xl shadow-md border border-gray-200 ${isInterviewer ? 'flex-1' : 'w-96'}`}>
+      <div className={`bg-white rounded-xl shadow-md border border-gray-200 ${isInterviewer ? 'flex-1' : 'flex-1'}`}>
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)} className="h-full flex flex-col">
           <div className="border-b border-gray-200 p-4">
             {isInterviewer ? (
@@ -882,24 +902,25 @@ export default function InterviewRoom() {
           
           <div className="flex-1 overflow-hidden">
             {isCandidate ? (
-              // Candidates only see the current question
-              <div className="p-4 space-y-4 h-full overflow-y-auto">
-                <Card>
-                  <CardContent className="pt-6">
+              // Candidates only see the current question with enhanced spacing
+              <div className="p-6 h-full overflow-y-auto">
+                <Card className="h-full">
+                  <CardContent className="pt-6 h-full flex flex-col">
                     {interviewData.question ? (
-                      <div className="space-y-3">
-                        <div className="flex gap-2">
-                          <Badge variant="secondary">{interviewData.questionType}</Badge>
-                          <Badge variant="outline">{interviewData.difficulty}</Badge>
+                      <div className="space-y-4 flex-1">
+                        <div className="flex gap-2 mb-4">
+                          <Badge variant="secondary" className="text-sm px-3 py-1">{interviewData.questionType}</Badge>
+                          <Badge variant="outline" className="text-sm px-3 py-1">{interviewData.difficulty}</Badge>
                         </div>
-                        <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg border">
+                        <div className="text-base text-gray-800 whitespace-pre-wrap bg-gray-50 p-6 rounded-lg border leading-relaxed flex-1">
                           {interviewData.question}
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center py-8 text-gray-500">
-                        <MessageCircle className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                        <div className="text-sm">Waiting for interviewer to generate a question</div>
+                      <div className="text-center py-12 text-gray-500 flex-1 flex flex-col justify-center">
+                        <MessageCircle className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                        <div className="text-base font-medium mb-2">Waiting for Question</div>
+                        <div className="text-sm text-gray-400">The interviewer will generate a question for you to solve</div>
                       </div>
                     )}
                   </CardContent>
