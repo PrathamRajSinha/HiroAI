@@ -767,7 +767,7 @@ console.log(fibonacci(10));
       </div>
 
       {/* Center Panel - Monaco Editor (60% width) */}
-      <div className="w-[60%] bg-white rounded-xl shadow-lg p-4 border border-gray-200 relative">
+      <div className="w-[60%] h-full bg-white rounded-xl shadow-lg p-4 border border-gray-200 relative flex flex-col">
         {/* Question Generation Section - Show for interviewers and default users, hide for candidates */}
         {role !== "candidate" && (
           <div className="bg-violet-50 p-4 rounded-xl space-y-3 mb-4">
@@ -823,7 +823,7 @@ console.log(fibonacci(10));
           </div>
         )}
         
-        <div className="rounded-lg overflow-hidden h-full relative">
+        <div className="rounded-lg overflow-hidden flex-1 relative">
           {/* Sync Status Indicator */}
           {isCodeSyncing && (
             <div className="absolute top-2 right-2 z-10 bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
