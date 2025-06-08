@@ -843,6 +843,38 @@ export default function InterviewRoom() {
                 >
                   {isGeneratingFromProfile ? "Generating..." : "Generate Questions from LinkedIn"}
                 </Button>
+                
+                {/* Generated Questions Section */}
+                {generatedLinkedInQuestions.length > 0 && (
+                  <div className="mt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-800">Generated Questions</h3>
+                      <Badge variant="secondary">{generatedLinkedInQuestions.length} questions</Badge>
+                    </div>
+                    <div className="space-y-4">
+                      {generatedLinkedInQuestions.map((question, index) => (
+                        <Card key={index} className="border border-blue-200 bg-blue-50">
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-blue-800 mb-2">Question {index + 1}</div>
+                                <div className="text-sm text-gray-700 whitespace-pre-wrap">{question}</div>
+                              </div>
+                              <Button
+                                onClick={() => updateQuestion(question, "LinkedIn Analysis", "Medium")}
+                                size="sm"
+                                variant="outline"
+                                className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                              >
+                                Use This
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
