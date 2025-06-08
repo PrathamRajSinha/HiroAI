@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { MonacoEditor } from "@/components/monaco-editor";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation, useParams } from "wouter";
+import { useInterviewRoom } from "@/hooks/useFirestore";
 
 type TabType = "resume" | "github" | "linkedin" | "question";
 
@@ -23,13 +24,15 @@ export default function InterviewRoom() {
   const [activeTab, setActiveTab] = useState<TabType>("resume");
   const [editorValue, setEditorValue] = useState("");
   const [generatedSummary, setGeneratedSummary] = useState<string>("");
-  const [currentQuestion, setCurrentQuestion] = useState<string>("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeUrl, setResumeUrl] = useState<string>("");
   const [githubUrl, setGithubUrl] = useState<string>("");
   const [linkedinUrl, setLinkedinUrl] = useState<string>("");
   const [questionType, setQuestionType] = useState<string>("Coding");
   const [difficulty, setDifficulty] = useState<string>("Medium");
+  
+  // Firebase Firestore integration
+  const { data: interviewData, loading: firestoreLoading, error: firestoreError, updateQuestion, updateSummary } = useInterviewRoom(roomId || "");
   const [generatedQuestion, setGeneratedQuestion] = useState<string>(`// Welcome to the Interview Code Editor
 // Click "Generate Coding Question" to get started with an AI-generated question
 // This is where you can write and test code during the interview
@@ -55,25 +58,20 @@ console.log(fibonacci(10));
     mutationFn: async ({ type, difficulty }: { type: string; difficulty: string }) => {
       return apiRequest("/api/generate-question", "POST", { type, difficulty, roomId });
     },
-    onSuccess: (data: { question: string }) => {
-      // Set the current question for display above the editor
-      setCurrentQuestion(data.question);
-      
-      // Invalidate and refetch the room question query immediately
-      queryClient.invalidateQueries({
-        queryKey: ["/api/room", roomId, "question"]
-      });
+    onSuccess: async (data: { question: string }) => {
+      // Save to Firebase Firestore for real-time sync
+      await updateQuestion(data.question, questionType, difficulty);
       
       toast({
         title: "Question Generated!",
-        description: "A new coding question has been generated and shared with the candidate.",
+        description: "A new question has been generated and shared with the candidate.",
       });
     },
     onError: (error) => {
       console.error("Error generating question:", error);
       toast({
         title: "Error",
-        description: "Failed to generate coding question. Please try again.",
+        description: "Failed to generate question. Please try again.",
         variant: "destructive",
       });
     },
@@ -83,8 +81,11 @@ console.log(fibonacci(10));
     mutationFn: async (code: string) => {
       return apiRequest("/api/generate-summary", "POST", { code });
     },
-    onSuccess: (data: { summary: string }) => {
+    onSuccess: async (data: { summary: string }) => {
       setGeneratedSummary(data.summary);
+      // Save to Firebase Firestore for real-time sync
+      await updateSummary(data.summary);
+      
       toast({
         title: "Summary Generated!",
         description: "Code feedback summary has been generated successfully.",
