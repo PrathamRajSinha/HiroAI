@@ -478,34 +478,11 @@ Format: Present each question as a complete, professional interview question tha
         return res.status(500).json({ error: "Google Gemini API key not configured" });
       }
 
-      // Extract text from PDF using pdfjs-dist
+      // Extract text from PDF using pdf-parse-new
       try {
-        const pdfjs = await import('pdfjs-dist');
-        
-        // Load PDF document from buffer
-        const loadingTask = pdfjs.getDocument({ data: file.buffer });
-        const pdfDoc = await loadingTask.promise;
-        
-        let resumeText = '';
-        
-        // Extract text from all pages
-        for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-          const page = await pdfDoc.getPage(pageNum);
-          const textContent = await page.getTextContent();
-          
-          // Combine text items with spaces
-          const pageText = textContent.items
-            .map((item: any) => item.str || '')
-            .join(' ')
-            .replace(/\s+/g, ' ')
-            .trim();
-          
-          if (pageText) {
-            resumeText += pageText + '\n\n';
-          }
-        }
-        
-        resumeText = resumeText.trim();
+        const pdfParse = (await import('pdf-parse-new')).default;
+        const pdfData = await pdfParse(file.buffer);
+        const resumeText = pdfData.text.trim();
 
         if (!resumeText.trim()) {
           throw new Error('Unable to extract text from PDF file');
