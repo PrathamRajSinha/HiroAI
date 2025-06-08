@@ -118,6 +118,119 @@ export default function InterviewRoom() {
     },
   });
 
+  const generateFromProfileMutation = useMutation({
+    mutationFn: async ({ type, content }: { type: "resume" | "github" | "linkedin"; content: string }) => {
+      return apiRequest("/api/gen-from-source", "POST", { type, content, roomId });
+    },
+    onSuccess: async (data: { questions: string[] }) => {
+      if (data.questions && data.questions.length > 0) {
+        await updateQuestion(data.questions.join('\n\n'), "Profile-based", "Medium");
+      }
+      
+      toast({
+        title: "Questions Generated!",
+        description: `Generated ${data.questions.length} contextual questions from profile.`,
+      });
+      setIsGeneratingFromProfile(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to generate questions from profile. Please try again.",
+        variant: "destructive",
+      });
+      setIsGeneratingFromProfile(false);
+    },
+  });
+
+  const generateFromLinkedInMutation = useMutation({
+    mutationFn: async (url: string) => {
+      return apiRequest("/api/gen-from-linkedin", "POST", { url, roomId });
+    },
+    onSuccess: async (data: { questions: string[] }) => {
+      if (data.questions && data.questions.length > 0) {
+        await updateQuestion(data.questions.join('\n\n'), "LinkedIn Analysis", "Medium");
+      }
+      
+      toast({
+        title: "LinkedIn Questions Generated!",
+        description: `Generated ${data.questions.length} questions from LinkedIn profile.`,
+      });
+      setIsGeneratingFromProfile(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to generate questions from LinkedIn. Please try again.",
+        variant: "destructive",
+      });
+      setIsGeneratingFromProfile(false);
+    },
+  });
+
+  const generateFromGitHubMutation = useMutation({
+    mutationFn: async (username: string) => {
+      return apiRequest("/api/gen-from-github", "POST", { username, roomId });
+    },
+    onSuccess: async (data: { questions: string[] }) => {
+      if (data.questions && data.questions.length > 0) {
+        await updateQuestion(data.questions.join('\n\n'), "GitHub Analysis", "Medium");
+      }
+      
+      toast({
+        title: "GitHub Questions Generated!",
+        description: `Generated ${data.questions.length} questions from GitHub profile.`,
+      });
+      setIsGeneratingFromProfile(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to generate questions from GitHub. Please try again.",
+        variant: "destructive",
+      });
+      setIsGeneratingFromProfile(false);
+    },
+  });
+
+  const generateFromResumeMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('resume', file);
+      formData.append('roomId', roomId || '');
+      
+      const response = await fetch('/api/gen-from-resume', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to process resume');
+      }
+      
+      return response.json();
+    },
+    onSuccess: async (data: { questions: string[] }) => {
+      if (data.questions && data.questions.length > 0) {
+        await updateQuestion(data.questions.join('\n\n'), "Resume Analysis", "Medium");
+      }
+      
+      toast({
+        title: "Resume Questions Generated!",
+        description: `Generated ${data.questions.length} questions from resume analysis.`,
+      });
+      setIsGeneratingFromProfile(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to generate questions from resume. Please try again.",
+        variant: "destructive",
+      });
+      setIsGeneratingFromProfile(false);
+    },
+  });
+
   const submitAnswerMutation = useMutation({
     mutationFn: async ({ code, question, questionId }: { code: string; question: string; questionId: string }) => {
       const response = await fetch('/api/analyze-code', {
@@ -241,6 +354,49 @@ export default function InterviewRoom() {
     }
     setResumeFile(null);
     setResumeUrl("");
+  };
+
+  const generateFromResume = async () => {
+    if (!resumeFile) {
+      toast({
+        title: "Error",
+        description: "No resume file uploaded",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsGeneratingFromProfile(true);
+    generateFromResumeMutation.mutate(resumeFile);
+  };
+
+  const generateFromGitHub = async () => {
+    if (!githubUrl.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a GitHub URL",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsGeneratingFromProfile(true);
+    const username = githubUrl.split('/').pop() || '';
+    generateFromGitHubMutation.mutate(username);
+  };
+
+  const generateFromLinkedIn = async () => {
+    if (!linkedinUrl.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a LinkedIn URL",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsGeneratingFromProfile(true);
+    generateFromLinkedInMutation.mutate(linkedinUrl);
   };
 
   const renderTabContent = () => {
@@ -454,7 +610,7 @@ export default function InterviewRoom() {
                     )}
                     
                     <Button
-                      onClick={() => {/* Add resume analysis logic */}}
+                      onClick={generateFromResume}
                       disabled={isGeneratingFromProfile}
                       className="w-full bg-orange-600 hover:bg-orange-700"
                     >
@@ -492,7 +648,7 @@ export default function InterviewRoom() {
                 </div>
                 
                 <Button
-                  onClick={() => {/* Add GitHub analysis logic */}}
+                  onClick={generateFromGitHub}
                   disabled={isGeneratingFromProfile || !githubUrl.trim()}
                   className="w-full bg-gray-700 hover:bg-gray-800"
                 >
@@ -528,7 +684,7 @@ export default function InterviewRoom() {
                 </div>
                 
                 <Button
-                  onClick={() => {/* Add LinkedIn analysis logic */}}
+                  onClick={generateFromLinkedIn}
                   disabled={isGeneratingFromProfile || !linkedinUrl.trim()}
                   className="w-full bg-blue-600 hover:bg-blue-700"
                 >
