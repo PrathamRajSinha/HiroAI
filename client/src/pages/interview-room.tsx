@@ -141,6 +141,11 @@ console.log(fibonacci(10));
       return apiRequest("/api/gen-from-linkedin", "POST", { url, roomId });
     },
     onSuccess: async (data: { questions: string[] }) => {
+      // Save questions to Firebase Firestore for real-time sync
+      if (data.questions && data.questions.length > 0) {
+        await updateQuestion(data.questions.join('\n\n'), "LinkedIn Profile", "Medium");
+      }
+      
       toast({
         title: "LinkedIn Questions Generated!",
         description: `Generated ${data.questions.length} questions from LinkedIn profile.`,
@@ -163,6 +168,11 @@ console.log(fibonacci(10));
       return apiRequest("/api/gen-from-github", "POST", { username, roomId });
     },
     onSuccess: async (data: { questions: string[] }) => {
+      // Save questions to Firebase Firestore for real-time sync
+      if (data.questions && data.questions.length > 0) {
+        await updateQuestion(data.questions.join('\n\n'), "GitHub Profile", "Medium");
+      }
+      
       toast({
         title: "GitHub Questions Generated!",
         description: `Generated ${data.questions.length} questions from GitHub profile.`,
@@ -200,9 +210,7 @@ console.log(fibonacci(10));
     onSuccess: async (data: { questions: string[] }) => {
       // Save questions to Firebase Firestore for real-time sync
       if (data.questions && data.questions.length > 0) {
-        console.log("Saving Resume questions to Firestore:", data.questions);
         await updateQuestion(data.questions.join('\n\n'), "Resume Analysis", "Medium");
-        console.log("Questions saved successfully");
       }
       
       toast({

@@ -569,15 +569,17 @@ Format: Present each question as a concise, direct interview question.`;
           await storage.setRoomQuestion(roomId, combinedQuestions);
           
           // Also update Firestore for real-time sync
-          try {
-            await db.collection('interviews').doc(roomId).set({
-              question: combinedQuestions,
-              questionType: 'Resume Analysis',
-              difficulty: 'Medium',
-              timestamp: Date.now()
-            }, { merge: true });
-          } catch (firestoreError) {
-            console.error("Error updating Firestore:", firestoreError);
+          if (db) {
+            try {
+              await db.collection('interviews').doc(roomId).set({
+                question: combinedQuestions,
+                questionType: 'Resume Analysis',
+                difficulty: 'Medium',
+                timestamp: Date.now()
+              }, { merge: true });
+            } catch (firestoreError) {
+              console.error("Error updating Firestore:", firestoreError);
+            }
           }
         }
 
