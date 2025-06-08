@@ -21,7 +21,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
 
-type TabType = "question" | "history" | "resume" | "github" | "linkedin";
+type TabType = "question" | "history" | "resume" | "github" | "linkedin" | "feedback";
 
 export default function InterviewRoom() {
   const params = useParams();
@@ -139,9 +139,10 @@ export default function InterviewRoom() {
     },
     onSuccess: (data: { summary: string }) => {
       setGeneratedSummary(data.summary);
+      setActiveTab("feedback"); // Automatically switch to feedback tab
       toast({
         title: "Summary Generated",
-        description: "Code analysis summary has been generated.",
+        description: "Code analysis summary has been generated. Check the Feedback tab.",
       });
     },
     onError: (error) => {
@@ -1053,6 +1054,43 @@ export default function InterviewRoom() {
           </div>
         );
         
+      case "feedback":
+        return (
+          <div className="p-4 h-full overflow-y-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                  <Brain className="h-5 w-5" />
+                  Code Feedback Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {generatedSummary ? (
+                  <div className="space-y-4">
+                    <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg border leading-relaxed">
+                      {generatedSummary}
+                    </div>
+                    <Button
+                      onClick={() => setGeneratedSummary("")}
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      Clear Feedback
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Brain className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                    <div className="text-sm">No feedback summary available</div>
+                    <div className="text-xs mt-1">Generate a summary to see AI feedback here</div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        );
+        
       default:
         return null;
     }
@@ -1326,29 +1364,7 @@ export default function InterviewRoom() {
           </CardContent>
         </Card>
         
-        {/* Summary Card */}
-        {generatedSummary && (
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold">Code Feedback Summary</CardTitle>
-                <Button
-                  onClick={() => setGeneratedSummary("")}
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                >
-                  ✕
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm text-gray-600 whitespace-pre-wrap max-h-32 overflow-y-auto">
-                {generatedSummary}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+
       </div>
 
       {/* Right Panel - Tabbed Interface */}
@@ -1356,7 +1372,7 @@ export default function InterviewRoom() {
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)} className="h-full flex flex-col">
           <div className="border-b border-gray-200 p-4">
             {isInterviewer ? (
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="question" className="flex items-center gap-1">
                   <MessageCircle className="h-4 w-4" />
                   Question
@@ -1364,6 +1380,10 @@ export default function InterviewRoom() {
                 <TabsTrigger value="history" className="flex items-center gap-1">
                   <History className="h-4 w-4" />
                   History
+                </TabsTrigger>
+                <TabsTrigger value="feedback" className="flex items-center gap-1">
+                  <Brain className="h-4 w-4" />
+                  Feedback
                 </TabsTrigger>
                 <TabsTrigger value="resume" className="flex items-center gap-1">
                   <FileText className="h-4 w-4" />
