@@ -15,13 +15,14 @@ export interface InterviewData {
 export interface CodeFeedback {
   summary: string;
   scores: {
-    quality: number;
     correctness: number;
     efficiency: number;
+    quality: number;
     readability: number;
     overall: number;
   };
   fullExplanation: string;
+  suggestion?: string;
 }
 
 export interface QuestionHistory {

@@ -611,34 +611,40 @@ Format: Present each question as a concise, direct interview question.`;
         return res.status(500).json({ error: "Google Gemini API key not configured" });
       }
 
-      const prompt = `Analyze this candidate's code solution for the given interview question. Provide structured feedback in JSON format.
+      const prompt = `Here's the coding interview question:
+---
+${question}
+---
 
-Question: ${question}
-
-Code Solution:
+And here is the candidate's response:
+---
 ${code}
+---
 
-Analyze the code and provide feedback in this exact JSON structure:
+Evaluate the candidate's answer based on how well it solves the specific question. Provide structured feedback in JSON format.
+
+Return the response as this exact JSON structure:
 {
-  "summary": "Brief 1-2 sentence summary of the solution approach",
+  "summary": "1-sentence summary of strengths/weaknesses",
   "scores": {
+    "correctness": [score 1-10],
+    "efficiency": [score 1-10], 
     "quality": [score 1-10],
-    "correctness": [score 1-10], 
-    "efficiency": [score 1-10],
     "readability": [score 1-10],
     "overall": [average score 1-10]
   },
-  "fullExplanation": "Detailed explanation covering: code structure, algorithm approach, time/space complexity, potential improvements, best practices followed or missed, and overall assessment"
+  "fullExplanation": "Detailed 2-3 sentence explanation of the solution quality and specific improvements",
+  "suggestion": "Optional 2-line suggestion to improve the answer"
 }
 
-Focus on:
-- Code correctness and logic
-- Algorithm efficiency and complexity
-- Code readability and structure
-- Best practices and patterns
-- Potential edge cases or improvements
+Evaluation criteria:
+- Correctness: Does the code correctly solve the specific problem stated in the question?
+- Efficiency: Time and space complexity relative to optimal solutions
+- Quality: Code structure, error handling, edge cases
+- Readability: Clear variable names, comments, logical flow
+- Overall: Weighted average considering the question's requirements
 
-Be constructive and specific in feedback.`;
+Be specific about how well the code addresses the original question requirements.`;
 
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       const result = await model.generateContent(prompt);

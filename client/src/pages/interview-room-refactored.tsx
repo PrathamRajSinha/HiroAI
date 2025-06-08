@@ -523,37 +523,92 @@ export default function InterviewRoom() {
                                     </div>
                                   </CardHeader>
                                   <CardContent className="space-y-3">
-                                    <div className="text-sm font-medium text-blue-900">
+                                    <div className="text-sm font-medium text-blue-900 mb-3">
                                       {item.aiFeedback.summary}
                                     </div>
                                     
-                                    <div className="grid grid-cols-2 gap-3">
-                                      <div className="space-y-1">
-                                        <div className="flex justify-between text-xs">
-                                          <span>Code Quality:</span>
-                                          <span className="font-medium">{item.aiFeedback.scores.quality}/10</span>
+                                    {/* Enhanced Scorecard */}
+                                    <div className="bg-white rounded-lg p-3 border border-blue-200">
+                                      <div className="text-xs font-semibold text-gray-600 mb-2">Performance Scores</div>
+                                      <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-2">
+                                          <div className="flex justify-between items-center">
+                                            <span className="text-xs text-gray-600">Correctness:</span>
+                                            <div className="flex items-center gap-1">
+                                              <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                                <div 
+                                                  className="h-full bg-green-500 rounded-full" 
+                                                  style={{ width: `${(item.aiFeedback.scores.correctness / 10) * 100}%` }}
+                                                />
+                                              </div>
+                                              <span className="text-xs font-semibold text-gray-800">{item.aiFeedback.scores.correctness}/10</span>
+                                            </div>
+                                          </div>
+                                          <div className="flex justify-between items-center">
+                                            <span className="text-xs text-gray-600">Quality:</span>
+                                            <div className="flex items-center gap-1">
+                                              <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                                <div 
+                                                  className="h-full bg-blue-500 rounded-full" 
+                                                  style={{ width: `${(item.aiFeedback.scores.quality / 10) * 100}%` }}
+                                                />
+                                              </div>
+                                              <span className="text-xs font-semibold text-gray-800">{item.aiFeedback.scores.quality}/10</span>
+                                            </div>
+                                          </div>
                                         </div>
-                                        <div className="flex justify-between text-xs">
-                                          <span>Correctness:</span>
-                                          <span className="font-medium">{item.aiFeedback.scores.correctness}/10</span>
+                                        <div className="space-y-2">
+                                          <div className="flex justify-between items-center">
+                                            <span className="text-xs text-gray-600">Efficiency:</span>
+                                            <div className="flex items-center gap-1">
+                                              <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                                <div 
+                                                  className="h-full bg-orange-500 rounded-full" 
+                                                  style={{ width: `${(item.aiFeedback.scores.efficiency / 10) * 100}%` }}
+                                                />
+                                              </div>
+                                              <span className="text-xs font-semibold text-gray-800">{item.aiFeedback.scores.efficiency}/10</span>
+                                            </div>
+                                          </div>
+                                          <div className="flex justify-between items-center">
+                                            <span className="text-xs text-gray-600">Readability:</span>
+                                            <div className="flex items-center gap-1">
+                                              <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                                <div 
+                                                  className="h-full bg-purple-500 rounded-full" 
+                                                  style={{ width: `${(item.aiFeedback.scores.readability / 10) * 100}%` }}
+                                                />
+                                              </div>
+                                              <span className="text-xs font-semibold text-gray-800">{item.aiFeedback.scores.readability}/10</span>
+                                            </div>
+                                          </div>
                                         </div>
                                       </div>
-                                      <div className="space-y-1">
-                                        <div className="flex justify-between text-xs">
-                                          <span>Efficiency:</span>
-                                          <span className="font-medium">{item.aiFeedback.scores.efficiency}/10</span>
-                                        </div>
-                                        <div className="flex justify-between text-xs">
-                                          <span>Readability:</span>
-                                          <span className="font-medium">{item.aiFeedback.scores.readability}/10</span>
+                                      
+                                      {/* Overall Score */}
+                                      <div className="mt-3 pt-3 border-t border-gray-200">
+                                        <div className="flex justify-between items-center">
+                                          <span className="text-sm font-medium text-gray-800">Overall Score:</span>
+                                          <div className="flex items-center gap-2">
+                                            <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                              <div 
+                                                className="h-full bg-indigo-600 rounded-full" 
+                                                style={{ width: `${(item.aiFeedback.scores.overall / 10) * 100}%` }}
+                                              />
+                                            </div>
+                                            <span className="text-sm font-bold text-indigo-600">{item.aiFeedback.scores.overall}/10</span>
+                                          </div>
                                         </div>
                                       </div>
                                     </div>
                                     
-                                    <div className="flex justify-between text-sm font-bold text-blue-800 pt-2 border-t border-blue-200">
-                                      <span>Overall Score:</span>
-                                      <span>{item.aiFeedback.scores.overall}/10</span>
-                                    </div>
+                                    {/* Suggestion Section */}
+                                    {item.aiFeedback.suggestion && (
+                                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                        <div className="text-xs font-semibold text-amber-800 mb-1">💡 Improvement Suggestion</div>
+                                        <div className="text-xs text-amber-700">{item.aiFeedback.suggestion}</div>
+                                      </div>
+                                    )}
                                     
                                     <Collapsible>
                                       <CollapsibleTrigger className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-800 font-medium">
