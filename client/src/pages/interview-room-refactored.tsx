@@ -852,34 +852,68 @@ export default function InterviewRoom() {
       <div className={`bg-white rounded-xl shadow-md border border-gray-200 ${isInterviewer ? 'flex-1' : 'w-96'}`}>
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)} className="h-full flex flex-col">
           <div className="border-b border-gray-200 p-4">
-            <TabsList className={`grid w-full ${isInterviewer ? 'grid-cols-5' : 'grid-cols-4'}`}>
-              <TabsTrigger value="question" className="flex items-center gap-1">
-                <MessageCircle className="h-4 w-4" />
-                Question
-              </TabsTrigger>
-              {isInterviewer && (
+            {isInterviewer ? (
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="question" className="flex items-center gap-1">
+                  <MessageCircle className="h-4 w-4" />
+                  Question
+                </TabsTrigger>
                 <TabsTrigger value="history" className="flex items-center gap-1">
                   <History className="h-4 w-4" />
                   History
                 </TabsTrigger>
-              )}
-              <TabsTrigger value="resume" className="flex items-center gap-1">
-                <FileText className="h-4 w-4" />
-                Resume
-              </TabsTrigger>
-              <TabsTrigger value="github" className="flex items-center gap-1">
-                <Github className="h-4 w-4" />
-                GitHub
-              </TabsTrigger>
-              <TabsTrigger value="linkedin" className="flex items-center gap-1">
-                <Linkedin className="h-4 w-4" />
-                LinkedIn
-              </TabsTrigger>
-            </TabsList>
+                <TabsTrigger value="resume" className="flex items-center gap-1">
+                  <FileText className="h-4 w-4" />
+                  Resume
+                </TabsTrigger>
+                <TabsTrigger value="github" className="flex items-center gap-1">
+                  <Github className="h-4 w-4" />
+                  GitHub
+                </TabsTrigger>
+                <TabsTrigger value="linkedin" className="flex items-center gap-1">
+                  <Linkedin className="h-4 w-4" />
+                  LinkedIn
+                </TabsTrigger>
+              </TabsList>
+            ) : (
+              <div className="text-center">
+                <h2 className="text-lg font-bold text-gray-800 flex items-center justify-center gap-2">
+                  <MessageCircle className="h-5 w-5" />
+                  Current Question
+                </h2>
+              </div>
+            )}
           </div>
           
           <div className="flex-1 overflow-hidden">
-            {renderTabContent()}
+            {isCandidate ? (
+              // Candidates only see the current question
+              <div className="p-4 space-y-4 h-full overflow-y-auto">
+                <Card>
+                  <CardContent className="pt-6">
+                    {interviewData.question ? (
+                      <div className="space-y-3">
+                        <div className="flex gap-2">
+                          <Badge variant="secondary">{interviewData.questionType}</Badge>
+                          <Badge variant="outline">{interviewData.difficulty}</Badge>
+                        </div>
+                        <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg border">
+                          {interviewData.question}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <MessageCircle className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                        <div className="text-sm">Waiting for interviewer to generate a question</div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              // Interviewers see full tabbed interface
+              renderTabContent()
+            )}
           </div>
         </Tabs>
       </div>
