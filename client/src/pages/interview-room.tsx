@@ -144,7 +144,9 @@ console.log(fibonacci(10));
     onSuccess: async (data: { questions: string[] }) => {
       // Save questions to Firebase Firestore for real-time sync
       if (data.questions && data.questions.length > 0) {
+        console.log("Saving LinkedIn questions to Firestore:", data.questions);
         await updateQuestion(data.questions.join('\n\n'), "LinkedIn Profile", "Medium");
+        console.log("Questions saved successfully");
       }
       
       toast({
@@ -295,6 +297,11 @@ console.log(fibonacci(10));
       setGeneratedSummary(interviewData.summary);
     }
   }, [interviewData.summary]);
+
+  // Debug Firestore data changes
+  useEffect(() => {
+    console.log("Firestore data updated:", interviewData);
+  }, [interviewData]);
 
   const handleTabSwitch = (tab: TabType) => {
     setActiveTab(tab);
