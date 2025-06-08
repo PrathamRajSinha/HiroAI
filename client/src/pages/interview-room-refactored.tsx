@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { FileText, Github, Linkedin, MessageCircle, History, ChevronDown, ChevronRight, Code, Brain, Video } from "lucide-react";
+import { VideoCall } from "@/components/video-call";
 import * as pdfjsLib from 'pdfjs-dist';
 
 type TabType = "question" | "history" | "resume" | "github" | "linkedin";
@@ -710,22 +711,16 @@ export default function InterviewRoom() {
             Video Call
           </h2>
         </div>
-        {roomId ? (
-          <div className="p-4">
-            <div className="h-48 bg-gray-900 rounded-lg flex items-center justify-center">
-              <div className="text-center text-white">
-                <Video className="h-8 w-8 mx-auto mb-2" />
-                <div className="text-xs">Room: {roomId}</div>
-                <div className="text-xs text-gray-300 mt-1">Role: {role}</div>
-              </div>
+        <div className="p-4 h-full">
+          {roomId ? (
+            <VideoCall roomId={roomId} role={role || "guest"} />
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-gray-500">
+              <Video className="h-8 w-8 mb-2 text-gray-400" />
+              <div className="text-sm">No Room ID</div>
             </div>
-          </div>
-        ) : (
-          <div className="p-4 text-center text-gray-500">
-            <div className="text-2xl mb-2">⚠️</div>
-            <div className="text-sm">No Room ID</div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Middle Panel - Code Editor */}
