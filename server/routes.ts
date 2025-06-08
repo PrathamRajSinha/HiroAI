@@ -598,6 +598,80 @@ Format: Present each question as a concise, direct interview question.`;
     }
   });
 
+  // Code analysis route for AI feedback
+  app.post('/api/analyze-code', async (req, res) => {
+    try {
+      const { code, question } = req.body;
+
+      if (!code || !question) {
+        return res.status(400).json({ error: "Code and question are required" });
+      }
+
+      if (!process.env.GOOGLE_GEMINI_API_KEY) {
+        return res.status(500).json({ error: "Google Gemini API key not configured" });
+      }
+
+      const prompt = `Analyze this candidate's code solution for the given interview question. Provide structured feedback in JSON format.
+
+Question: ${question}
+
+Code Solution:
+${code}
+
+Analyze the code and provide feedback in this exact JSON structure:
+{
+  "summary": "Brief 1-2 sentence summary of the solution approach",
+  "scores": {
+    "quality": [score 1-10],
+    "correctness": [score 1-10], 
+    "efficiency": [score 1-10],
+    "readability": [score 1-10],
+    "overall": [average score 1-10]
+  },
+  "fullExplanation": "Detailed explanation covering: code structure, algorithm approach, time/space complexity, potential improvements, best practices followed or missed, and overall assessment"
+}
+
+Focus on:
+- Code correctness and logic
+- Algorithm efficiency and complexity
+- Code readability and structure
+- Best practices and patterns
+- Potential edge cases or improvements
+
+Be constructive and specific in feedback.`;
+
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      // Parse the JSON response
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("Invalid response format");
+      }
+
+      const feedback = JSON.parse(jsonMatch[0]);
+      
+      // Ensure scores are numbers and within range
+      const scores = feedback.scores;
+      scores.quality = Math.max(1, Math.min(10, Math.round(scores.quality)));
+      scores.correctness = Math.max(1, Math.min(10, Math.round(scores.correctness)));
+      scores.efficiency = Math.max(1, Math.min(10, Math.round(scores.efficiency)));
+      scores.readability = Math.max(1, Math.min(10, Math.round(scores.readability)));
+      scores.overall = Math.round((scores.quality + scores.correctness + scores.efficiency + scores.readability) / 4 * 10) / 10;
+
+      res.json(feedback);
+
+    } catch (error) {
+      console.error('Code analysis error:', error);
+      res.status(500).json({ 
+        error: "Failed to analyze code",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

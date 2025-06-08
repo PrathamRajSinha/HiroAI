@@ -39,12 +39,14 @@ export default function InterviewRoom() {
   const isCandidate = role === "candidate";
   
   // Firebase Firestore integration
-  const { data: interviewData, loading: firestoreLoading, error: firestoreError, updateQuestion, updateSummary, getQuestionHistory } = useInterviewRoom(roomId || "");
+  const { data: interviewData, loading: firestoreLoading, error: firestoreError, updateQuestion, updateSummary, getQuestionHistory, updateQuestionWithCode } = useInterviewRoom(roomId || "");
   
   // Previous questions state
   const [questionHistory, setQuestionHistory] = useState<QuestionHistory[]>([]);
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
   const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set());
+  const [isSubmittingAnswer, setIsSubmittingAnswer] = useState(false);
+  const [lastSubmittedQuestionId, setLastSubmittedQuestionId] = useState<string | null>(null);
   
   // Real-time code synchronization
   const { code: syncedCode, isUpdating: isCodeSyncing, handleCodeChange } = useCodeSync({
@@ -233,6 +235,49 @@ console.log(fibonacci(10));
       });
       setIsGeneratingFromProfile(false);
     },
+  });
+
+  const submitAnswerMutation = useMutation({
+    mutationFn: async ({ code, question, questionId }: { code: string; question: string; questionId: string }) => {
+      const response = await fetch('/api/analyze-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code, question }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to analyze code');
+      }
+
+      const feedback = await response.json();
+      return { feedback, questionId };
+    },
+    onSuccess: async ({ feedback, questionId }) => {
+      await updateQuestionWithCode(questionId, syncedCode, feedback);
+      setLastSubmittedQuestionId(questionId);
+      
+      toast({
+        title: "Answer Submitted",
+        description: `AI feedback generated with overall score: ${feedback.scores.overall}/10`,
+      });
+      
+      // Refresh question history
+      const history = await getQuestionHistory();
+      setQuestionHistory(history);
+      
+      setIsSubmittingAnswer(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsSubmittingAnswer(false);
+    }
   });
 
   // Helper functions for extracting content from different sources
@@ -427,6 +472,44 @@ console.log(fibonacci(10));
   const truncateQuestion = (question: string, maxLength: number = 80) => {
     if (question.length <= maxLength) return question;
     return question.substring(0, maxLength) + "...";
+  };
+
+  const handleSubmitAnswer = async () => {
+    if (!interviewData.question || !syncedCode.trim() || !roomId) {
+      toast({
+        title: "Error",
+        description: "No question or code to submit",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmittingAnswer(true);
+
+    try {
+      // Find the most recent question in history to get its ID
+      const history = await getQuestionHistory();
+      const currentQuestionEntry = history.find(
+        (item) => item.question === interviewData.question && item.timestamp === interviewData.timestamp
+      );
+
+      if (!currentQuestionEntry) {
+        throw new Error("Could not find current question in history");
+      }
+
+      submitAnswerMutation.mutate({
+        code: syncedCode,
+        question: interviewData.question,
+        questionId: currentQuestionEntry.id,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit answer",
+        variant: "destructive",
+      });
+      setIsSubmittingAnswer(false);
+    }
   };
 
   // Update state when Firebase data changes
@@ -990,6 +1073,20 @@ console.log(fibonacci(10));
             <div className="absolute top-2 right-2 z-10 bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
               <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
               Syncing...
+            </div>
+          )}
+          
+          {/* Submit Answer Button - Only for candidates */}
+          {isCandidate && interviewData.question && (
+            <div className="absolute top-2 left-2 z-10">
+              <button
+                onClick={handleSubmitAnswer}
+                disabled={isSubmittingAnswer || !syncedCode.trim()}
+                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white px-3 py-1.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-xs font-medium flex items-center gap-2"
+              >
+                <span className="text-sm">{isSubmittingAnswer ? "⏳" : "✅"}</span>
+                <span>{isSubmittingAnswer ? "Analyzing..." : "Submit Answer"}</span>
+              </button>
             </div>
           )}
           
