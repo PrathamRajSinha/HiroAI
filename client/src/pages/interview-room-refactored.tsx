@@ -1049,6 +1049,10 @@ export default function InterviewRoom() {
                   <option value="Algorithm">Algorithm</option>
                   <option value="System Design">System Design</option>
                   <option value="Data Structures">Data Structures</option>
+                  <option value="Behavioral">Behavioral</option>
+                  <option value="Psychometric">Psychometric</option>
+                  <option value="Situational">Situational</option>
+                  <option value="Technical Knowledge">Technical Knowledge</option>
                 </select>
                 
                 <select

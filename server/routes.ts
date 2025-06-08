@@ -96,18 +96,48 @@ Requirements:
 - Specify expected functionality and constraints
 - Mention any specific technologies or patterns to use
 - Include example data if helpful`;
+      } else if (type === "Algorithm") {
+        prompt += `For algorithm questions:
+- Focus on algorithmic thinking and problem-solving
+- Include time and space complexity considerations
+- Present data structure optimization challenges
+- Ask about trade-offs between different approaches`;
+      } else if (type === "System Design") {
+        prompt += `For system design questions:
+- Focus on scalability, architecture, and design patterns
+- Include considerations for performance and reliability
+- Ask about technology choices and trade-offs
+- Cover both high-level and detailed implementation aspects`;
+      } else if (type === "Data Structures") {
+        prompt += `For data structure questions:
+- Focus on choosing appropriate data structures
+- Include performance implications and use cases
+- Ask about implementation details and optimizations
+- Cover both theoretical knowledge and practical applications`;
       } else if (type === "Behavioral") {
         prompt += `For behavioral questions:
 - Focus on past experiences and situations
 - Ask about teamwork, problem-solving, or conflict resolution
 - Use STAR method framework (Situation, Task, Action, Result)
-- Relate to frontend development scenarios`;
+- Relate to software development scenarios and team dynamics`;
+      } else if (type === "Psychometric") {
+        prompt += `For psychometric questions:
+- Focus on personality traits, work style, and motivations
+- Ask about handling stress, communication preferences, and decision-making
+- Include scenarios about adaptability and learning approaches
+- Explore values, career goals, and cultural fit aspects`;
       } else if (type === "Situational") {
         prompt += `For situational questions:
-- Present hypothetical scenarios in frontend development
+- Present hypothetical scenarios in software development
 - Focus on decision-making and problem-solving approach
 - Include technical trade-offs or team dynamics
-- Ask how they would handle specific challenges`;
+- Ask how they would handle specific challenges and conflicts`;
+      } else if (type === "Technical Knowledge") {
+        prompt += `For technical knowledge questions:
+- Focus on theoretical understanding and best practices
+- Ask about specific technologies, frameworks, or methodologies
+- Include questions about industry standards and patterns
+- Test depth of knowledge in relevant technical areas`;
       }
 
       prompt += `\n\nFormat the response as a professional interview question that reads naturally.`;
