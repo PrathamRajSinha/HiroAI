@@ -560,7 +560,7 @@ export default function InterviewRoom() {
           roleType: "Coding"
         },
         questions: questionHistory,
-        currentCode: code,
+        currentCode: syncedCode,
         overallSummary: generatedSummary,
         date: new Date().toLocaleDateString()
       };
@@ -576,7 +576,9 @@ export default function InterviewRoom() {
         description: "Interview ended and saved successfully!",
       });
       // Redirect to dashboard
-      window.location.href = "/dashboard";
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 1000);
     },
     onError: (error) => {
       console.error("Failed to end interview:", error);
