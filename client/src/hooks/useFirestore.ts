@@ -209,6 +209,22 @@ export function useInterviewRoom(roomId: string) {
     }
   };
 
+  const updateInterviewData = async (interviewData: any) => {
+    if (!roomId) return;
+
+    try {
+      const docRef = doc(db, "interviews", roomId);
+      await setDoc(docRef, {
+        ...interviewData,
+        timestamp: Date.now(),
+        lastUpdated: Date.now(),
+      }, { merge: true });
+    } catch (err) {
+      console.error("Error updating interview data:", err);
+      throw new Error("Failed to save interview data");
+    }
+  };
+
   return {
     data,
     loading,
@@ -220,5 +236,6 @@ export function useInterviewRoom(roomId: string) {
     updateQuestionWithCode,
     saveJobContext,
     getJobContext,
+    updateInterviewData,
   };
 }

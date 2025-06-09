@@ -60,7 +60,7 @@ export default function InterviewRoom() {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   
   // Firebase Firestore integration
-  const { data: interviewData, loading: firestoreLoading, error: firestoreError, updateQuestion, updateSummary, getQuestionHistory, updateQuestionWithCode, saveJobContext, getJobContext } = useInterviewRoom(roomId || "");
+  const { data: interviewData, loading: firestoreLoading, error: firestoreError, updateQuestion, updateSummary, getQuestionHistory, updateQuestionWithCode, saveJobContext, getJobContext, updateInterviewData } = useInterviewRoom(roomId || "");
   
   // Previous questions state
   const [questionHistory, setQuestionHistory] = useState<QuestionHistory[]>([]);
@@ -539,6 +539,68 @@ export default function InterviewRoom() {
       candidateEmail, 
       companyName 
     });
+  };
+
+  // End Interview functionality
+  const endInterviewMutation = useMutation({
+    mutationFn: async () => {
+      const interviewData = {
+        roomId,
+        candidateName: candidateName || "Unnamed Candidate",
+        candidateId: `candidate_${roomId}`,
+        roleTitle: jobContext?.jobTitle || "Software Engineer",
+        roundNumber: 1,
+        interviewerName: "Interviewer", // Could be made dynamic
+        timestamp: Date.now(),
+        status: "Completed",
+        jobContext: jobContext || {
+          jobTitle: "Software Engineer",
+          techStack: "General",
+          seniorityLevel: "Mid",
+          roleType: "Coding"
+        },
+        questions: questionHistory,
+        currentCode: code,
+        overallSummary: generatedSummary,
+        date: new Date().toLocaleDateString()
+      };
+
+      // Save to Firestore
+      await updateInterviewData(interviewData);
+      
+      return interviewData;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Interview Ended",
+        description: "Interview ended and saved successfully!",
+      });
+      // Redirect to dashboard
+      window.location.href = "/dashboard";
+    },
+    onError: (error) => {
+      console.error("Failed to end interview:", error);
+      toast({
+        title: "Save Failed",
+        description: "Failed to save interview. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleEndInterview = async () => {
+    // Generate final AI summary if not already done
+    if (!generatedSummary && questionHistory.length > 0) {
+      try {
+        const summaryResponse = await generateSummaryMutation.mutateAsync();
+        setGeneratedSummary(summaryResponse.summary);
+      } catch (error) {
+        console.warn("Failed to generate final summary:", error);
+      }
+    }
+    
+    // End the interview and save all data
+    endInterviewMutation.mutate();
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1295,6 +1357,14 @@ export default function InterviewRoom() {
                       {jobContext.seniorityLevel} {jobContext.jobTitle}
                     </Badge>
                   )}
+                  <Button 
+                    onClick={handleEndInterview}
+                    variant="destructive" 
+                    size="sm"
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    End Interview
+                  </Button>
                   <Dialog open={showJobContextDialog} onOpenChange={setShowJobContextDialog}>
                     <DialogTrigger asChild>
                       <Button variant="ghost" size="sm">
