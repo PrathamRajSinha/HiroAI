@@ -794,6 +794,7 @@ Be specific about how well the code addresses the original question requirements
       let interviewData: any = {};
       let questionHistory: any[] = [];
       let jobContext: any = null;
+      let latestCode: string | null = null;
 
       try {
         if (db) {
@@ -816,6 +817,37 @@ Be specific about how well the code addresses the original question requirements
           if (jobContextDoc.exists) {
             jobContext = jobContextDoc.data();
             console.log("Job context found:", jobContext);
+          }
+
+          // Fetch latest saved code from multiple possible locations
+          try {
+            // Try to get code from rounds collection
+            const roundsSnapshot = await db.collection('interviews').doc(roomId).collection('rounds').orderBy('timestamp', 'desc').limit(1).get();
+            if (!roundsSnapshot.empty) {
+              const latestRound = roundsSnapshot.docs[0].data();
+              if (latestRound.code && latestRound.code.trim()) {
+                latestCode = latestRound.code;
+                console.log("Found code in rounds collection");
+              }
+            }
+
+            // If no code in rounds, try the main interview document
+            if (!latestCode && interviewData.code && interviewData.code.trim()) {
+              latestCode = interviewData.code;
+              console.log("Found code in main interview document");
+            }
+
+            // If still no code, check if there's a code field in the latest question history
+            if (!latestCode && questionHistory.length > 0) {
+              const latestQuestion = questionHistory[0];
+              if (latestQuestion.candidateCode && latestQuestion.candidateCode.trim()) {
+                latestCode = latestQuestion.candidateCode;
+                console.log("Found code in latest question history");
+              }
+            }
+
+          } catch (codeError) {
+            console.log("Error fetching code:", codeError);
           }
         }
       } catch (firestoreError) {
@@ -840,6 +872,120 @@ Be specific about how well the code addresses the original question requirements
             aiFeedback: null
           }];
           console.log("Added current room question to history for report");
+        }
+      }
+
+      // If we found latest code, analyze it with AI scoring
+      let latestCodeAnalysis: any = null;
+      if (latestCode && latestCode.trim() && latestCode !== 'No code submitted') {
+        try {
+          // Get the current question for context
+          const currentQuestion = questionHistory.length > 0 ? questionHistory[0].question : 
+                                 (interviewData.question || 'Analyze this code solution');
+
+          console.log("Analyzing latest code with AI...");
+          
+          const codePrompt = `Here's the coding interview question:
+---
+${currentQuestion}
+---
+
+And here is the candidate's response:
+---
+${latestCode}
+---
+
+Evaluate the candidate's answer based on how well it solves the specific question. Provide structured feedback in JSON format.
+
+Return the response as this exact JSON structure:
+{
+  "summary": "1-sentence summary of strengths/weaknesses",
+  "scores": {
+    "correctness": [score 1-10],
+    "relevance": [score 1-10],
+    "efficiency": [score 1-10], 
+    "quality": [score 1-10],
+    "readability": [score 1-10],
+    "overall": [weighted score 1-10]
+  },
+  "fullExplanation": "Detailed 2-3 sentence explanation of the solution quality and specific improvements",
+  "suggestion": "Optional 2-line suggestion to improve the answer"
+}
+
+Evaluation criteria:
+- Correctness: Does the code correctly solve the specific problem stated in the question?
+- Relevance: How well does the solution address the actual question requirements and constraints?
+- Efficiency: Time and space complexity relative to optimal solutions
+- Quality: Code structure, error handling, edge cases
+- Readability: Clear variable names, comments, logical flow
+- Overall: Weighted score based on contextual importance (will be calculated automatically)
+
+Be specific about how well the code addresses the original question requirements.`;
+
+          const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+          const result = await model.generateContent(codePrompt);
+          const response = await result.response;
+          const text = response.text();
+
+          // Parse the JSON response
+          const jsonMatch = text.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const feedback = JSON.parse(jsonMatch[0]);
+            
+            // Apply weighted scoring logic
+            const scores = feedback.scores;
+            scores.quality = Math.max(1, Math.min(10, Math.round(scores.quality)));
+            scores.correctness = Math.max(1, Math.min(10, Math.round(scores.correctness)));
+            scores.efficiency = Math.max(1, Math.min(10, Math.round(scores.efficiency)));
+            scores.readability = Math.max(1, Math.min(10, Math.round(scores.readability)));
+            
+            if (!scores.relevance) {
+              scores.relevance = scores.correctness;
+            }
+            scores.relevance = Math.max(1, Math.min(10, Math.round(scores.relevance)));
+
+            // Implement weighted scoring logic
+            let overall;
+            if (scores.correctness < 3 || scores.relevance < 3) {
+              overall = Math.min(3, Math.max(scores.correctness, scores.relevance));
+            } else {
+              const weights = {
+                correctness: 0.30,
+                relevance: 0.30,
+                efficiency: 0.15,
+                readability: 0.15,
+                quality: 0.10
+              };
+              
+              overall = (
+                scores.correctness * weights.correctness +
+                scores.relevance * weights.relevance +
+                scores.efficiency * weights.efficiency +
+                scores.readability * weights.readability +
+                scores.quality * weights.quality
+              );
+            }
+            
+            scores.overall = Math.round(overall * 10) / 10;
+
+            // Generate score note
+            let scoreNote = "";
+            if (scores.overall < 3) {
+              scoreNote = "Poor understanding of question";
+            } else if (scores.overall >= 3 && scores.overall < 5) {
+              scoreNote = "Partial or misaligned answer";
+            } else if (scores.overall >= 5 && scores.overall < 7) {
+              scoreNote = "Acceptable with room for improvement";
+            } else if (scores.overall >= 7) {
+              scoreNote = "Strong answer with good alignment";
+            }
+            
+            feedback.scoreNote = scoreNote;
+            latestCodeAnalysis = feedback;
+            console.log("Latest code analysis completed");
+          }
+        } catch (analysisError) {
+          console.log("Error analyzing latest code:", analysisError);
         }
       }
 
@@ -900,7 +1046,9 @@ Keep the tone professional and constructive. If limited data is available, ackno
         jobContext,
         questionHistory,
         overallSummary,
-        interviewDate: new Date().toLocaleDateString()
+        interviewDate: new Date().toLocaleDateString(),
+        latestCode,
+        latestCodeAnalysis
       });
 
       if (format === 'pdf') {
@@ -1227,8 +1375,10 @@ function generateReportHtml(data: {
   questionHistory: any[];
   overallSummary: string;
   interviewDate: string;
+  latestCode?: string | null;
+  latestCodeAnalysis?: any;
 }) {
-  const { candidateName, companyName, jobContext, questionHistory, overallSummary, interviewDate } = data;
+  const { candidateName, companyName, jobContext, questionHistory, overallSummary, interviewDate, latestCode, latestCodeAnalysis } = data;
   
   return `
 <!DOCTYPE html>
@@ -1449,6 +1599,81 @@ function generateReportHtml(data: {
         <div class="summary-title">Overall Performance Summary</div>
         <div>${overallSummary}</div>
     </div>
+
+    ${latestCode && latestCode.trim() && latestCode !== 'No code submitted' ? `
+    <div class="latest-code-section" style="background: #fefce8; border: 2px solid #eab308; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+        <h3 style="color: #92400e; margin-top: 0; margin-bottom: 15px;">Latest Code Solution</h3>
+        <div class="code-section">
+            <div class="code-title">Final Submitted Code:</div>
+            <div class="code-block">${latestCode}</div>
+        </div>
+        
+        ${latestCodeAnalysis ? `
+        <div class="feedback-section" style="margin-top: 20px;">
+            <h4 style="margin-top: 0; color: #92400e;">AI Performance Analysis</h4>
+            
+            <div class="scores-grid">
+                <div class="score-item">
+                    <div class="score-label">Correctness (30%)</div>
+                    <div class="score-value">${latestCodeAnalysis.scores.correctness}/10</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">Relevance (30%)</div>
+                    <div class="score-value">${latestCodeAnalysis.scores.relevance}/10</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">Efficiency (15%)</div>
+                    <div class="score-value">${latestCodeAnalysis.scores.efficiency}/10</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">Readability (15%)</div>
+                    <div class="score-value">${latestCodeAnalysis.scores.readability}/10</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">Quality (10%)</div>
+                    <div class="score-value">${latestCodeAnalysis.scores.quality}/10</div>
+                </div>
+                <div class="score-item" style="background: #f0f9ff; border-color: #0ea5e9;">
+                    <div class="score-label">Weighted Overall</div>
+                    <div class="score-value" style="color: #0ea5e9;">${latestCodeAnalysis.scores.overall}/10</div>
+                </div>
+            </div>
+            
+            ${latestCodeAnalysis.scoreNote ? `
+            <div style="margin-top: 15px; padding: 10px; background: ${
+              latestCodeAnalysis.scores.overall < 3 ? '#fef2f2; border-left: 4px solid #ef4444; color: #dc2626;' 
+              : latestCodeAnalysis.scores.overall < 5 ? '#fffbeb; border-left: 4px solid #f59e0b; color: #d97706;'
+              : latestCodeAnalysis.scores.overall < 7 ? '#eff6ff; border-left: 4px solid #3b82f6; color: #2563eb;'
+              : '#f0fdf4; border-left: 4px solid #10b981; color: #059669;'
+            } border-radius: 4px; font-weight: 600; text-align: center;">
+                ${latestCodeAnalysis.scoreNote}
+            </div>
+            ` : ''}
+            
+            <div class="feedback-text" style="margin-top: 15px;">
+                <strong>Summary:</strong> ${latestCodeAnalysis.summary}
+            </div>
+            
+            ${latestCodeAnalysis.fullExplanation ? `
+            <div class="feedback-text" style="margin-top: 15px;">
+                <strong>Detailed Analysis:</strong> ${latestCodeAnalysis.fullExplanation}
+            </div>
+            ` : ''}
+            
+            ${latestCodeAnalysis.suggestion ? `
+            <div class="feedback-text" style="margin-top: 15px;">
+                <strong>Improvement Suggestions:</strong> ${latestCodeAnalysis.suggestion}
+            </div>
+            ` : ''}
+        </div>
+        ` : ''}
+    </div>
+    ` : `
+    <div class="no-code-section" style="background: #f3f4f6; border: 2px dashed #9ca3af; border-radius: 8px; padding: 20px; margin-bottom: 30px; text-align: center;">
+        <h3 style="color: #6b7280; margin-top: 0;">No Code Submitted</h3>
+        <p style="color: #6b7280; margin-bottom: 0;">The candidate did not submit any code solution for analysis.</p>
+    </div>
+    `}
 
     <h2 style="color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Question-by-Question Analysis</h2>
 
