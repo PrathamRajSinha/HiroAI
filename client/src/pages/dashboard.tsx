@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Eye, Plus, Search, Users, Calendar, Clock, Trophy } from "lucide-react";
+import { Eye, Plus, Search, Users, Calendar, Clock, Trophy, FileText } from "lucide-react";
 
 interface InterviewSession {
   id: string;
@@ -254,9 +254,14 @@ export default function Dashboard() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Link href={`/interview/${interview.id}/review`}>
-                            <Button variant="outline" size="sm">
+                          <Link href={`/dashboard/interview/${interview.id}`}>
+                            <Button variant="outline" size="sm" title="View Full Thread">
                               <Eye className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          <Link href={`/interview/${interview.id}/review`}>
+                            <Button variant="outline" size="sm" title="Review Report">
+                              <FileText className="h-4 w-4" />
                             </Button>
                           </Link>
                           {interview.status === 'Completed' && (
@@ -268,6 +273,7 @@ export default function Dashboard() {
                                 candidateId: interview.candidateId
                               })}
                               disabled={createNextRoundMutation.isPending}
+                              title="Create Next Round"
                             >
                               <Plus className="h-4 w-4" />
                             </Button>

@@ -8,12 +8,14 @@ import InterviewRoom from "@/pages/interview-room-refactored";
 import CreateInterview from "@/pages/create-interview";
 import Dashboard from "@/pages/dashboard";
 import InterviewReview from "@/pages/interview-review";
+import InterviewThread from "@/pages/interview-thread";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={CreateInterview} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/dashboard/interview/:roomId" component={InterviewThread} />
       <Route path="/interview/:roomId" component={InterviewRoom} />
       <Route path="/interview/:id/review" component={InterviewReview} />
       <Route component={NotFound} />
