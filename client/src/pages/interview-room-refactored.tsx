@@ -721,6 +721,10 @@ export default function InterviewRoom() {
                                                 />
                                               </div>
                                               <span className="text-xs font-semibold text-gray-800">{item.aiFeedback.scores.correctness}/10</span>
+                                              <span className="text-xs">
+                                                {item.aiFeedback.scores.correctness >= 7 ? '✅' : 
+                                                 item.aiFeedback.scores.correctness < 5 ? '⚠️' : '📊'}
+                                              </span>
                                             </div>
                                           </div>
                                           <div className="flex justify-between items-center">
@@ -733,6 +737,10 @@ export default function InterviewRoom() {
                                                 />
                                               </div>
                                               <span className="text-xs font-semibold text-gray-800">{item.aiFeedback.scores.relevance || item.aiFeedback.scores.correctness}/10</span>
+                                              <span className="text-xs">
+                                                {(item.aiFeedback.scores.relevance || item.aiFeedback.scores.correctness) >= 7 ? '✅' : 
+                                                 (item.aiFeedback.scores.relevance || item.aiFeedback.scores.correctness) < 5 ? '⚠️' : '📊'}
+                                              </span>
                                             </div>
                                           </div>
                                           <div className="flex justify-between items-center">
@@ -745,6 +753,10 @@ export default function InterviewRoom() {
                                                 />
                                               </div>
                                               <span className="text-xs font-semibold text-gray-800">{item.aiFeedback.scores.quality}/10</span>
+                                              <span className="text-xs">
+                                                {item.aiFeedback.scores.quality >= 7 ? '✅' : 
+                                                 item.aiFeedback.scores.quality < 5 ? '⚠️' : '📊'}
+                                              </span>
                                             </div>
                                           </div>
                                         </div>
@@ -759,6 +771,10 @@ export default function InterviewRoom() {
                                                 />
                                               </div>
                                               <span className="text-xs font-semibold text-gray-800">{item.aiFeedback.scores.efficiency}/10</span>
+                                              <span className="text-xs">
+                                                {item.aiFeedback.scores.efficiency >= 7 ? '✅' : 
+                                                 item.aiFeedback.scores.efficiency < 5 ? '⚠️' : '📊'}
+                                              </span>
                                             </div>
                                           </div>
                                           <div className="flex justify-between items-center">
@@ -771,6 +787,10 @@ export default function InterviewRoom() {
                                                 />
                                               </div>
                                               <span className="text-xs font-semibold text-gray-800">{item.aiFeedback.scores.readability}/10</span>
+                                              <span className="text-xs">
+                                                {item.aiFeedback.scores.readability >= 7 ? '✅' : 
+                                                 item.aiFeedback.scores.readability < 5 ? '⚠️' : '📊'}
+                                              </span>
                                             </div>
                                           </div>
                                         </div>
@@ -788,6 +808,10 @@ export default function InterviewRoom() {
                                               />
                                             </div>
                                             <span className="text-sm font-bold text-indigo-600">{item.aiFeedback.scores.overall}/10</span>
+                                            <span className="text-sm">
+                                              {item.aiFeedback.scores.overall >= 7 ? '✅' : 
+                                               item.aiFeedback.scores.overall < 5 ? '⚠️' : '📊'}
+                                            </span>
                                           </div>
                                         </div>
                                         {/* AI Assessment Note */}
@@ -1096,6 +1120,111 @@ export default function InterviewRoom() {
                     <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg border leading-relaxed">
                       {generatedSummary}
                     </div>
+                    
+                    {/* Enhanced feedback section with scores and indicators */}
+                    {questionHistory.length > 0 && questionHistory[0].aiFeedback && (
+                      <div className="bg-white border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-sm font-semibold text-gray-800">Performance Metrics</h4>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-lg ${
+                              questionHistory[0].aiFeedback.scores.overall < 5 ? '' : 
+                              questionHistory[0].aiFeedback.scores.overall >= 7 ? '' : ''
+                            }`}>
+                              {questionHistory[0].aiFeedback.scores.overall < 5 ? '⚠️' : 
+                               questionHistory[0].aiFeedback.scores.overall >= 7 ? '✅' : '📊'}
+                            </span>
+                            <span className="text-sm font-bold text-indigo-600">
+                              {questionHistory[0].aiFeedback.scores.overall}/10
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Detailed scores grid */}
+                        <div className="grid grid-cols-2 gap-3 mb-4">
+                          <div className="text-xs">
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-600">Correctness (30%):</span>
+                              <div className="flex items-center gap-1">
+                                <span className="font-medium">{questionHistory[0].aiFeedback.scores.correctness}/10</span>
+                                <span className="text-xs">
+                                  {questionHistory[0].aiFeedback.scores.correctness >= 7 ? '✅' : 
+                                   questionHistory[0].aiFeedback.scores.correctness < 5 ? '⚠️' : '📊'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-xs">
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-600">Relevance (30%):</span>
+                              <div className="flex items-center gap-1">
+                                <span className="font-medium">{questionHistory[0].aiFeedback.scores.relevance || questionHistory[0].aiFeedback.scores.correctness}/10</span>
+                                <span className="text-xs">
+                                  {(questionHistory[0].aiFeedback.scores.relevance || questionHistory[0].aiFeedback.scores.correctness) >= 7 ? '✅' : 
+                                   (questionHistory[0].aiFeedback.scores.relevance || questionHistory[0].aiFeedback.scores.correctness) < 5 ? '⚠️' : '📊'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-xs">
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-600">Efficiency (15%):</span>
+                              <div className="flex items-center gap-1">
+                                <span className="font-medium">{questionHistory[0].aiFeedback.scores.efficiency}/10</span>
+                                <span className="text-xs">
+                                  {questionHistory[0].aiFeedback.scores.efficiency >= 7 ? '✅' : 
+                                   questionHistory[0].aiFeedback.scores.efficiency < 5 ? '⚠️' : '📊'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-xs">
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-600">Readability (15%):</span>
+                              <div className="flex items-center gap-1">
+                                <span className="font-medium">{questionHistory[0].aiFeedback.scores.readability}/10</span>
+                                <span className="text-xs">
+                                  {questionHistory[0].aiFeedback.scores.readability >= 7 ? '✅' : 
+                                   questionHistory[0].aiFeedback.scores.readability < 5 ? '⚠️' : '📊'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-xs">
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-600">Quality (10%):</span>
+                              <div className="flex items-center gap-1">
+                                <span className="font-medium">{questionHistory[0].aiFeedback.scores.quality}/10</span>
+                                <span className="text-xs">
+                                  {questionHistory[0].aiFeedback.scores.quality >= 7 ? '✅' : 
+                                   questionHistory[0].aiFeedback.scores.quality < 5 ? '⚠️' : '📊'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* AI-generated verdict */}
+                        {questionHistory[0].aiFeedback.scoreNote && (
+                          <div className={`text-xs px-3 py-2 rounded-lg font-medium text-center ${
+                            questionHistory[0].aiFeedback.scores.overall < 3 
+                              ? 'bg-red-100 text-red-700' 
+                              : questionHistory[0].aiFeedback.scores.overall < 5 
+                              ? 'bg-yellow-100 text-yellow-700'
+                              : questionHistory[0].aiFeedback.scores.overall < 7 
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-green-100 text-green-700'
+                          }`}>
+                            <span className="mr-1">
+                              {questionHistory[0].aiFeedback.scores.overall < 5 ? '⚠️' : 
+                               questionHistory[0].aiFeedback.scores.overall >= 7 ? '✅' : '📊'}
+                            </span>
+                            {questionHistory[0].aiFeedback.scoreNote}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
                     <Button
                       onClick={() => setGeneratedSummary("")}
                       variant="outline"
