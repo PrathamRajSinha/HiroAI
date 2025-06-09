@@ -183,7 +183,7 @@ export default function CreateInterview() {
         </div>
 
         {/* Action Buttons */}
-        <div className="text-center space-y-3">
+        <div className="text-center space-y-6">
           <Button
             onClick={openInterviewRoom}
             className="w-full bg-violet-600 hover:bg-violet-700 text-white font-medium text-lg shadow-lg hover:shadow-xl"
