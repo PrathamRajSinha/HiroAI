@@ -152,12 +152,13 @@ export default function CreateInterview() {
                   {interviewerLink}
                 </div>
               </div>
-              <button
+              <Button
                 onClick={() => copyToClipboard(interviewerLink, "Interviewer")}
-                className="ml-4 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                className="ml-4 bg-blue-600 hover:bg-blue-700"
+                size="sm"
               >
                 📋 Copy
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -170,40 +171,44 @@ export default function CreateInterview() {
                   {candidateLink}
                 </div>
               </div>
-              <button
+              <Button
                 onClick={() => copyToClipboard(candidateLink, "Candidate")}
-                className="ml-4 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                className="ml-4 bg-green-600 hover:bg-green-700"
+                size="sm"
               >
                 📋 Copy
-              </button>
+              </Button>
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
         <div className="text-center space-y-3">
-          <button
+          <Button
             onClick={openInterviewRoom}
-            className="w-full px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium text-lg transition-colors shadow-lg hover:shadow-xl"
+            className="w-full bg-violet-600 hover:bg-violet-700 text-white font-medium text-lg shadow-lg hover:shadow-xl"
+            size="lg"
           >
             Go to Interview Room
-          </button>
+          </Button>
           <Link href="/dashboard">
-            <Button className="w-full bg-blue-600 hover:bg-blue-700">
+            <Button className="w-full bg-blue-600 hover:bg-blue-700" size="lg">
               View Interview Dashboard
             </Button>
           </Link>
-          <button
+          <Button
             onClick={() => {
               setIsRoomCreated(false);
               setInterviewTitle("");
               setCandidateName("");
               setRoomId("");
             }}
-            className="w-full px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors"
+            variant="outline"
+            className="w-full"
+            size="lg"
           >
             Create New Room
-          </button>
+          </Button>
         </div>
 
         {/* Instructions */}
