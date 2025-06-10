@@ -65,7 +65,7 @@ export default function CreateInterview() {
               <img 
                 src={hiroLogo} 
                 alt="Hiro.ai Logo" 
-                className="w-8 h-8"
+                className="w-10 h-10"
               />
               <span className="text-xl font-bold text-foreground">Hiro.ai</span>
             </div>
@@ -81,11 +81,11 @@ export default function CreateInterview() {
         <div className="flex items-center justify-center p-4 pt-16">
           <div className="bg-card rounded-xl shadow-lg p-8 max-w-md w-full border border-border">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <img 
                   src={hiroLogo} 
                   alt="Hiro.ai Logo" 
-                  className="w-8 h-8"
+                  className="w-12 h-12"
                 />
               </div>
               <h1 className="text-2xl font-bold text-foreground mb-2">Create Interview Room</h1>

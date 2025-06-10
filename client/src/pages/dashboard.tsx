@@ -105,7 +105,7 @@ export default function Dashboard() {
               <img 
                 src={hiroLogo} 
                 alt="Hiro.ai Logo" 
-                className="w-8 h-8"
+                className="w-10 h-10"
               />
               <span className="text-xl font-bold text-foreground">Hiro.ai</span>
             </div>
