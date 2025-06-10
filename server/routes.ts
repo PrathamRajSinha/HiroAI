@@ -189,30 +189,6 @@ ${topic ? `- Ensure the question directly relates to the specified topic: ${topi
     }
   });
 
-  // Create Daily.co room endpoint
-  app.post("/api/create-room", async (req, res) => {
-    try {
-      const { roomId } = req.body;
-      
-      if (!roomId) {
-        return res.status(400).json({ error: "Room ID is required" });
-      }
-
-      // For now, return a demo room URL structure
-      // In production, you would integrate with Daily.co API to create actual rooms
-      const roomUrl = `https://hiro-ai.daily.co/${roomId}`;
-      
-      res.json({ 
-        roomUrl,
-        roomId,
-        success: true 
-      });
-    } catch (error) {
-      console.error('Error creating room:', error);
-      res.status(500).json({ error: "Failed to create room" });
-    }
-  });
-
   // Generate code feedback summary
   app.post("/api/generate-summary", async (req, res) => {
     try {
