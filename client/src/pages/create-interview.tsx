@@ -174,91 +174,94 @@ export default function CreateInterview() {
             </p>
           </div>
 
-        {/* Room ID Display */}
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <div className="text-sm font-medium text-gray-700 mb-1">Room ID</div>
-          <div className="text-xl font-mono text-gray-900">{roomId}</div>
-        </div>
+          {/* Room ID Display */}
+          <div className="mb-6 p-4 bg-muted rounded-lg">
+            <div className="text-sm font-medium text-foreground mb-1">Room ID</div>
+            <div className="text-xl font-mono text-foreground">{roomId}</div>
+          </div>
 
-        {/* Links Section */}
-        <div className="space-y-4 mb-8">
-          {/* Interviewer Link */}
-          <div className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="text-sm font-medium text-gray-700 mb-1">Interviewer Link</div>
-                <div className="text-sm text-gray-600 break-all font-mono bg-gray-50 p-2 rounded">
-                  {interviewerLink}
+          {/* Links Section */}
+          <div className="space-y-4 mb-8">
+            {/* Interviewer Link */}
+            <div className="border border-border rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-foreground mb-1">Interviewer Link</div>
+                  <div className="text-sm text-muted-foreground break-all font-mono bg-muted p-2 rounded">
+                    {interviewerLink}
+                  </div>
                 </div>
+                <Button
+                  onClick={() => copyToClipboard(interviewerLink, "Interviewer")}
+                  className="ml-4"
+                  size="sm"
+                  variant="secondary"
+                >
+                  Copy
+                </Button>
               </div>
-              <Button
-                onClick={() => copyToClipboard(interviewerLink, "Interviewer")}
-                className="ml-4 bg-blue-600 hover:bg-blue-700"
-                size="sm"
-              >
-                📋 Copy
-              </Button>
+            </div>
+
+            {/* Candidate Link */}
+            <div className="border border-border rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-foreground mb-1">Candidate Link</div>
+                  <div className="text-sm text-muted-foreground break-all font-mono bg-muted p-2 rounded">
+                    {candidateLink}
+                  </div>
+                </div>
+                <Button
+                  onClick={() => copyToClipboard(candidateLink, "Candidate")}
+                  className="ml-4"
+                  size="sm"
+                  variant="secondary"
+                >
+                  Copy
+                </Button>
+              </div>
             </div>
           </div>
 
-          {/* Candidate Link */}
-          <div className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="text-sm font-medium text-gray-700 mb-1">Candidate Link</div>
-                <div className="text-sm text-gray-600 break-all font-mono bg-gray-50 p-2 rounded">
-                  {candidateLink}
-                </div>
-              </div>
-              <Button
-                onClick={() => copyToClipboard(candidateLink, "Candidate")}
-                className="ml-4 bg-green-600 hover:bg-green-700"
-                size="sm"
-              >
-                📋 Copy
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="text-center space-y-6">
-          <Button
-            onClick={openInterviewRoom}
-            className="w-full bg-violet-600 hover:bg-violet-700 text-white font-medium text-lg shadow-lg hover:shadow-xl"
-            size="lg"
-          >
-            Go to Interview Room
-          </Button>
-          <Link href="/dashboard">
-            <Button className="w-full bg-blue-600 hover:bg-blue-700" size="lg">
-              View Interview Dashboard
+          {/* Action Buttons */}
+          <div className="text-center space-y-4">
+            <Button
+              onClick={openInterviewRoom}
+              className="w-full"
+              size="lg"
+            >
+              Go to Interview Room
             </Button>
-          </Link>
-          <Button
-            onClick={() => {
-              setIsRoomCreated(false);
-              setInterviewTitle("");
-              setCandidateName("");
-              setRoomId("");
-            }}
-            variant="outline"
-            className="w-full"
-            size="lg"
-          >
-            Create New Room
-          </Button>
-        </div>
+            <Link href="/dashboard">
+              <Button className="w-full" variant="secondary" size="lg">
+                View Interview Dashboard
+              </Button>
+            </Link>
+            <Button
+              onClick={() => {
+                setIsRoomCreated(false);
+                setInterviewTitle("");
+                setCandidateName("");
+                setRoomId("");
+              }}
+              variant="outline"
+              className="w-full"
+              size="lg"
+            >
+              Create New Room
+            </Button>
+          </div>
 
-        {/* Instructions */}
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <div className="text-sm text-blue-800">
-            <div className="font-medium mb-2">Instructions:</div>
-            <ul className="list-disc list-inside space-y-1 text-blue-700">
-              <li>Send the interviewer link to the person conducting the interview</li>
-              <li>Send the candidate link to the person being interviewed</li>
-              <li>Both participants can join the same room to collaborate in real-time</li>
-            </ul>
+          {/* Instructions */}
+          <div className="mt-6 p-4 bg-accent/10 rounded-lg border border-accent/20">
+            <div className="text-sm text-foreground">
+              <div className="font-medium mb-2">Instructions:</div>
+              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                <li>Send the interviewer link to the person conducting the interview</li>
+                <li>Send the candidate link to the person being interviewed</li>
+                <li>Both participants can join the same room to collaborate in real-time</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
