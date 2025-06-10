@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import hiroLogo from "@assets/logo hiro_1749550404647.png";
 
 export default function CreateInterview() {
   const [roomId, setRoomId] = useState<string>("");
@@ -62,7 +63,7 @@ export default function CreateInterview() {
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <img 
-                src="/attached_assets/logo%20hiro_1749550404647.png" 
+                src={hiroLogo} 
                 alt="Hiro.ai Logo" 
                 className="w-8 h-8"
               />
@@ -82,7 +83,7 @@ export default function CreateInterview() {
             <div className="text-center mb-8">
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <img 
-                  src="/attached_assets/logo%20hiro_1749550404647.png" 
+                  src={hiroLogo} 
                   alt="Hiro.ai Logo" 
                   className="w-8 h-8"
                 />

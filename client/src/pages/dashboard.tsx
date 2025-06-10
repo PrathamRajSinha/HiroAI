@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Eye, Plus, Search, Users, Calendar, Clock, Trophy, FileText } from "lucide-react";
+import hiroLogo from "@assets/logo hiro_1749550404647.png";
 
 interface InterviewSession {
   id: string;
@@ -102,7 +103,7 @@ export default function Dashboard() {
           <Link href="/">
             <div className="flex items-center space-x-2">
               <img 
-                src="/attached_assets/logo%20hiro_1749550404647.png" 
+                src={hiroLogo} 
                 alt="Hiro.ai Logo" 
                 className="w-8 h-8"
               />
