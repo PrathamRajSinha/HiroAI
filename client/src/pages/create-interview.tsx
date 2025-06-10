@@ -61,9 +61,11 @@ export default function CreateInterview() {
         <nav className="bg-card border-b border-border px-6 py-4">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">H</span>
-              </div>
+              <img 
+                src="/attached_assets/logo%20hiro_1749550404647.png" 
+                alt="Hiro.ai Logo" 
+                className="w-8 h-8"
+              />
               <span className="text-xl font-bold text-foreground">Hiro.ai</span>
             </div>
             
@@ -79,9 +81,11 @@ export default function CreateInterview() {
           <div className="bg-card rounded-xl shadow-lg p-8 max-w-md w-full border border-border">
             <div className="text-center mb-8">
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold">H</span>
-                </div>
+                <img 
+                  src="/attached_assets/logo%20hiro_1749550404647.png" 
+                  alt="Hiro.ai Logo" 
+                  className="w-8 h-8"
+                />
               </div>
               <h1 className="text-2xl font-bold text-foreground mb-2">Create Interview Room</h1>
               <p className="text-muted-foreground">Set up a new technical interview session</p>

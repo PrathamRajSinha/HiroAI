@@ -101,9 +101,11 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link href="/">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">H</span>
-              </div>
+              <img 
+                src="/attached_assets/logo%20hiro_1749550404647.png" 
+                alt="Hiro.ai Logo" 
+                className="w-8 h-8"
+              />
               <span className="text-xl font-bold text-foreground">Hiro.ai</span>
             </div>
           </Link>
