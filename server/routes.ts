@@ -47,7 +47,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate coding interview question
   app.post("/api/generate-question", async (req, res) => {
     try {
-      const { type, difficulty, roomId, jobContext } = req.body;
+      const { type, difficulty, roomId, jobContext, topic } = req.body;
       
       if (!type || !difficulty) {
         return res.status(400).json({ error: "Type and difficulty are required" });
@@ -61,14 +61,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let prompt = "";
       
+      // Create topic-specific prompt prefix if topic is provided
+      let topicPrefix = "";
+      if (topic && topic.trim()) {
+        topicPrefix = `specifically focused on: ${topic.trim()}. `;
+      }
+      
       if (jobContext) {
-        prompt = `Generate a ${difficulty} ${type} interview question for a ${jobContext.seniorityLevel} ${jobContext.jobTitle} who will work with ${jobContext.techStack}. Focus the question on realistic skills they'll use on the job.
+        prompt = `Generate a ${difficulty} ${type} interview question ${topicPrefix}for a ${jobContext.seniorityLevel} ${jobContext.jobTitle} who will work with ${jobContext.techStack}. Focus the question on realistic skills they'll use on the job.
 
 Job Context:
 - Position: ${jobContext.jobTitle}
 - Level: ${jobContext.seniorityLevel}
 - Tech Stack: ${jobContext.techStack}
 - Role Type: ${jobContext.roleType}
+${topic ? `- Specific Topic Focus: ${topic}` : ''}
 
 Requirements:
 - Use plain text formatting without markdown symbols like ** or ##
@@ -77,10 +84,11 @@ Requirements:
 - Use bullet points with - for sub-items
 - Practical and relevant to real-world scenarios specific to their role
 - Focus on technologies and challenges they'll actually encounter
+${topic ? `- Ensure the question directly relates to the specified topic: ${topic}` : ''}
 
 `;
       } else {
-        prompt = `Generate a clean, well-formatted ${type} interview question for a frontend developer at ${difficulty} level.
+        prompt = `Generate a clean, well-formatted ${difficulty} ${type} interview question ${topicPrefix}for a software developer.
 
 Requirements:
 - Use plain text formatting without markdown symbols like ** or ##
@@ -88,6 +96,7 @@ Requirements:
 - Use simple numbering (1., 2., 3.) for lists
 - Use bullet points with - for sub-items
 - Practical and relevant to real-world scenarios
+${topic ? `- Ensure the question directly relates to the specified topic: ${topic}` : ''}
 
 `;
       }

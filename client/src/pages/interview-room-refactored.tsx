@@ -77,6 +77,14 @@ export default function InterviewRoom() {
   
   const { toast } = useToast();
 
+  // Function to highlight topic in question text
+  const highlightTopic = (text: string, topic: string) => {
+    if (!topic.trim()) return text;
+    
+    const regex = new RegExp(`(${topic.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(regex, '<strong>$1</strong>');
+  };
+
   // Load question history when component mounts or room changes
   useEffect(() => {
     const loadHistory = async () => {
@@ -691,9 +699,12 @@ export default function InterviewRoom() {
                       <Badge variant="secondary">{interviewData.questionType}</Badge>
                       <Badge variant="outline">{interviewData.difficulty}</Badge>
                     </div>
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg border">
-                      {interviewData.question}
-                    </div>
+                    <div 
+                      className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg border"
+                      dangerouslySetInnerHTML={{
+                        __html: highlightTopic(interviewData.question, customTopic)
+                      }}
+                    />
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
