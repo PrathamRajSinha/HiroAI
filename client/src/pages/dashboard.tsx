@@ -95,22 +95,36 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background">
+      {/* Top Navigation */}
+      <nav className="bg-card border-b border-border px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <Link href="/">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-lg">H</span>
+              </div>
+              <span className="text-xl font-bold text-foreground">Hiro.ai</span>
+            </div>
+          </Link>
+          
+          <Link href="/">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              New Interview
+            </Button>
+          </Link>
+        </div>
+      </nav>
+
+      <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Interview Dashboard</h1>
-              <p className="text-gray-600 mt-2">Manage and review all interview sessions</p>
+              <h1 className="text-3xl font-bold text-foreground">Interview Dashboard</h1>
+              <p className="text-muted-foreground mt-2">Manage and review all interview sessions</p>
             </div>
-            
-            <Link href="/">
-              <Button className="bg-violet-600 hover:bg-violet-700">
-                <Plus className="h-4 w-4 mr-2" />
-                New Interview
-              </Button>
-            </Link>
           </div>
         </div>
 
@@ -287,6 +301,13 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
+        
+        {/* Footer */}
+        <footer className="mt-16 pt-8 border-t border-border">
+          <div className="text-center text-sm text-muted-foreground">
+            © 2025 Hiro.ai — All rights reserved
+          </div>
+        </footer>
       </div>
     </div>
   );

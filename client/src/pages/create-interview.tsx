@@ -56,65 +56,83 @@ export default function CreateInterview() {
 
   if (!isRoomCreated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full">
-          <div className="text-center mb-8">
-            <div className="text-6xl mb-4">🎯</div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">Create Interview Room</h1>
-            <p className="text-gray-600">Set up a new technical interview session</p>
-            <div className="mt-4">
-              <Link href="/dashboard">
-                <Button variant="outline" size="sm">
-                  View Dashboard
-                </Button>
-              </Link>
+      <div className="min-h-screen bg-background">
+        {/* Top Navigation */}
+        <nav className="bg-card border-b border-border px-6 py-4">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-lg">H</span>
+              </div>
+              <span className="text-xl font-bold text-foreground">Hiro.ai</span>
             </div>
+            
+            <Link href="/dashboard">
+              <Button variant="outline">
+                View Dashboard
+              </Button>
+            </Link>
           </div>
+        </nav>
 
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Interview Title *
-              </label>
-              <input
-                type="text"
-                value={interviewTitle}
-                onChange={(e) => setInterviewTitle(e.target.value)}
-                placeholder="e.g., Frontend Developer Interview"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-              />
+        <div className="flex items-center justify-center p-4 pt-16">
+          <div className="bg-card rounded-xl shadow-lg p-8 max-w-md w-full border border-border">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <span className="text-primary-foreground font-bold">H</span>
+                </div>
+              </div>
+              <h1 className="text-2xl font-bold text-foreground mb-2">Create Interview Room</h1>
+              <p className="text-muted-foreground">Set up a new technical interview session</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Candidate Name (Optional)
-              </label>
-              <input
-                type="text"
-                value={candidateName}
-                onChange={(e) => setCandidateName(e.target.value)}
-                placeholder="e.g., John Smith"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-              />
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Interview Title *
+                </label>
+                <input
+                  type="text"
+                  value={interviewTitle}
+                  onChange={(e) => setInterviewTitle(e.target.value)}
+                  placeholder="e.g., Frontend Developer Interview"
+                  className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Candidate Name (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={candidateName}
+                  onChange={(e) => setCandidateName(e.target.value)}
+                  placeholder="e.g., John Smith"
+                  className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                />
+              </div>
+
+              <Button
+                onClick={createRoom}
+                className="w-full"
+                size="lg"
+              >
+                Create Interview Room
+              </Button>
             </div>
 
-            <button
-              onClick={createRoom}
-              className="w-full px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl"
-            >
-              Create Interview Room
-            </button>
-          </div>
-
-          <div className="mt-6 p-4 bg-violet-50 rounded-lg">
-            <div className="text-sm text-violet-800">
-              <div className="font-medium mb-2">Features:</div>
-              <ul className="list-disc list-inside space-y-1 text-violet-700">
-                <li>Real-time video chat with Daily.co</li>
-                <li>Collaborative Monaco code editor</li>
-                <li>AI-powered coding questions</li>
-                <li>Separate links for interviewer and candidate</li>
-              </ul>
+            <div className="mt-6 p-4 bg-accent/10 rounded-lg border border-accent/20">
+              <div className="text-sm text-foreground">
+                <div className="font-medium mb-2">Features:</div>
+                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                  <li>Real-time video chat with Daily.co</li>
+                  <li>Collaborative Monaco code editor</li>
+                  <li>AI-powered coding questions</li>
+                  <li>Separate links for interviewer and candidate</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
@@ -123,17 +141,38 @@ export default function CreateInterview() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-lg p-8 max-w-2xl w-full">
-        {/* Success Message */}
-        <div className="text-center mb-8">
-          <div className="text-6xl mb-4">✅</div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Interview Room Created!</h1>
-          <p className="text-gray-600">
-            {interviewTitle && `"${interviewTitle}" - `}
-            Share these links with the interviewer and candidate
-          </p>
+    <div className="min-h-screen bg-background">
+      {/* Top Navigation */}
+      <nav className="bg-card border-b border-border px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-lg">H</span>
+            </div>
+            <span className="text-xl font-bold text-foreground">Hiro.ai</span>
+          </div>
+          
+          <Link href="/dashboard">
+            <Button variant="outline">
+              View Dashboard
+            </Button>
+          </Link>
         </div>
+      </nav>
+
+      <div className="flex items-center justify-center p-4 pt-16">
+        <div className="bg-card rounded-xl shadow-lg p-8 max-w-2xl w-full border border-border">
+          {/* Success Message */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">✅</span>
+            </div>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Interview Room Created!</h1>
+            <p className="text-muted-foreground">
+              {interviewTitle && `"${interviewTitle}" - `}
+              Share these links with the interviewer and candidate
+            </p>
+          </div>
 
         {/* Room ID Display */}
         <div className="mb-6 p-4 bg-gray-50 rounded-lg">
