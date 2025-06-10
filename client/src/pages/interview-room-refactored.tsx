@@ -43,6 +43,7 @@ export default function InterviewRoom() {
   const [linkedinUrl, setLinkedinUrl] = useState<string>("");
   const [questionType, setQuestionType] = useState<string>("Coding");
   const [difficulty, setDifficulty] = useState<string>("Medium");
+  const [customTopic, setCustomTopic] = useState<string>("");
   const [isGeneratingFromProfile, setIsGeneratingFromProfile] = useState<boolean>(false);
   
   // Generated questions for each source
@@ -114,8 +115,8 @@ export default function InterviewRoom() {
 
   // Mutations
   const generateQuestionMutation = useMutation({
-    mutationFn: async ({ type, difficulty, jobContext }: { type: string; difficulty: string; jobContext?: JobContext | null }) => {
-      return apiRequest("/api/generate-question", "POST", { type, difficulty, roomId, jobContext });
+    mutationFn: async ({ type, difficulty, jobContext, topic }: { type: string; difficulty: string; jobContext?: JobContext | null; topic?: string }) => {
+      return apiRequest("/api/generate-question", "POST", { type, difficulty, roomId, jobContext, topic });
     },
     onSuccess: async (data: { question: string }) => {
       await updateQuestion(data.question, questionType, difficulty);
@@ -389,8 +390,8 @@ export default function InterviewRoom() {
     }
   };
 
-  const generateSmartQuestion = (type: string, difficulty: string) => {
-    generateQuestionMutation.mutate({ type, difficulty, jobContext });
+  const generateSmartQuestion = (type: string, difficulty: string, topic?: string) => {
+    generateQuestionMutation.mutate({ type, difficulty, jobContext, topic });
   };
 
   // Job Context Setup Functions
@@ -1464,9 +1465,20 @@ export default function InterviewRoom() {
                 </select>
               </div>
               
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Topic (optional)</label>
+                <input
+                  type="text"
+                  value={customTopic}
+                  onChange={(e) => setCustomTopic(e.target.value)}
+                  placeholder="e.g. React useEffect, customer escalation, DSA arrays"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                />
+              </div>
+              
               <div className="grid grid-cols-2 gap-3">
                 <Button
-                  onClick={() => generateSmartQuestion(questionType, difficulty)}
+                  onClick={() => generateSmartQuestion(questionType, difficulty, customTopic)}
                   disabled={generateQuestionMutation.isPending}
                   className="bg-violet-600 hover:bg-violet-700"
                 >
