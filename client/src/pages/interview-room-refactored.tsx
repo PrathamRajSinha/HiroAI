@@ -720,6 +720,16 @@ export default function InterviewRoom() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {/* Debug info - remove later */}
+                {import.meta.env.DEV && (
+                  <div className="mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                    <div>Debug: firestoreLoading={String(firestoreLoading)}</div>
+                    <div>Debug: roomId={roomId}</div>
+                    <div>Debug: interviewData.question exists={Boolean(interviewData.question)}</div>
+                    <div>Debug: error={firestoreError}</div>
+                  </div>
+                )}
+                
                 {interviewData.question ? (
                   <div className="space-y-3">
                     <div className="flex gap-2">
