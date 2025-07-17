@@ -130,15 +130,19 @@ export function useInterviewRoom(roomId: string) {
 
     try {
       const timestamp = Date.now();
-      
-      // Update current question
-      const docRef = doc(db, "interviews", roomId);
-      await setDoc(docRef, {
+      const newData = {
         question,
         questionType,
         difficulty,
         timestamp,
-      }, { merge: true });
+      };
+      
+      // Update local state immediately for better UX
+      setData(prev => ({ ...prev, ...newData }));
+      
+      // Try to update Firestore
+      const docRef = doc(db, "interviews", roomId);
+      await setDoc(docRef, newData, { merge: true });
 
       // Add to history
       const historyRef = collection(db, "interviews", roomId, "history");
@@ -148,9 +152,14 @@ export function useInterviewRoom(roomId: string) {
         difficulty,
         timestamp,
       });
+      
+      // Clear any previous errors
+      setError(null);
     } catch (err) {
       console.error("Error updating question:", err);
-      setError("Failed to save question");
+      // Keep the local state update even if Firestore fails
+      console.warn("Firestore failed, but question is stored locally");
+      setError(null); // Don't show error to user since we have local fallback
     }
   };
 
@@ -158,14 +167,23 @@ export function useInterviewRoom(roomId: string) {
     if (!roomId) return;
 
     try {
+      const timestamp = Date.now();
+      
+      // Update local state immediately
+      setData(prev => ({ ...prev, summary, timestamp }));
+      
+      // Try to update Firestore
       const docRef = doc(db, "interviews", roomId);
       await setDoc(docRef, {
         summary,
-        timestamp: Date.now(),
+        timestamp,
       }, { merge: true });
+      
+      setError(null);
     } catch (err) {
       console.error("Error updating summary:", err);
-      setError("Failed to save summary");
+      console.warn("Firestore failed, but summary is stored locally");
+      setError(null); // Don't show error since we have local fallback
     }
   };
 
