@@ -17,10 +17,6 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 // Initialize Firestore
 export const db = getFirestore(app);
 
-// Test connection and log any issues
-console.log("Firebase initialized with config:", {
-  projectId: firebaseConfig.projectId,
-  authDomain: firebaseConfig.authDomain
-});
+
 
 export default app;
