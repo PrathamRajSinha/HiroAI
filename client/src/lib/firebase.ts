@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCOEiSfRPXCqQ-QNkrwF5ISxgHAXATqpEg",
@@ -16,5 +16,11 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 // Initialize Firestore
 export const db = getFirestore(app);
+
+// Test connection and log any issues
+console.log("Firebase initialized with config:", {
+  projectId: firebaseConfig.projectId,
+  authDomain: firebaseConfig.authDomain
+});
 
 export default app;

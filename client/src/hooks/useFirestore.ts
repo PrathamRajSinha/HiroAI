@@ -130,19 +130,15 @@ export function useInterviewRoom(roomId: string) {
 
     try {
       const timestamp = Date.now();
-      const newData = {
+      
+      // Update current question
+      const docRef = doc(db, "interviews", roomId);
+      await setDoc(docRef, {
         question,
         questionType,
         difficulty,
         timestamp,
-      };
-      
-      // Update local state immediately for better UX
-      setData(prev => ({ ...prev, ...newData }));
-      
-      // Try to update Firestore
-      const docRef = doc(db, "interviews", roomId);
-      await setDoc(docRef, newData, { merge: true });
+      }, { merge: true });
 
       // Add to history
       const historyRef = collection(db, "interviews", roomId, "history");
@@ -152,14 +148,20 @@ export function useInterviewRoom(roomId: string) {
         difficulty,
         timestamp,
       });
-      
-      // Clear any previous errors
-      setError(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error updating question:", err);
-      // Keep the local state update even if Firestore fails
-      console.warn("Firestore failed, but question is stored locally");
-      setError(null); // Don't show error to user since we have local fallback
+      console.error("Error code:", err.code);
+      console.error("Error message:", err.message);
+      
+      let errorMessage = "Failed to save question";
+      if (err.code === 'permission-denied') {
+        errorMessage = "Permission denied - Firestore security rules need to be configured";
+      } else if (err.code === 'failed-precondition') {
+        errorMessage = "Firestore connection failed - check Firebase project settings";
+      }
+      
+      setError(errorMessage);
+      throw err;
     }
   };
 
