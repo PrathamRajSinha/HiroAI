@@ -55,6 +55,7 @@ export default function InterviewRoom() {
   const [jobContext, setJobContext] = useState<JobContext | null>(null);
   const [showJobContextDialog, setShowJobContextDialog] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [hasCheckedJobContext, setHasCheckedJobContext] = useState(false);
   const [candidateName, setCandidateName] = useState("");
   const [candidateEmail, setCandidateEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
@@ -99,16 +100,17 @@ export default function InterviewRoom() {
   // Load job context when component mounts
   useEffect(() => {
     const loadJobContext = async () => {
-      if (roomId) {
+      if (roomId && !hasCheckedJobContext) {
         const context = await getJobContext();
         setJobContext(context);
+        setHasCheckedJobContext(true);
         if (!context && isInterviewer) {
           setShowJobContextDialog(true);
         }
       }
     };
     loadJobContext();
-  }, [roomId, getJobContext, isInterviewer]);
+  }, [roomId, getJobContext, isInterviewer, hasCheckedJobContext]);
 
   // Reload history when a new question is added
   useEffect(() => {
