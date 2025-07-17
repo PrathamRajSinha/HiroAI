@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation, useParams } from "wouter";
-import { useInterviewRoom, QuestionHistory, JobContext } from "@/hooks/useFirestore";
+import { useInterviewRoom, QuestionHistory, JobContext, useSentQuestions, SentQuestion } from "@/hooks/useFirestore";
 import { useCodeSync } from "@/hooks/useCodeSync";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
 
-type TabType = "question" | "history" | "resume" | "github" | "linkedin" | "feedback";
+type TabType = "question" | "history" | "resume" | "github" | "linkedin" | "feedback" | "live-questions";
 
 export default function InterviewRoom() {
   const params = useParams();
@@ -62,7 +62,10 @@ export default function InterviewRoom() {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   
   // Firebase Firestore integration
-  const { data: interviewData, loading: firestoreLoading, error: firestoreError, updateQuestion, updateSummary, getQuestionHistory, updateQuestionWithCode, saveJobContext, getJobContext, updateInterviewData } = useInterviewRoom(roomId || "");
+  const { data: interviewData, loading: firestoreLoading, error: firestoreError, updateQuestion, updateSummary, getQuestionHistory, updateQuestionWithCode, saveJobContext, getJobContext, updateInterviewData, sendQuestionToCandidate, getSentQuestions } = useInterviewRoom(roomId || "");
+  
+  // Real-time sent questions for candidates
+  const { sentQuestions, loading: sentQuestionsLoading } = useSentQuestions(roomId || "");
   
   // Previous questions state
   const [questionHistory, setQuestionHistory] = useState<QuestionHistory[]>([]);
@@ -160,6 +163,26 @@ export default function InterviewRoom() {
       toast({
         title: "Error",
         description: "Failed to generate summary. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const sendToCandidateMutation = useMutation({
+    mutationFn: async ({ question, questionType, difficulty }: { question: string; questionType: string; difficulty: string }) => {
+      await sendQuestionToCandidate(question, questionType, difficulty);
+      return { success: true };
+    },
+    onSuccess: () => {
+      toast({
+        title: "Question Sent",
+        description: "Question has been sent to the candidate successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to send question to candidate. Please try again.",
         variant: "destructive",
       });
     },
@@ -707,6 +730,19 @@ export default function InterviewRoom() {
                         __html: highlightTopic(interviewData.question, customTopic)
                       }}
                     />
+                    <div className="flex justify-end mt-4">
+                      <Button
+                        onClick={() => sendToCandidateMutation.mutate({
+                          question: interviewData.question || "",
+                          questionType: interviewData.questionType || "General",
+                          difficulty: interviewData.difficulty || "Medium"
+                        })}
+                        disabled={sendToCandidateMutation.isPending}
+                        className="bg-violet-600 hover:bg-violet-700 text-white"
+                      >
+                        {sendToCandidateMutation.isPending ? "Sending..." : "📤 Send to Candidate"}
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
@@ -1030,14 +1066,30 @@ export default function InterviewRoom() {
                                 <div className="text-sm font-medium text-orange-800 mb-2">Question {index + 1}</div>
                                 <div className="text-sm text-gray-700 whitespace-pre-wrap">{question}</div>
                               </div>
-                              <Button
-                                onClick={() => updateQuestion(question, "Resume Analysis", "Medium")}
-                                size="sm"
-                                variant="outline"
-                                className="border-orange-300 text-orange-700 hover:bg-orange-100"
-                              >
-                                Use This
-                              </Button>
+                              <div className="flex flex-col gap-2">
+                                <Button
+                                  onClick={() => updateQuestion(question, "Resume Analysis", "Medium")}
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                                >
+                                  Use This
+                                </Button>
+                                {isInterviewer && (
+                                  <Button
+                                    onClick={() => sendToCandidateMutation.mutate({
+                                      question,
+                                      questionType: "Resume Analysis",
+                                      difficulty: "Medium"
+                                    })}
+                                    size="sm"
+                                    disabled={sendToCandidateMutation.isPending}
+                                    className="bg-orange-600 hover:bg-orange-700 text-white"
+                                  >
+                                    {sendToCandidateMutation.isPending ? "Sending..." : "Send to Candidate"}
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
@@ -1098,14 +1150,30 @@ export default function InterviewRoom() {
                                 <div className="text-sm font-medium text-gray-800 mb-2">Question {index + 1}</div>
                                 <div className="text-sm text-gray-700 whitespace-pre-wrap">{question}</div>
                               </div>
-                              <Button
-                                onClick={() => updateQuestion(question, "GitHub Analysis", "Medium")}
-                                size="sm"
-                                variant="outline"
-                                className="border-gray-300 text-gray-700 hover:bg-gray-100"
-                              >
-                                Use This
-                              </Button>
+                              <div className="flex flex-col gap-2">
+                                <Button
+                                  onClick={() => updateQuestion(question, "GitHub Analysis", "Medium")}
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                                >
+                                  Use This
+                                </Button>
+                                {isInterviewer && (
+                                  <Button
+                                    onClick={() => sendToCandidateMutation.mutate({
+                                      question,
+                                      questionType: "GitHub Analysis",
+                                      difficulty: "Medium"
+                                    })}
+                                    size="sm"
+                                    disabled={sendToCandidateMutation.isPending}
+                                    className="bg-gray-700 hover:bg-gray-800 text-white"
+                                  >
+                                    {sendToCandidateMutation.isPending ? "Sending..." : "Send to Candidate"}
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
@@ -1166,14 +1234,30 @@ export default function InterviewRoom() {
                                 <div className="text-sm font-medium text-blue-800 mb-2">Question {index + 1}</div>
                                 <div className="text-sm text-gray-700 whitespace-pre-wrap">{question}</div>
                               </div>
-                              <Button
-                                onClick={() => updateQuestion(question, "LinkedIn Analysis", "Medium")}
-                                size="sm"
-                                variant="outline"
-                                className="border-blue-300 text-blue-700 hover:bg-blue-100"
-                              >
-                                Use This
-                              </Button>
+                              <div className="flex flex-col gap-2">
+                                <Button
+                                  onClick={() => updateQuestion(question, "LinkedIn Analysis", "Medium")}
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                                >
+                                  Use This
+                                </Button>
+                                {isInterviewer && (
+                                  <Button
+                                    onClick={() => sendToCandidateMutation.mutate({
+                                      question,
+                                      questionType: "LinkedIn Analysis",
+                                      difficulty: "Medium"
+                                    })}
+                                    size="sm"
+                                    disabled={sendToCandidateMutation.isPending}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                  >
+                                    {sendToCandidateMutation.isPending ? "Sending..." : "Send to Candidate"}
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
@@ -1655,37 +1739,97 @@ export default function InterviewRoom() {
                 </TabsTrigger>
               </TabsList>
             ) : (
-              <div className="text-center">
-                <h2 className="text-lg font-bold text-gray-800 flex items-center justify-center gap-2">
-                  <MessageCircle className="h-5 w-5" />
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="question" className="flex items-center gap-1">
+                  <MessageCircle className="h-4 w-4" />
                   Current Question
-                </h2>
-              </div>
+                </TabsTrigger>
+                <TabsTrigger value="live-questions" className="flex items-center gap-1">
+                  <History className="h-4 w-4" />
+                  Live Questions ({sentQuestions.length})
+                </TabsTrigger>
+              </TabsList>
             )}
           </div>
           
           <div className="flex-1 overflow-hidden">
             {isCandidate ? (
-              // Candidates only see the current question with enhanced spacing
-              <div className="p-6 h-full overflow-y-auto">
-                <Card className="h-full">
-                  <CardContent className="pt-6 h-full flex flex-col">
-                    {interviewData.question ? (
-                      <div className="space-y-4 flex-1">
-                        <div className="text-base text-gray-800 whitespace-pre-wrap bg-gray-50 p-6 rounded-lg border leading-relaxed flex-1">
-                          {interviewData.question}
+              // Candidates see tabbed interface with current question and live questions
+              <>
+                <TabsContent value="question" className="p-6 h-full overflow-y-auto m-0">
+                  <Card className="h-full">
+                    <CardContent className="pt-6 h-full flex flex-col">
+                      {interviewData.question ? (
+                        <div className="space-y-4 flex-1">
+                          <div className="flex gap-2">
+                            <Badge variant="secondary">{interviewData.questionType}</Badge>
+                            <Badge variant="outline">{interviewData.difficulty}</Badge>
+                          </div>
+                          <div 
+                            className="text-base text-gray-800 whitespace-pre-wrap bg-gray-50 p-6 rounded-lg border leading-relaxed flex-1"
+                            dangerouslySetInnerHTML={{
+                              __html: highlightTopic(interviewData.question, customTopic)
+                            }}
+                          />
                         </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-12 text-gray-500 flex-1 flex flex-col justify-center">
-                        <MessageCircle className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-                        <div className="text-base font-medium mb-2">Waiting for Question</div>
-                        <div className="text-sm text-gray-400">The interviewer will generate a question for you to solve</div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
+                      ) : (
+                        <div className="text-center py-12 text-gray-500 flex-1 flex flex-col justify-center">
+                          <MessageCircle className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                          <div className="text-base font-medium mb-2">Waiting for Question</div>
+                          <div className="text-sm text-gray-400">The interviewer will generate a question for you to solve</div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="live-questions" className="p-6 h-full overflow-y-auto m-0">
+                  <Card className="h-full">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <History className="h-5 w-5" />
+                        Live Questions
+                        <Badge variant="secondary">{sentQuestions.length}</Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {sentQuestionsLoading ? (
+                        <div className="text-center py-8 text-gray-500">
+                          <div className="animate-spin h-8 w-8 border-2 border-violet-500 border-t-transparent rounded-full mx-auto mb-2"></div>
+                          <div className="text-sm">Loading questions...</div>
+                        </div>
+                      ) : sentQuestions.length > 0 ? (
+                        sentQuestions.map((question, index) => (
+                          <Card key={question.id} className="border border-violet-200 bg-violet-50">
+                            <CardContent className="p-4">
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex gap-2">
+                                    <Badge variant="secondary">{question.questionType}</Badge>
+                                    <Badge variant="outline">{question.difficulty}</Badge>
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {new Date(question.timestamp).toLocaleTimeString()}
+                                  </div>
+                                </div>
+                                <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                                  {question.question}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      ) : (
+                        <div className="text-center py-12 text-gray-500">
+                          <History className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                          <div className="text-base font-medium mb-2">No Questions Sent Yet</div>
+                          <div className="text-sm text-gray-400">Questions sent by the interviewer will appear here in real-time</div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </>
             ) : (
               // Interviewers see full tabbed interface
               renderTabContent()

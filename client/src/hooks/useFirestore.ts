@@ -2,6 +2,42 @@ import { useState, useEffect } from "react";
 import { doc, onSnapshot, setDoc, getDoc, collection, addDoc, query, orderBy, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
+// Custom hook for real-time sent questions listening
+export function useSentQuestions(roomId: string) {
+  const [sentQuestions, setSentQuestions] = useState<SentQuestion[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!roomId) {
+      setLoading(false);
+      return;
+    }
+
+    const sentQuestionsRef = collection(db, "interviews", roomId, "sentQuestions");
+    const q = query(sentQuestionsRef, orderBy("timestamp", "desc"));
+    
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const questions = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as SentQuestion));
+        setSentQuestions(questions);
+        setLoading(false);
+      },
+      (err) => {
+        console.error("Error listening to sent questions:", err);
+        setLoading(false);
+      }
+    );
+
+    return unsubscribe;
+  }, [roomId]);
+
+  return { sentQuestions, loading };
+}
+
 export interface InterviewData {
   question?: string;
   summary?: string;
@@ -43,6 +79,16 @@ export interface QuestionHistory {
   timestamp: number;
   candidateCode?: string;
   aiFeedback?: CodeFeedback;
+}
+
+export interface SentQuestion {
+  id: string;
+  question: string;
+  questionType: string;
+  difficulty: string;
+  timestamp: number;
+  sentBy: string;
+  isAsked: boolean;
 }
 
 export function useInterviewRoom(roomId: string) {
@@ -225,6 +271,45 @@ export function useInterviewRoom(roomId: string) {
     }
   };
 
+  const sendQuestionToCandidate = async (question: string, questionType: string, difficulty: string) => {
+    if (!roomId) return;
+
+    try {
+      const sentQuestionsRef = collection(db, "interviews", roomId, "sentQuestions");
+      const sentQuestion: Omit<SentQuestion, 'id'> = {
+        question,
+        questionType,
+        difficulty,
+        timestamp: Date.now(),
+        sentBy: "interviewer",
+        isAsked: true
+      };
+      
+      await addDoc(sentQuestionsRef, sentQuestion);
+    } catch (err) {
+      console.error("Error sending question to candidate:", err);
+      throw err;
+    }
+  };
+
+  const getSentQuestions = async (): Promise<SentQuestion[]> => {
+    if (!roomId) return [];
+
+    try {
+      const sentQuestionsRef = collection(db, "interviews", roomId, "sentQuestions");
+      const q = query(sentQuestionsRef, orderBy("timestamp", "desc"));
+      const querySnapshot = await getDocs(q);
+      
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as SentQuestion));
+    } catch (err) {
+      console.error("Error fetching sent questions:", err);
+      return [];
+    }
+  };
+
   return {
     data,
     loading,
@@ -237,5 +322,7 @@ export function useInterviewRoom(roomId: string) {
     saveJobContext,
     getJobContext,
     updateInterviewData,
+    sendQuestionToCandidate,
+    getSentQuestions,
   };
 }

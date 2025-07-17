@@ -70,6 +70,8 @@ A cutting-edge technical interview platform that transforms hiring processes thr
 - Real-time collaboration capabilities
 
 ## Recent Changes
+- **January 2025**: Added "Send to Candidate" feature with real-time Firestore sync
+- **January 2025**: Implemented Live Questions panel for candidates with real-time updates
 - **January 2025**: Added custom topic input field for question generation
 - **January 2025**: Enhanced backend API to support topic-focused questions
 - **January 2025**: Implemented topic highlighting in generated questions
