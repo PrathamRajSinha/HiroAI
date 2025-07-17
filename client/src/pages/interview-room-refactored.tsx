@@ -35,7 +35,7 @@ export default function InterviewRoom() {
   const isCandidate = role === "candidate";
   
   // State management
-  const [activeTab, setActiveTab] = useState<TabType>(isInterviewer ? "history" : "question");
+  const [activeTab, setActiveTab] = useState<TabType>("question");
   const [generatedSummary, setGeneratedSummary] = useState<string>("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeUrl, setResumeUrl] = useState<string>("");
@@ -133,6 +133,8 @@ export default function InterviewRoom() {
     },
     onSuccess: async (data: { question: string }) => {
       await updateQuestion(data.question, questionType, difficulty);
+      // Switch to question tab to show the generated question
+      setActiveTab("question");
       toast({
         title: "Question Generated",
         description: "New coding question has been generated successfully.",
