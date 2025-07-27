@@ -14,6 +14,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={CreateInterview} />
+      <Route path="/create-interview" component={CreateInterview} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/dashboard/interview/:roomId" component={InterviewThread} />
       <Route path="/interview/:roomId" component={InterviewRoom} />
