@@ -53,6 +53,9 @@ export const useSpeechToText = ({ roomId, questionId, onTranscriptUpdate }: UseT
       return;
     }
 
+    // Only initialize recognition if not already initialized
+    if (recognitionRef.current) return;
+
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
     
@@ -62,72 +65,106 @@ export const useSpeechToText = ({ roomId, questionId, onTranscriptUpdate }: UseT
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
+      console.log('Speech recognition started');
       setIsListening(true);
       setError(null);
     };
 
     recognition.onresult = (event: any) => {
       let interimTranscript = '';
-      let finalTranscript = transcript;
+      let currentFinalTranscript = '';
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcriptSegment = event.results[i][0].transcript;
         
         if (event.results[i].isFinal) {
-          finalTranscript += transcriptSegment + ' ';
+          currentFinalTranscript += transcriptSegment + ' ';
         } else {
           interimTranscript += transcriptSegment;
         }
       }
 
-      setTranscript(finalTranscript);
-      setInterimTranscript(interimTranscript);
-
-      // Save final transcript to Firestore
-      if (finalTranscript !== transcript) {
-        saveTranscript(finalTranscript);
+      // Update state with the current final transcript
+      if (currentFinalTranscript) {
+        setTranscript(prev => prev + currentFinalTranscript);
+        // Save the updated transcript
+        saveTranscript(transcript + currentFinalTranscript);
       }
+      
+      setInterimTranscript(interimTranscript);
     };
 
     recognition.onerror = (event: any) => {
       console.error('Speech recognition error:', event.error);
-      setError(`Speech recognition error: ${event.error}`);
+      
+      // Handle specific error cases
+      if (event.error === 'aborted') {
+        setError('Speech recognition was stopped');
+      } else if (event.error === 'not-allowed') {
+        setError('Microphone access denied. Please allow microphone access and try again.');
+      } else if (event.error === 'no-speech') {
+        setError('No speech was detected. Please try speaking again.');
+      } else {
+        setError(`Speech recognition error: ${event.error}`);
+      }
+      
       setIsListening(false);
     };
 
     recognition.onend = () => {
+      console.log('Speech recognition ended');
       setIsListening(false);
       setInterimTranscript('');
     };
 
     recognitionRef.current = recognition;
 
+    // Cleanup on unmount only
     return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.abort();
+      if (recognitionRef.current && isListening) {
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
       }
     };
-  }, [isSupported, transcript, saveTranscript]);
+  }, [isSupported]); // Remove transcript and saveTranscript dependencies to prevent re-initialization
 
   const startListening = useCallback(() => {
     if (!recognitionRef.current || isListening) return;
     
+    console.log('Attempting to start speech recognition...');
     setError(null);
     setTranscript('');
     setInterimTranscript('');
     
     try {
-      recognitionRef.current.start();
+      // Request microphone permissions first
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(() => {
+          console.log('Microphone permission granted');
+          recognitionRef.current.start();
+        })
+        .catch((err) => {
+          console.error('Microphone permission denied:', err);
+          setError('Microphone access is required for speech recognition. Please allow microphone access and try again.');
+        });
     } catch (err) {
       console.error('Error starting speech recognition:', err);
-      setError('Failed to start speech recognition');
+      setError('Failed to start speech recognition. Please ensure you are using a supported browser.');
     }
   }, [isListening]);
 
   const stopListening = useCallback(() => {
-    if (!recognitionRef.current || !isListening) return;
+    if (!recognitionRef.current) return;
     
-    recognitionRef.current.stop();
+    console.log('Stopping speech recognition...');
+    
+    try {
+      if (isListening) {
+        recognitionRef.current.stop();
+      }
+    } catch (err) {
+      console.error('Error stopping speech recognition:', err);
+    }
     
     // Mark transcript as complete in Firestore
     if (roomId && questionId && transcript.trim()) {
