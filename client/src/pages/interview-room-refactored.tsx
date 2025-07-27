@@ -20,6 +20,8 @@ import { VideoCall } from "@/components/video-call";
 import { SpeechTranscription } from "@/components/SpeechTranscription";
 import { TranscriptViewer } from "@/components/TranscriptViewer";
 import { QuestionTimeline } from "@/components/QuestionTimeline";
+import { InterviewCompletion } from "@/components/InterviewCompletion";
+import { CompletedInterviewView } from "@/components/CompletedInterviewView";
 import * as pdfjsLib from 'pdfjs-dist';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
@@ -64,6 +66,7 @@ export default function InterviewRoom() {
   const [companyName, setCompanyName] = useState("");
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [isTimelineCollapsed, setIsTimelineCollapsed] = useState(false);
+  const [isInterviewCompleted, setIsInterviewCompleted] = useState(false);
   
   // Firebase Firestore integration
   const { data: interviewData, loading: firestoreLoading, error: firestoreError, updateQuestion, updateSummary, getQuestionHistory, updateQuestionWithCode, saveJobContext, getJobContext, updateInterviewData, sendQuestionToCandidate, getSentQuestions } = useInterviewRoom(roomId || "");
@@ -118,6 +121,13 @@ export default function InterviewRoom() {
     };
     loadJobContext();
   }, [roomId, getJobContext, isInterviewer, hasCheckedJobContext]);
+
+  // Monitor interview completion status
+  useEffect(() => {
+    if (interviewData && interviewData.status === 'completed') {
+      setIsInterviewCompleted(true);
+    }
+  }, [interviewData]);
 
   // Reload history when a new question is added
   useEffect(() => {
@@ -1434,6 +1444,21 @@ export default function InterviewRoom() {
     }
   };
 
+  // Show completed interview view if interview is completed
+  if (isInterviewCompleted) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Interview Summary & Results</h1>
+            <div className="text-sm text-gray-600">Room ID: {roomId}</div>
+          </div>
+          <CompletedInterviewView roomId={roomId || ""} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen w-screen flex gap-6 p-4 bg-gray-50">
       {/* Left Panel - Video Call */}
@@ -1474,6 +1499,16 @@ export default function InterviewRoom() {
                       {jobContext.seniorityLevel} {jobContext.jobTitle}
                     </Badge>
                   )}
+                  <InterviewCompletion 
+                    roomId={roomId || ""}
+                    onInterviewCompleted={() => {
+                      setIsInterviewCompleted(true);
+                      toast({
+                        title: "Interview Completed",
+                        description: "Interview has been successfully completed and saved",
+                      });
+                    }}
+                  />
                   <Button 
                     onClick={handleEndInterview}
                     variant="destructive" 

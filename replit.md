@@ -70,6 +70,11 @@ A cutting-edge technical interview platform that transforms hiring processes thr
 - Real-time collaboration capabilities
 
 ## Recent Changes
+- **January 2025**: Added comprehensive "Mark Interview as Completed" functionality
+- **January 2025**: Implemented AI-powered final summary generation combining code quality, verbal transcripts, and profile insights
+- **January 2025**: Added interviewer feedback collection system with manual notes and hire/no hire decisions
+- **January 2025**: Created CompletedInterviewView for displaying final interview results and summaries
+- **January 2025**: Integrated interview completion workflow with status tracking and Firestore persistence
 - **January 2025**: Added "Send to Candidate" feature with real-time Firestore sync
 - **January 2025**: Implemented Live Questions panel for candidates with real-time updates
 - **January 2025**: Added custom topic input field for question generation

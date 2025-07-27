@@ -888,6 +888,202 @@ Format your response as a structured analysis that would be helpful for intervie
     }
   });
 
+  // Complete interview endpoint
+  app.post("/api/complete-interview", async (req, res) => {
+    try {
+      const { roomId } = req.body;
+      
+      if (!roomId) {
+        return res.status(400).json({ error: "Room ID is required" });
+      }
+
+      if (!process.env.GOOGLE_GEMINI_API_KEY) {
+        return res.status(500).json({ error: "Google Gemini API key not configured" });
+      }
+
+      // Collect all interview data
+      let interviewData: any = {};
+      let questionHistory: any[] = [];
+      let transcriptData: any[] = [];
+      let codeAnalysis: any = null;
+      let jobContext: any = null;
+
+      if (db) {
+        try {
+          // Get main interview data
+          const interviewDoc = await db.collection('interviews').doc(roomId).get();
+          if (interviewDoc.exists) {
+            interviewData = interviewDoc.data();
+          }
+
+          // Get question history
+          const historySnapshot = await db.collection('interviews').doc(roomId).collection('history').orderBy('timestamp', 'desc').get();
+          questionHistory = historySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+          // Get transcript data
+          const answersSnapshot = await db.collection('interviews').doc(roomId).collection('answers').get();
+          transcriptData = answersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+          // Get job context
+          const jobContextDoc = await db.collection('interviews').doc(roomId).collection('jobContext').doc('current').get();
+          if (jobContextDoc.exists) {
+            jobContext = jobContextDoc.data();
+          } else if (interviewData.jobContext) {
+            jobContext = interviewData.jobContext;
+          }
+
+          // Get latest code analysis
+          if (questionHistory.length > 0 && questionHistory[0].aiFeedback) {
+            codeAnalysis = questionHistory[0].aiFeedback;
+          }
+        } catch (firestoreError) {
+          console.error("Error fetching interview data:", firestoreError);
+        }
+      }
+
+      // Generate comprehensive AI summary
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      
+      let summaryPrompt = `As an expert technical interviewer, generate a comprehensive interview summary based on the following data:
+
+INTERVIEW CONTEXT:
+${jobContext ? `
+Position: ${jobContext.jobTitle} (${jobContext.seniorityLevel} level)
+Tech Stack: ${jobContext.techStack}
+Role Type: ${jobContext.roleType}
+` : 'No specific job context provided'}
+
+QUESTIONS ASKED:
+${questionHistory.length > 0 ? questionHistory.map((q, i) => `
+${i + 1}. ${q.question || 'N/A'}
+   Type: ${q.questionType || 'General'}
+   Difficulty: ${q.difficulty || 'Medium'}
+`).join('\n') : 'No questions recorded'}
+
+CODE PERFORMANCE:
+${codeAnalysis ? `
+Overall Score: ${codeAnalysis.scores?.overall || 'N/A'}/10
+Correctness: ${codeAnalysis.scores?.correctness || 'N/A'}/10
+Efficiency: ${codeAnalysis.scores?.efficiency || 'N/A'}/10
+Quality: ${codeAnalysis.scores?.quality || 'N/A'}/10
+Readability: ${codeAnalysis.scores?.readability || 'N/A'}/10
+
+AI Feedback: ${codeAnalysis.summary || 'No detailed feedback available'}
+${codeAnalysis.fullExplanation ? `Analysis: ${codeAnalysis.fullExplanation}` : ''}
+` : 'No code analysis available'}
+
+VERBAL RESPONSES:
+${transcriptData.length > 0 ? transcriptData.map((t, i) => `
+Response ${i + 1}: ${t.transcript || 'No transcript'}
+Word Count: ${t.wordCount || 0}
+`).join('\n') : 'No verbal responses recorded'}
+
+Please provide a structured summary covering:
+
+1. **Overall Performance Assessment** (2-3 sentences)
+2. **Technical Skills Evaluation** 
+   - Code quality and problem-solving approach
+   - Understanding of concepts and implementation
+3. **Communication Skills**
+   - Clarity and articulation during verbal responses
+   - Ability to explain technical concepts
+4. **Strengths Observed**
+   - Key positive aspects demonstrated
+5. **Areas for Improvement**
+   - Specific gaps or weaknesses identified
+6. **Recommendation Context**
+   - Factors to consider for hiring decision
+
+Keep the summary professional, objective, and actionable. Focus on specific observations rather than generic statements.`;
+
+      const result = await model.generateContent(summaryPrompt);
+      const response = await result.response;
+      const summary = response.text();
+
+      // Update interview status to completed
+      if (db) {
+        try {
+          await db.collection('interviews').doc(roomId).update({
+            status: 'completed',
+            completedAt: Date.now(),
+            preliminarySummary: summary
+          });
+        } catch (updateError) {
+          console.error("Error updating interview status:", updateError);
+        }
+      }
+
+      res.json({ 
+        summary,
+        interviewData: {
+          questionCount: questionHistory.length,
+          transcriptCount: transcriptData.length,
+          hasCodeAnalysis: !!codeAnalysis,
+          jobContext
+        }
+      });
+
+    } catch (error) {
+      console.error('Interview completion error:', error);
+      res.status(500).json({ 
+        error: "Failed to complete interview",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Submit interview feedback endpoint
+  app.post("/api/submit-interview-feedback", async (req, res) => {
+    try {
+      const { roomId, interviewerNotes, finalDecision, aiSummary } = req.body;
+      
+      if (!roomId || !finalDecision) {
+        return res.status(400).json({ error: "Room ID and final decision are required" });
+      }
+
+      const feedbackData = {
+        status: 'completed',
+        finalSummary: aiSummary,
+        interviewerNotes: interviewerNotes || '',
+        finalDecision,
+        completedAt: Date.now(),
+        completedBy: 'interviewer'
+      };
+
+      if (db) {
+        try {
+          // Save final summary and feedback
+          await db.collection('interviews').doc(roomId).collection('finalSummary').doc('complete').set({
+            ...feedbackData,
+            timestamp: Date.now()
+          });
+
+          // Update main interview document
+          await db.collection('interviews').doc(roomId).update({
+            status: 'completed',
+            finalDecision,
+            completedAt: Date.now()
+          });
+        } catch (firestoreError) {
+          console.error("Error saving interview feedback:", firestoreError);
+          return res.status(500).json({ error: "Failed to save feedback to database" });
+        }
+      }
+
+      res.json({ 
+        success: true,
+        message: "Interview completed and feedback saved successfully"
+      });
+
+    } catch (error) {
+      console.error('Interview feedback error:', error);
+      res.status(500).json({ 
+        error: "Failed to save interview feedback",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Export interview report endpoint
   app.post("/api/export-report", async (req, res) => {
     try {
