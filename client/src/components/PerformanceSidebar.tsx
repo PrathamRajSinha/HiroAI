@@ -241,7 +241,11 @@ export function PerformanceSidebar({ roomId, isCollapsed, onToggleCollapse }: Pe
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-violet-600 mb-1">
+                    <div className={cn(
+                      "text-3xl font-bold mb-1 transition-all duration-500",
+                      overallScores.overall >= 8 ? "text-green-600 animate-pulse" :
+                      overallScores.overall >= 6 ? "text-violet-600" : "text-red-600"
+                    )}>
                       {overallScores.overall}/10
                     </div>
                     <div className="text-xs text-gray-500">Average Score</div>
@@ -257,40 +261,40 @@ export function PerformanceSidebar({ roomId, isCollapsed, onToggleCollapse }: Pe
                         {overallScores.correctness}/10
                       </span>
                     </div>
-                    <Progress value={overallScores.correctness * 10} className="h-1" />
+                    <Progress value={overallScores.correctness * 10} className="h-1 transition-all duration-300" />
 
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-gray-600 flex items-center gap-1">
                         <Zap className="h-3 w-3" />
                         Efficiency
                       </span>
-                      <span className={cn("text-xs font-medium", getScoreColor(overallScores.efficiency))}>
+                      <span className={cn("text-xs font-medium transition-colors duration-300", getScoreColor(overallScores.efficiency))}>
                         {overallScores.efficiency}/10
                       </span>
                     </div>
-                    <Progress value={overallScores.efficiency * 10} className="h-1" />
+                    <Progress value={overallScores.efficiency * 10} className="h-1 transition-all duration-300" />
 
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-gray-600 flex items-center gap-1">
                         <Code className="h-3 w-3" />
                         Quality
                       </span>
-                      <span className={cn("text-xs font-medium", getScoreColor(overallScores.quality))}>
+                      <span className={cn("text-xs font-medium transition-colors duration-300", getScoreColor(overallScores.quality))}>
                         {overallScores.quality}/10
                       </span>
                     </div>
-                    <Progress value={overallScores.quality * 10} className="h-1" />
+                    <Progress value={overallScores.quality * 10} className="h-1 transition-all duration-300" />
 
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-gray-600 flex items-center gap-1">
                         <Eye className="h-3 w-3" />
                         Readability
                       </span>
-                      <span className={cn("text-xs font-medium", getScoreColor(overallScores.readability))}>
+                      <span className={cn("text-xs font-medium transition-colors duration-300", getScoreColor(overallScores.readability))}>
                         {overallScores.readability}/10
                       </span>
                     </div>
-                    <Progress value={overallScores.readability * 10} className="h-1" />
+                    <Progress value={overallScores.readability * 10} className="h-1 transition-all duration-300" />
                   </div>
                 </CardContent>
               </Card>

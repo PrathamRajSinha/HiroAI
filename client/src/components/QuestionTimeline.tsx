@@ -8,6 +8,7 @@ import { useInterviewRoom } from '@/hooks/useFirestore';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, orderBy, updateDoc, doc } from 'firebase/firestore';
 import { Clock, MessageCircle, Code, Mic, ChevronRight, ChevronDown, Eye, EyeOff, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 interface QuestionData {
@@ -72,6 +73,26 @@ export function QuestionTimeline({ roomId, isCollapsed, onToggleCollapse }: Ques
       newExpanded.add(questionId);
     }
     setExpandedQuestions(newExpanded);
+  };
+
+  const getStatusEmoji = (status: string) => {
+    switch (status) {
+      case 'not_sent': return '🟡';
+      case 'sent': return '📩';
+      case 'answered': return '💬';
+      case 'evaluated': return '✅';
+      default: return '🟡';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'not_sent': return 'Not Sent';
+      case 'sent': return 'Sent';
+      case 'answered': return 'Answered';
+      case 'evaluated': return 'Evaluated';
+      default: return 'Not Sent';
+    }
   };
 
   const updateQuestionStatus = async (questionId: string, newStatus: QuestionData['status']) => {
@@ -191,9 +212,17 @@ export function QuestionTimeline({ roomId, isCollapsed, onToggleCollapse }: Ques
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge className={cn("text-xs", getStatusColor(question.status))}>
-                        {question.status.replace('_', ' ').toUpperCase()}
-                      </Badge>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Badge className={cn("text-xs flex items-center gap-1", getStatusColor(question.status))}>
+                            <span>{getStatusEmoji(question.status)}</span>
+                            <span>{getStatusLabel(question.status)}</span>
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Status: {getStatusLabel(question.status)}
+                        </TooltipContent>
+                      </Tooltip>
                       <Button
                         variant="ghost"
                         size="sm"

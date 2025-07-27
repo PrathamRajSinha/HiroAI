@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FileText, Github, Linkedin, MessageCircle, History, ChevronDown, ChevronRight, Code, Brain, Video, Briefcase, Settings, Volume2 } from "lucide-react";
 import { VideoCall } from "@/components/video-call";
 import { SpeechTranscription } from "@/components/SpeechTranscription";
@@ -60,6 +61,9 @@ export default function InterviewRoom() {
   
   // Performance sidebar state
   const [isPerformanceSidebarCollapsed, setIsPerformanceSidebarCollapsed] = useState<boolean>(false);
+  
+  // UI animations state
+  const [showSendSuccess, setShowSendSuccess] = useState<boolean>(false);
   
   // Generated questions for each source
   const [generatedResumeQuestions, setGeneratedResumeQuestions] = useState<string[]>([]);
@@ -228,9 +232,13 @@ export default function InterviewRoom() {
       return { success: true };
     },
     onSuccess: () => {
+      // Show success animation
+      setShowSendSuccess(true);
+      setTimeout(() => setShowSendSuccess(false), 2000);
+      
       toast({
-        title: "Question Sent",
-        description: "Question has been sent to the candidate successfully.",
+        title: "✅ Question Sent Successfully",
+        description: "The question is now live in the candidate's panel.",
       });
     },
     onError: (error) => {
@@ -785,17 +793,28 @@ export default function InterviewRoom() {
                       }}
                     />
                     <div className="flex justify-end mt-4">
-                      <Button
-                        onClick={() => sendToCandidateMutation.mutate({
-                          question: interviewData.question || "",
-                          questionType: interviewData.questionType || "General",
-                          difficulty: interviewData.difficulty || "Medium"
-                        })}
-                        disabled={sendToCandidateMutation.isPending}
-                        className="bg-violet-600 hover:bg-violet-700 text-white"
-                      >
-                        {sendToCandidateMutation.isPending ? "Sending..." : "📤 Send to Candidate"}
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            onClick={() => sendToCandidateMutation.mutate({
+                              question: interviewData.question || "",
+                              questionType: interviewData.questionType || "General",
+                              difficulty: interviewData.difficulty || "Medium"
+                            })}
+                            disabled={sendToCandidateMutation.isPending}
+                            className={cn(
+                              "bg-violet-600 hover:bg-violet-700 text-white transition-all duration-300",
+                              showSendSuccess ? "bg-green-600 animate-pulse" : "hover:scale-105"
+                            )}
+                          >
+                            {sendToCandidateMutation.isPending ? "⏳ Sending..." : 
+                             showSendSuccess ? "✅ Sent!" : "📤 Send to Candidate"}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Send this question to the candidate's live panel</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                   </div>
                 ) : (
@@ -1105,13 +1124,20 @@ export default function InterviewRoom() {
                       </div>
                     )}
                     
-                    <Button
-                      onClick={generateFromResume}
-                      disabled={isGeneratingFromProfile}
-                      className="w-full bg-orange-600 hover:bg-orange-700"
-                    >
-                      {isGeneratingFromProfile ? "Generating..." : "Generate Questions from Resume"}
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={generateFromResume}
+                          disabled={isGeneratingFromProfile}
+                          className="w-full bg-orange-600 hover:bg-orange-700 transition-all duration-200 hover:scale-105"
+                        >
+                          {isGeneratingFromProfile ? "Generating..." : "📄 Generate Questions from Resume"}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Analyze uploaded resume to create personalized interview questions</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 )}
                 
@@ -1275,13 +1301,20 @@ export default function InterviewRoom() {
                   />
                 </div>
                 
-                <Button
-                  onClick={generateFromLinkedIn}
-                  disabled={isGeneratingFromProfile || !linkedinUrl.trim()}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                >
-                  {isGeneratingFromProfile ? "Generating..." : "Generate Questions from LinkedIn"}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={generateFromLinkedIn}
+                      disabled={isGeneratingFromProfile || !linkedinUrl.trim()}
+                      className="w-full bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:scale-105"
+                    >
+                      {isGeneratingFromProfile ? "Generating..." : "🔗 Generate Questions from LinkedIn"}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Analyze LinkedIn profile to generate role-specific interview questions</p>
+                  </TooltipContent>
+                </Tooltip>
                 
                 {/* Generated Questions Section */}
                 {generatedLinkedInQuestions.length > 0 && (
@@ -1850,35 +1883,81 @@ export default function InterviewRoom() {
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)} className="h-full flex flex-col">
           <div className="border-b border-gray-200 p-4">
             {isInterviewer ? (
-              <TabsList className="grid w-full grid-cols-7">
-                <TabsTrigger value="question" className="flex items-center gap-1">
-                  <MessageCircle className="h-4 w-4" />
-                  Question
-                </TabsTrigger>
-                <TabsTrigger value="transcript" className="flex items-center gap-1">
-                  <Volume2 className="h-4 w-4" />
-                  Speech
-                </TabsTrigger>
-                <TabsTrigger value="history" className="flex items-center gap-1">
-                  <History className="h-4 w-4" />
-                  History
-                </TabsTrigger>
-                <TabsTrigger value="feedback" className="flex items-center gap-1">
-                  <Brain className="h-4 w-4" />
-                  Feedback
-                </TabsTrigger>
-                <TabsTrigger value="resume" className="flex items-center gap-1">
-                  <FileText className="h-4 w-4" />
-                  Resume
-                </TabsTrigger>
-                <TabsTrigger value="github" className="flex items-center gap-1">
-                  <Github className="h-4 w-4" />
-                  GitHub
-                </TabsTrigger>
-                <TabsTrigger value="linkedin" className="flex items-center gap-1">
-                  <Linkedin className="h-4 w-4" />
-                  LinkedIn
-                </TabsTrigger>
+              <TabsList className="grid w-full grid-cols-7 bg-gray-100">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TabsTrigger value="question" className="flex items-center gap-1 transition-all duration-200">
+                      <MessageCircle className="h-4 w-4" />
+                      Question
+                    </TabsTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Generate and manage interview questions</TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TabsTrigger value="transcript" className="flex items-center gap-1 transition-all duration-200">
+                      <Volume2 className="h-4 w-4" />
+                      Speech
+                    </TabsTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>View live speech transcription</TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TabsTrigger value="history" className="flex items-center gap-1 transition-all duration-200">
+                      <History className="h-4 w-4" />
+                      History
+                      {questionHistory.length > 0 && (
+                        <Badge variant="secondary" className="ml-1 h-4 w-4 p-0 text-xs">
+                          {questionHistory.length}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>View question history and AI feedback</TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TabsTrigger value="feedback" className="flex items-center gap-1 transition-all duration-200">
+                      <Brain className="h-4 w-4" />
+                      Feedback
+                    </TabsTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Generate AI-powered feedback summary</TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TabsTrigger value="resume" className="flex items-center gap-1 transition-all duration-200">
+                      <FileText className="h-4 w-4" />
+                      Resume
+                    </TabsTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Upload and analyze resume for targeted questions</TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TabsTrigger value="github" className="flex items-center gap-1 transition-all duration-200">
+                      <Github className="h-4 w-4" />
+                      GitHub
+                    </TabsTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Analyze GitHub profile for technical questions</TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TabsTrigger value="linkedin" className="flex items-center gap-1 transition-all duration-200">
+                      <Linkedin className="h-4 w-4" />
+                      LinkedIn
+                    </TabsTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Generate questions from LinkedIn experience</TooltipContent>
+                </Tooltip>
               </TabsList>
             ) : (
               <TabsList className="grid w-full grid-cols-2">
