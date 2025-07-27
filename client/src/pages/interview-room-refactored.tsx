@@ -15,13 +15,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Github, Linkedin, MessageCircle, History, ChevronDown, ChevronRight, Code, Brain, Video, Briefcase, Settings } from "lucide-react";
+import { FileText, Github, Linkedin, MessageCircle, History, ChevronDown, ChevronRight, Code, Brain, Video, Briefcase, Settings, Volume2 } from "lucide-react";
 import { VideoCall } from "@/components/video-call";
+import { SpeechTranscription } from "@/components/SpeechTranscription";
+import { TranscriptViewer } from "@/components/TranscriptViewer";
 import * as pdfjsLib from 'pdfjs-dist';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
 
-type TabType = "question" | "history" | "resume" | "github" | "linkedin" | "feedback" | "live-questions";
+type TabType = "question" | "history" | "resume" | "github" | "linkedin" | "feedback" | "live-questions" | "transcript";
 
 export default function InterviewRoom() {
   const params = useParams();
@@ -755,6 +757,17 @@ export default function InterviewRoom() {
                 )}
               </CardContent>
             </Card>
+          </div>
+        );
+
+      case "transcript":
+        return (
+          <div className="p-4 h-full overflow-y-auto">
+            <TranscriptViewer
+              roomId={roomId || ""}
+              questionId={interviewData.question ? "current-question" : undefined}
+              currentQuestion={interviewData.question || undefined}
+            />
           </div>
         );
         
@@ -1714,10 +1727,14 @@ export default function InterviewRoom() {
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)} className="h-full flex flex-col">
           <div className="border-b border-gray-200 p-4">
             {isInterviewer ? (
-              <TabsList className="grid w-full grid-cols-6">
+              <TabsList className="grid w-full grid-cols-7">
                 <TabsTrigger value="question" className="flex items-center gap-1">
                   <MessageCircle className="h-4 w-4" />
                   Question
+                </TabsTrigger>
+                <TabsTrigger value="transcript" className="flex items-center gap-1">
+                  <Volume2 className="h-4 w-4" />
+                  Speech
                 </TabsTrigger>
                 <TabsTrigger value="history" className="flex items-center gap-1">
                   <History className="h-4 w-4" />
@@ -1759,30 +1776,42 @@ export default function InterviewRoom() {
               // Candidates see tabbed interface with current question and live questions
               <>
                 <TabsContent value="question" className="p-6 h-full overflow-y-auto m-0">
-                  <Card className="h-full">
-                    <CardContent className="pt-6 h-full flex flex-col">
-                      {interviewData.question ? (
-                        <div className="space-y-4 flex-1">
-                          <div className="flex gap-2">
-                            <Badge variant="secondary">{interviewData.questionType}</Badge>
-                            <Badge variant="outline">{interviewData.difficulty}</Badge>
+                  <div className="h-full flex flex-col gap-4">
+                    <Card className="flex-1">
+                      <CardContent className="pt-6 h-full flex flex-col">
+                        {interviewData.question ? (
+                          <div className="space-y-4 flex-1">
+                            <div className="flex gap-2">
+                              <Badge variant="secondary">{interviewData.questionType}</Badge>
+                              <Badge variant="outline">{interviewData.difficulty}</Badge>
+                            </div>
+                            <div 
+                              className="text-base text-gray-800 whitespace-pre-wrap bg-gray-50 p-6 rounded-lg border leading-relaxed flex-1"
+                              dangerouslySetInnerHTML={{
+                                __html: highlightTopic(interviewData.question, customTopic)
+                              }}
+                            />
                           </div>
-                          <div 
-                            className="text-base text-gray-800 whitespace-pre-wrap bg-gray-50 p-6 rounded-lg border leading-relaxed flex-1"
-                            dangerouslySetInnerHTML={{
-                              __html: highlightTopic(interviewData.question, customTopic)
-                            }}
-                          />
-                        </div>
-                      ) : (
-                        <div className="text-center py-12 text-gray-500 flex-1 flex flex-col justify-center">
-                          <MessageCircle className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-                          <div className="text-base font-medium mb-2">Waiting for Question</div>
-                          <div className="text-sm text-gray-400">The interviewer will generate a question for you to solve</div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                        ) : (
+                          <div className="text-center py-12 text-gray-500 flex-1 flex flex-col justify-center">
+                            <MessageCircle className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                            <div className="text-base font-medium mb-2">Waiting for Question</div>
+                            <div className="text-sm text-gray-400">The interviewer will generate a question for you to solve</div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                    
+                    {/* Speech Transcription Component */}
+                    <SpeechTranscription
+                      roomId={roomId || ""}
+                      questionId={interviewData.question ? `current-question` : undefined}
+                      isActive={!!interviewData.question}
+                      onTranscriptUpdate={(transcript) => {
+                        console.log('Transcript updated:', transcript);
+                      }}
+                    />
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="live-questions" className="p-6 h-full overflow-y-auto m-0">

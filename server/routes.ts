@@ -790,6 +790,58 @@ Be specific about how well the code addresses the original question requirements
     }
   });
 
+  // Summarize transcript endpoint
+  app.post("/api/summarize-transcript", async (req, res) => {
+    try {
+      const { transcript, question } = req.body;
+      
+      if (!transcript || !transcript.trim()) {
+        return res.status(400).json({ error: "Transcript is required" });
+      }
+
+      if (!process.env.GOOGLE_GEMINI_API_KEY) {
+        return res.status(500).json({ error: "Google Gemini API key not configured" });
+      }
+
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      
+      let prompt = `Please provide a comprehensive analysis of this candidate's spoken response during a technical interview:
+
+INTERVIEW QUESTION:
+${question || "No specific question provided"}
+
+CANDIDATE'S SPOKEN RESPONSE:
+${transcript}
+
+Please provide:
+1. A concise summary of their answer (2-3 sentences)
+2. Key technical points mentioned
+3. Communication clarity and structure
+4. Areas of strength in their response
+5. Areas that could be improved
+6. Overall assessment of their verbal communication skills
+
+Format your response as a structured analysis that would be helpful for interview evaluation.`;
+      
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const summary = response.text();
+
+      res.json({ 
+        summary,
+        wordCount: transcript.split(' ').filter((word: string) => word.length > 0).length,
+        analysisGenerated: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('Transcript summarization error:', error);
+      res.status(500).json({ 
+        error: "Failed to summarize transcript",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Export interview report endpoint
   app.post("/api/export-report", async (req, res) => {
     try {
