@@ -22,6 +22,7 @@ import { TranscriptViewer } from "@/components/TranscriptViewer";
 import { QuestionTimeline } from "@/components/QuestionTimeline";
 import { InterviewCompletion } from "@/components/InterviewCompletion";
 import { CompletedInterviewView } from "@/components/CompletedInterviewView";
+import { TemplateManager } from "@/components/TemplateManager";
 import * as pdfjsLib from 'pdfjs-dist';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
@@ -124,7 +125,7 @@ export default function InterviewRoom() {
 
   // Monitor interview completion status
   useEffect(() => {
-    if (interviewData && interviewData.status === 'completed') {
+    if (interviewData && (interviewData as any).status === 'completed') {
       setIsInterviewCompleted(true);
     }
   }, [interviewData]);
@@ -1625,22 +1626,54 @@ export default function InterviewRoom() {
                 />
               </div>
               
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  onClick={() => generateSmartQuestion(questionType, difficulty, customTopic)}
-                  disabled={generateQuestionMutation.isPending}
-                  className="bg-violet-600 hover:bg-violet-700"
-                >
-                  {generateQuestionMutation.isPending ? "⏳" : "✨"} Generate
-                </Button>
+              <div className="space-y-3">
+                <div className="flex justify-center">
+                  <TemplateManager 
+                    currentJobContext={jobContext}
+                    onLoadTemplate={(template) => {
+                      // Map template values to job context compatible values
+                      const mappedSeniorityLevel = template.seniorityLevel === 'Entry' ? 'Junior' : 
+                                                   template.seniorityLevel === 'Staff' || template.seniorityLevel === 'Principal' ? 'Senior' : 
+                                                   template.seniorityLevel as 'Junior' | 'Mid' | 'Senior';
+                      
+                      const mappedRoleType = ['Frontend', 'Backend', 'Fullstack', 'DevOps', 'Data Science', 'Mobile', 'QA', 'Product Manager'].includes(template.roleType) ? 'Coding' : 
+                                           template.roleType === 'Behavioral' ? 'Behavioral' : 
+                                           'System Design';
+                      
+                      const newJobContext = {
+                        jobTitle: template.jobTitle,
+                        seniorityLevel: mappedSeniorityLevel,
+                        roleType: mappedRoleType as 'Coding' | 'Behavioral' | 'System Design',
+                        techStack: template.techStack,
+                        department: template.department || ''
+                      };
+                      
+                      setJobContext(newJobContext);
+                      setQuestionType(template.defaultQuestionType);
+                      setDifficulty(template.defaultDifficulty);
+                      // Save loaded template as job context
+                      saveJobContext(newJobContext);
+                    }}
+                  />
+                </div>
                 
-                <Button
-                  onClick={generateSummary}
-                  disabled={generateSummaryMutation.isPending}
-                  variant="outline"
-                >
-                  {generateSummaryMutation.isPending ? "⏳" : "🧠"} Summary
-                </Button>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    onClick={() => generateSmartQuestion(questionType, difficulty, customTopic)}
+                    disabled={generateQuestionMutation.isPending}
+                    className="bg-violet-600 hover:bg-violet-700"
+                  >
+                    {generateQuestionMutation.isPending ? "⏳" : "✨"} Generate
+                  </Button>
+                  
+                  <Button
+                    onClick={generateSummary}
+                    disabled={generateSummaryMutation.isPending}
+                    variant="outline"
+                  >
+                    {generateSummaryMutation.isPending ? "⏳" : "🧠"} Summary
+                  </Button>
+                </div>
               </div>
               
               <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>

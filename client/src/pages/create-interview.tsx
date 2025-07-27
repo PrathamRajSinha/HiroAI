@@ -1,34 +1,117 @@
-import { useState } from "react";
-import { Link } from "wouter";
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { TemplateManager } from "@/components/TemplateManager";
+import { Settings, Briefcase, Copy } from "lucide-react";
 import hiroLogo from "@assets/logo hiro_1749550404647.png";
 
 export default function CreateInterview() {
-  const [roomId, setRoomId] = useState<string>("");
+  const [location] = useLocation();
   const [isRoomCreated, setIsRoomCreated] = useState<boolean>(false);
-  const [interviewTitle, setInterviewTitle] = useState<string>("");
+  const [roomId, setRoomId] = useState<string>("");
+  
+  // Interview configuration
   const [candidateName, setCandidateName] = useState<string>("");
+  const [interviewerName, setInterviewerName] = useState<string>("");
+  const [jobTitle, setJobTitle] = useState<string>("");
+  const [seniorityLevel, setSeniorityLevel] = useState<string>("");
+  const [roleType, setRoleType] = useState<string>("");
+  const [techStack, setTechStack] = useState<string>("");
+  const [department, setDepartment] = useState<string>("");
+  const [defaultQuestionType, setDefaultQuestionType] = useState<string>("");
+  const [defaultDifficulty, setDefaultDifficulty] = useState<string>("");
+  
   const { toast } = useToast();
 
+  // Load template data from URL parameters
+  useEffect(() => {
+    const params = new URLSearchParams(location.split('?')[1] || '');
+    const templateData = params.get('template');
+    
+    if (templateData) {
+      try {
+        const template = JSON.parse(templateData);
+        setJobTitle(template.jobTitle || '');
+        setSeniorityLevel(template.seniorityLevel || '');
+        setRoleType(template.roleType || '');
+        setTechStack(template.techStack || '');
+        setDepartment(template.department || '');
+        setDefaultQuestionType(template.defaultQuestionType || '');
+        setDefaultDifficulty(template.defaultDifficulty || '');
+        
+        toast({
+          title: "Template Loaded",
+          description: "Interview template has been applied to the form",
+        });
+      } catch (error) {
+        console.error('Error parsing template data:', error);
+      }
+    }
+  }, [location, toast]);
+
+  // Create interview mutation
+  const createInterviewMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest('/api/interviews', 'POST', {
+        candidateName: candidateName.trim(),
+        roleTitle: jobTitle.trim(),
+        interviewerName: interviewerName.trim(),
+        jobTitle: jobTitle.trim(),
+        seniorityLevel,
+        techStack,
+        roleType,
+        department,
+        defaultQuestionType,
+        defaultDifficulty
+      });
+    },
+    onSuccess: (data) => {
+      setRoomId(data.roomId);
+      setIsRoomCreated(true);
+      toast({
+        title: "Interview Created!",
+        description: "Interview room has been successfully created",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create interview",
+        variant: "destructive",
+      });
+    }
+  });
+
   const createRoom = () => {
-    if (!interviewTitle.trim()) {
+    if (!candidateName.trim() || !jobTitle.trim() || !interviewerName.trim()) {
       toast({
         title: "Missing Information",
-        description: "Please enter an interview title",
+        description: "Please fill in candidate name, job title, and interviewer name",
         variant: "destructive",
       });
       return;
     }
-
-    const generatedRoomId = crypto.randomUUID().slice(0, 8);
-    setRoomId(generatedRoomId);
-    setIsRoomCreated(true);
     
-    toast({
-      title: "Room Created!",
-      description: "Interview room has been successfully created",
-    });
+    createInterviewMutation.mutate();
+  };
+
+  // Handle template loading
+  const handleTemplateLoad = (templateData: any) => {
+    setJobTitle(templateData.jobTitle || '');
+    setSeniorityLevel(templateData.seniorityLevel || '');
+    setRoleType(templateData.roleType || '');
+    setTechStack(templateData.techStack || '');
+    setDepartment(templateData.department || '');
+    setDefaultQuestionType(templateData.defaultQuestionType || '');
+    setDefaultDifficulty(templateData.defaultDifficulty || '');
   };
 
   const copyToClipboard = async (text: string, type: string) => {
@@ -78,66 +161,197 @@ export default function CreateInterview() {
           </div>
         </nav>
 
-        <div className="flex items-center justify-center p-4 pt-16">
-          <div className="bg-card rounded-xl shadow-lg p-8 max-w-md w-full border border-border">
-            <div className="text-center mb-8">
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <img 
-                  src={hiroLogo} 
-                  alt="Hiro.ai Logo" 
-                  className="w-12 h-12"
-                />
+        <div className="container mx-auto p-6 max-w-6xl">
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Briefcase className="w-10 h-10 text-primary" />
+            </div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Create Interview</h1>
+            <p className="text-muted-foreground">Configure your technical interview session</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Interview Configuration */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Basic Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    Basic Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="candidateName">Candidate Name *</Label>
+                      <Input
+                        id="candidateName"
+                        value={candidateName}
+                        onChange={(e) => setCandidateName(e.target.value)}
+                        placeholder="e.g., John Smith"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="interviewerName">Interviewer Name *</Label>
+                      <Input
+                        id="interviewerName"
+                        value={interviewerName}
+                        onChange={(e) => setInterviewerName(e.target.value)}
+                        placeholder="e.g., Jane Doe"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Job Context */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Briefcase className="h-5 w-5" />
+                    Job Context
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="jobTitle">Job Title *</Label>
+                      <Input
+                        id="jobTitle"
+                        value={jobTitle}
+                        onChange={(e) => setJobTitle(e.target.value)}
+                        placeholder="e.g., Senior Frontend Developer"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="department">Department</Label>
+                      <Input
+                        id="department"
+                        value={department}
+                        onChange={(e) => setDepartment(e.target.value)}
+                        placeholder="e.g., Engineering"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="seniorityLevel">Seniority Level</Label>
+                      <Select value={seniorityLevel} onValueChange={setSeniorityLevel}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Junior">Junior</SelectItem>
+                          <SelectItem value="Mid">Mid</SelectItem>
+                          <SelectItem value="Senior">Senior</SelectItem>
+                          <SelectItem value="Lead">Lead</SelectItem>
+                          <SelectItem value="Principal">Principal</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="roleType">Role Type</Label>
+                      <Select value={roleType} onValueChange={setRoleType}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Frontend">Frontend</SelectItem>
+                          <SelectItem value="Backend">Backend</SelectItem>
+                          <SelectItem value="Full Stack">Full Stack</SelectItem>
+                          <SelectItem value="DevOps">DevOps</SelectItem>
+                          <SelectItem value="Mobile">Mobile</SelectItem>
+                          <SelectItem value="Data Science">Data Science</SelectItem>
+                          <SelectItem value="QA">QA</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="techStack">Tech Stack</Label>
+                    <Input
+                      id="techStack"
+                      value={techStack}
+                      onChange={(e) => setTechStack(e.target.value)}
+                      placeholder="e.g., React, TypeScript, Node.js, PostgreSQL"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Question Preferences */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Question Preferences</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="defaultQuestionType">Default Question Type</Label>
+                      <Select value={defaultQuestionType} onValueChange={setDefaultQuestionType}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Coding">Coding</SelectItem>
+                          <SelectItem value="System Design">System Design</SelectItem>
+                          <SelectItem value="Behavioral">Behavioral</SelectItem>
+                          <SelectItem value="Technical Discussion">Technical Discussion</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="defaultDifficulty">Default Difficulty</Label>
+                      <Select value={defaultDifficulty} onValueChange={setDefaultDifficulty}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select difficulty" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Easy">Easy</SelectItem>
+                          <SelectItem value="Medium">Medium</SelectItem>
+                          <SelectItem value="Hard">Hard</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Action Buttons */}
+              <div className="flex gap-4">
+                <Button
+                  onClick={createRoom}
+                  className="flex-1"
+                  size="lg"
+                  disabled={createInterviewMutation.isPending}
+                >
+                  {createInterviewMutation.isPending ? "Creating..." : "Create Interview"}
+                </Button>
+                <Link href="/dashboard">
+                  <Button variant="outline" size="lg">
+                    Cancel
+                  </Button>
+                </Link>
               </div>
-              <h1 className="text-2xl font-bold text-foreground mb-2">Create Interview Room</h1>
-              <p className="text-muted-foreground">Set up a new technical interview session</p>
             </div>
 
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Interview Title *
-                </label>
-                <input
-                  type="text"
-                  value={interviewTitle}
-                  onChange={(e) => setInterviewTitle(e.target.value)}
-                  placeholder="e.g., Frontend Developer Interview"
-                  className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Candidate Name (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={candidateName}
-                  onChange={(e) => setCandidateName(e.target.value)}
-                  placeholder="e.g., John Smith"
-                  className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
-                />
-              </div>
-
-              <Button
-                onClick={createRoom}
-                className="w-full"
-                size="lg"
-              >
-                Create Interview Room
-              </Button>
-            </div>
-
-            <div className="mt-6 p-4 bg-accent/10 rounded-lg border border-accent/20">
-              <div className="text-sm text-foreground">
-                <div className="font-medium mb-2">Features:</div>
-                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                  <li>Real-time video chat with Daily.co</li>
-                  <li>Collaborative Monaco code editor</li>
-                  <li>AI-powered coding questions</li>
-                  <li>Separate links for interviewer and candidate</li>
-                </ul>
-              </div>
+            {/* Template Manager */}
+            <div className="lg:col-span-1">
+              <TemplateManager
+                onTemplateLoad={handleTemplateLoad}
+                currentTemplate={{
+                  jobTitle,
+                  seniorityLevel,
+                  roleType,
+                  techStack,
+                  department,
+                  defaultQuestionType,
+                  defaultDifficulty
+                }}
+              />
             </div>
           </div>
         </div>
@@ -174,7 +388,7 @@ export default function CreateInterview() {
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-2">Interview Room Created!</h1>
             <p className="text-muted-foreground">
-              {interviewTitle && `"${interviewTitle}" - `}
+              {jobTitle && `"${jobTitle}" - `}
               Share these links with the interviewer and candidate
             </p>
           </div>

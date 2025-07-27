@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Eye, Plus, Search, Users, Calendar, Clock, Trophy, FileText } from "lucide-react";
+import { CloneInterviewButton } from "@/components/CloneInterviewButton";
 import hiroLogo from "@assets/logo hiro_1749550404647.png";
 
 interface InterviewSession {
@@ -282,18 +283,26 @@ export default function Dashboard() {
                             </Button>
                           </Link>
                           {interview.status === 'Completed' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => createNextRoundMutation.mutate({
-                                interviewId: interview.id,
-                                candidateId: interview.candidateId
-                              })}
-                              disabled={createNextRoundMutation.isPending}
-                              title="Create Next Round"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
+                            <>
+                              <CloneInterviewButton 
+                                interviewId={interview.id}
+                                jobTitle={interview.jobContext?.jobTitle}
+                                size="sm"
+                                variant="outline"
+                              />
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => createNextRoundMutation.mutate({
+                                  interviewId: interview.id,
+                                  candidateId: interview.candidateId
+                                })}
+                                disabled={createNextRoundMutation.isPending}
+                                title="Create Next Round"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </>
                           )}
                         </div>
                       </TableCell>

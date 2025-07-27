@@ -1084,6 +1084,165 @@ Keep the summary professional, objective, and actionable. Focus on specific obse
     }
   });
 
+  // Template management endpoints
+  
+  // Get all templates
+  app.get("/api/templates", async (req, res) => {
+    try {
+      let templates: any[] = [];
+
+      if (db) {
+        try {
+          const templatesSnapshot = await db.collection('interviewTemplates').orderBy('createdAt', 'desc').get();
+          templates = templatesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (firestoreError) {
+          console.error("Error fetching templates:", firestoreError);
+        }
+      }
+
+      res.json(templates);
+    } catch (error) {
+      console.error('Templates fetch error:', error);
+      res.status(500).json({ 
+        error: "Failed to fetch templates",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Create new template
+  app.post("/api/templates", async (req, res) => {
+    try {
+      const templateData = {
+        ...req.body,
+        id: `template_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        usageCount: 0
+      };
+
+      if (db) {
+        try {
+          await db.collection('interviewTemplates').doc(templateData.id).set(templateData);
+        } catch (firestoreError) {
+          console.error("Error creating template:", firestoreError);
+          return res.status(500).json({ error: "Failed to save template to database" });
+        }
+      }
+
+      res.json({ 
+        success: true,
+        template: templateData,
+        message: "Template created successfully"
+      });
+    } catch (error) {
+      console.error('Template creation error:', error);
+      res.status(500).json({ 
+        error: "Failed to create template",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Delete template
+  app.delete("/api/templates/:templateId", async (req, res) => {
+    try {
+      const { templateId } = req.params;
+
+      if (db) {
+        try {
+          await db.collection('interviewTemplates').doc(templateId).delete();
+        } catch (firestoreError) {
+          console.error("Error deleting template:", firestoreError);
+          return res.status(500).json({ error: "Failed to delete template from database" });
+        }
+      }
+
+      res.json({ 
+        success: true,
+        message: "Template deleted successfully"
+      });
+    } catch (error) {
+      console.error('Template deletion error:', error);
+      res.status(500).json({ 
+        error: "Failed to delete template",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Clone interview endpoint
+  app.post("/api/clone-interview", async (req, res) => {
+    try {
+      const { interviewId, name, description } = req.body;
+      
+      if (!interviewId) {
+        return res.status(400).json({ error: "Interview ID is required" });
+      }
+
+      let interviewData: any = null;
+      let jobContext: any = null;
+
+      if (db) {
+        try {
+          // Get interview data
+          const interviewDoc = await db.collection('interviews').doc(interviewId).get();
+          if (interviewDoc.exists) {
+            interviewData = interviewDoc.data();
+          }
+
+          // Get job context
+          const jobContextDoc = await db.collection('interviews').doc(interviewId).collection('jobContext').doc('current').get();
+          if (jobContextDoc.exists) {
+            jobContext = jobContextDoc.data();
+          } else if (interviewData?.jobContext) {
+            jobContext = interviewData.jobContext;
+          }
+        } catch (firestoreError) {
+          console.error("Error fetching interview for cloning:", firestoreError);
+          return res.status(500).json({ error: "Failed to fetch interview data" });
+        }
+      }
+
+      if (!jobContext) {
+        return res.status(404).json({ error: "Interview data not found or incomplete" });
+      }
+
+      // Create cloned template
+      const clonedTemplate = {
+        id: `clone_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        name: name || `Cloned from ${jobContext.jobTitle}`,
+        description: description || `Cloned from interview ${interviewId}`,
+        jobTitle: jobContext.jobTitle || '',
+        seniorityLevel: jobContext.seniorityLevel || 'Mid',
+        roleType: jobContext.roleType || 'Fullstack',
+        techStack: jobContext.techStack || '',
+        department: jobContext.department || '',
+        commonTopics: [],
+        defaultQuestionType: interviewData?.questionType || 'Coding',
+        defaultDifficulty: interviewData?.difficulty || 'Medium',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        usageCount: 0,
+        isPublic: false,
+        clonedFrom: interviewId
+      };
+
+      res.json({
+        success: true,
+        template: clonedTemplate,
+        message: "Interview cloned successfully"
+      });
+
+    } catch (error) {
+      console.error('Interview cloning error:', error);
+      res.status(500).json({ 
+        error: "Failed to clone interview",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Export interview report endpoint
   app.post("/api/export-report", async (req, res) => {
     try {
@@ -1417,10 +1576,21 @@ Keep the tone professional and constructive. If limited data is available, ackno
   // Create new interview session
   app.post("/api/interviews", async (req, res) => {
     try {
-      const { candidateName, roleTitle, interviewerName, jobTitle, seniorityLevel, techStack, roleType } = req.body;
+      const { 
+        candidateName, 
+        roleTitle, 
+        interviewerName, 
+        jobTitle, 
+        seniorityLevel, 
+        techStack, 
+        roleType,
+        department,
+        defaultQuestionType,
+        defaultDifficulty
+      } = req.body;
       
-      if (!candidateName || !roleTitle || !interviewerName) {
-        return res.status(400).json({ error: "Missing required fields" });
+      if (!candidateName || !jobTitle || !interviewerName) {
+        return res.status(400).json({ error: "Missing required fields: candidateName, jobTitle, and interviewerName" });
       }
 
       const roomId = Math.random().toString(36).substring(2, 10);
@@ -1429,16 +1599,21 @@ Keep the tone professional and constructive. If limited data is available, ackno
       const interviewData = {
         candidateName,
         candidateId,
-        roleTitle,
+        roleTitle: jobTitle, // Use jobTitle as roleTitle for consistency
         roundNumber: 1,
         interviewerName,
         timestamp: Date.now(),
         status: 'Scheduled',
         jobContext: {
-          jobTitle: jobTitle || roleTitle,
+          jobTitle: jobTitle,
           seniorityLevel: seniorityLevel || 'Mid',
           techStack: techStack || 'General',
-          roleType: roleType || 'Coding'
+          roleType: roleType || 'Full Stack',
+          department: department || 'Engineering'
+        },
+        questionPreferences: {
+          defaultQuestionType: defaultQuestionType || 'Coding',
+          defaultDifficulty: defaultDifficulty || 'Medium'
         }
       };
 
@@ -1446,7 +1621,10 @@ Keep the tone professional and constructive. If limited data is available, ackno
         await db.collection('interviews').doc(roomId).set(interviewData);
         
         // Also set job context in the room's subcollection
-        await db.collection('interviews').doc(roomId).collection('jobContext').doc('current').set(interviewData.jobContext);
+        await db.collection('interviews').doc(roomId).collection('jobContext').doc('current').set({
+          ...interviewData.jobContext,
+          questionPreferences: interviewData.questionPreferences
+        });
       }
 
       res.json({ 
