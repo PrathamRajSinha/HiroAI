@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { FileText, Github, Linkedin, MessageCircle, History, ChevronDown, ChevronRight, Code, Brain, Video, Briefcase, Settings, Volume2 } from "lucide-react";
+import { FileText, Github, Linkedin, MessageCircle, History, ChevronDown, ChevronRight, Code, Brain, Video, Briefcase, Settings, Volume2, BarChart3 } from "lucide-react";
 import { VideoCall } from "@/components/video-call";
 import { SpeechTranscription } from "@/components/SpeechTranscription";
 import { TranscriptViewer } from "@/components/TranscriptViewer";
@@ -59,8 +59,8 @@ export default function InterviewRoom() {
   const [consentGiven, setConsentGiven] = useState<boolean>(false);
   const [consentLoading, setConsentLoading] = useState<boolean>(true);
   
-  // Performance sidebar state
-  const [isPerformanceSidebarCollapsed, setIsPerformanceSidebarCollapsed] = useState<boolean>(false);
+  // Unified sidebar state - either 'timeline', 'performance', or 'closed'
+  const [activeSidebar, setActiveSidebar] = useState<'timeline' | 'performance' | 'closed'>('closed');
   
   // UI animations state
   const [showSendSuccess, setShowSendSuccess] = useState<boolean>(false);
@@ -79,7 +79,7 @@ export default function InterviewRoom() {
   const [candidateEmail, setCandidateEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [isTimelineCollapsed, setIsTimelineCollapsed] = useState(false);
+
   const [isInterviewCompleted, setIsInterviewCompleted] = useState(false);
   
   // Firebase Firestore integration
@@ -802,10 +802,9 @@ export default function InterviewRoom() {
                               difficulty: interviewData.difficulty || "Medium"
                             })}
                             disabled={sendToCandidateMutation.isPending}
-                            className={cn(
-                              "bg-violet-600 hover:bg-violet-700 text-white transition-all duration-300",
+                            className={`bg-violet-600 hover:bg-violet-700 text-white transition-all duration-300 ${
                               showSendSuccess ? "bg-green-600 animate-pulse" : "hover:scale-105"
-                            )}
+                            }`}
                           >
                             {sendToCandidateMutation.isPending ? "⏳ Sending..." : 
                              showSendSuccess ? "✅ Sent!" : "📤 Send to Candidate"}
@@ -1580,6 +1579,45 @@ export default function InterviewRoom() {
                   Interview Controls
                 </CardTitle>
                 <div className="flex items-center gap-2">
+                  {/* Sidebar Toggle Buttons */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={() => setActiveSidebar(activeSidebar === 'timeline' ? 'closed' : 'timeline')}
+                        variant={activeSidebar === 'timeline' ? 'default' : 'outline'}
+                        size="sm"
+                        className={`transition-all duration-200 ${activeSidebar === 'timeline' ? 'bg-violet-600 hover:bg-violet-700' : ''}`}
+                      >
+                        <History className="h-4 w-4" />
+                        Question Timeline
+                        {questionHistory.length > 0 && (
+                          <Badge variant="secondary" className="ml-1 h-4 w-4 p-0 text-xs">
+                            {questionHistory.length}
+                          </Badge>
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Toggle question timeline and history view</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={() => setActiveSidebar(activeSidebar === 'performance' ? 'closed' : 'performance')}
+                        variant={activeSidebar === 'performance' ? 'default' : 'outline'}
+                        size="sm"
+                        className={`transition-all duration-200 ${activeSidebar === 'performance' ? 'bg-violet-600 hover:bg-violet-700' : ''}`}
+                      >
+                        <BarChart3 className="h-4 w-4" />
+                        AI Scorecard
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Toggle AI performance scorecard with real-time analytics</p>
+                    </TooltipContent>
+                  </Tooltip>
                   {jobContext && (
                     <Badge variant="secondary" className="text-xs">
                       <Briefcase className="h-3 w-3 mr-1" />
@@ -2071,22 +2109,24 @@ export default function InterviewRoom() {
         </Tabs>
       </div>
 
-      {/* Question Timeline - Right Sidebar (Only for interviewers) */}
-      {isInterviewer && (
-        <QuestionTimeline
-          roomId={roomId || ""}
-          isCollapsed={isTimelineCollapsed}
-          onToggleCollapse={() => setIsTimelineCollapsed(!isTimelineCollapsed)}
-        />
-      )}
-      
-      {/* Performance Sidebar - AI Scorecard (Only for interviewers) */}
-      {isInterviewer && (
-        <PerformanceSidebar
-          roomId={roomId || ""}
-          isCollapsed={isPerformanceSidebarCollapsed}
-          onToggleCollapse={() => setIsPerformanceSidebarCollapsed(!isPerformanceSidebarCollapsed)}
-        />
+      {/* Unified Sidebar (Only for interviewers) - Toggle between Timeline and Performance */}
+      {isInterviewer && activeSidebar !== 'closed' && (
+        <div className="w-80 bg-white rounded-xl shadow-md border border-gray-200">
+          {activeSidebar === 'timeline' && (
+            <QuestionTimeline
+              roomId={roomId || ""}
+              isCollapsed={false}
+              onToggleCollapse={() => setActiveSidebar('closed')}
+            />
+          )}
+          {activeSidebar === 'performance' && (
+            <PerformanceSidebar
+              roomId={roomId || ""}
+              isCollapsed={false}
+              onToggleCollapse={() => setActiveSidebar('closed')}
+            />
+          )}
+        </div>
       )}
     </div>
   );
