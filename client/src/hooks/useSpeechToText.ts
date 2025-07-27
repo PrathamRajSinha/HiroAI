@@ -103,12 +103,30 @@ export const useSpeechToText = ({ roomId, questionId, onTranscriptUpdate }: UseT
       } else if (event.error === 'not-allowed') {
         setError('Microphone access denied. Please allow microphone access and try again.');
       } else if (event.error === 'no-speech') {
-        setError('No speech was detected. Please try speaking again.');
+        setError('No speech detected. Try speaking louder or closer to the microphone.');
+      } else if (event.error === 'network') {
+        setError('Network connection issue. Speech recognition requires internet connectivity.');
+      } else if (event.error === 'service-not-allowed') {
+        setError('Speech recognition service not available. Please try again later.');
       } else {
-        setError(`Speech recognition error: ${event.error}`);
+        setError(`Speech recognition error: ${event.error}. Please try again.`);
       }
       
       setIsListening(false);
+      
+      // Auto-retry for network errors after a delay
+      if (event.error === 'network' && recognitionRef.current) {
+        setTimeout(() => {
+          if (!isListening && recognitionRef.current) {
+            console.log('Retrying speech recognition after network error...');
+            try {
+              recognitionRef.current.start();
+            } catch (retryErr) {
+              console.error('Retry failed:', retryErr);
+            }
+          }
+        }, 2000);
+      }
     };
 
     recognition.onend = () => {

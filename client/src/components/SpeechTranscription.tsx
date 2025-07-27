@@ -79,6 +79,12 @@ export function SpeechTranscription({
     }
   };
 
+  const handleRetry = () => {
+    if (!isListening) {
+      startListening();
+    }
+  };
+
   const handleToggleEnable = () => {
     if (isEnabled && isListening) {
       stopListening();
@@ -117,25 +123,38 @@ export function SpeechTranscription({
               {isEnabled ? "Enabled" : "Enable"}
             </Button>
             {isEnabled && (
-              <Button
-                variant={isListening ? "destructive" : "default"}
-                size="sm"
-                onClick={handleToggleListening}
-                disabled={!isActive || !questionId}
-                className={isListening ? "animate-pulse" : ""}
-              >
-                {isListening ? (
-                  <>
-                    <MicOff className="h-4 w-4 mr-2" />
-                    Stop
-                  </>
-                ) : (
-                  <>
-                    <Mic className="h-4 w-4 mr-2" />
-                    Start
-                  </>
+              <>
+                <Button
+                  variant={isListening ? "destructive" : "default"}
+                  size="sm"
+                  onClick={handleToggleListening}
+                  disabled={!isActive || !questionId}
+                  className={isListening ? "animate-pulse" : ""}
+                >
+                  {isListening ? (
+                    <>
+                      <MicOff className="h-4 w-4 mr-2" />
+                      Stop
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="h-4 w-4 mr-2" />
+                      Start
+                    </>
+                  )}
+                </Button>
+                
+                {error && error.includes('network') && !isListening && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRetry}
+                    className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                  >
+                    Retry
+                  </Button>
                 )}
-              </Button>
+              </>
             )}
           </div>
         </div>
@@ -189,11 +208,28 @@ export function SpeechTranscription({
             </div>
           )}
           
+          {/* Error display */}
+          {error && (
+            <div className={`text-xs p-3 rounded-lg border ${
+              error.includes('network') ? 'bg-yellow-50 border-yellow-200 text-yellow-800' :
+              error.includes('not-allowed') ? 'bg-red-50 border-red-200 text-red-800' :
+              'bg-orange-50 border-orange-200 text-orange-800'
+            }`}>
+              <div className="font-medium mb-1">Speech Recognition Issue:</div>
+              <div>{error}</div>
+              {error.includes('network') && (
+                <div className="mt-2 text-xs">
+                  💡 Try checking your internet connection or clicking the Retry button above.
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Permissions note */}
-          {isEnabled && (
+          {isEnabled && !error && (
             <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-              <strong>Note:</strong> This feature requires microphone permissions. 
-              Your browser may prompt you to allow access.
+              <strong>Note:</strong> This feature requires microphone permissions and internet connectivity. 
+              Your browser may prompt you to allow microphone access.
             </div>
           )}
         </CardContent>
