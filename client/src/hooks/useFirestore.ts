@@ -235,6 +235,31 @@ export function useInterviewRoom(roomId: string) {
       }
       
       await updateDoc(questionRef, updateData);
+
+      // Update timeline status when code is submitted and analyzed
+      try {
+        const questionsRef = collection(db, "interviews", roomId, "questions");
+        const q = query(questionsRef, orderBy("timestamp", "desc"));
+        const querySnapshot = await getDocs(q);
+        
+        // Find the most recent 'sent' question and update status
+        const recentSentQuestion = querySnapshot.docs.find(doc => {
+          const data = doc.data();
+          return data.status === 'sent';
+        });
+        
+        if (recentSentQuestion) {
+          const newStatus = aiFeedback ? 'evaluated' : 'answered';
+          await updateDoc(recentSentQuestion.ref, {
+            status: newStatus,
+            code: candidateCode,
+            analysis: aiFeedback,
+            [newStatus + 'Timestamp']: Date.now()
+          });
+        }
+      } catch (timelineError) {
+        console.error("Error updating timeline with code:", timelineError);
+      }
     } catch (err) {
       console.error("Error updating question with code:", err);
       throw err;
@@ -306,6 +331,28 @@ export function useInterviewRoom(roomId: string) {
       };
       
       await addDoc(sentQuestionsRef, sentQuestion);
+
+      // Update timeline status to 'sent' for matching question
+      try {
+        const questionsRef = collection(db, "interviews", roomId, "questions");
+        const q = query(questionsRef, orderBy("timestamp", "desc"));
+        const querySnapshot = await getDocs(q);
+        
+        // Find the most recent question that matches
+        const matchingDoc = querySnapshot.docs.find(doc => {
+          const data = doc.data();
+          return data.question === question && data.status === 'not_sent';
+        });
+        
+        if (matchingDoc) {
+          await updateDoc(matchingDoc.ref, {
+            status: 'sent',
+            sentTimestamp: Date.now()
+          });
+        }
+      } catch (timelineError) {
+        console.error("Error updating timeline status:", timelineError);
+      }
     } catch (err) {
       console.error("Error sending question to candidate:", err);
       throw err;

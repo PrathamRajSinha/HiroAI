@@ -29,6 +29,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize Gemini AI
   const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY || "");
 
+  // Helper function to add questions to timeline
+  const addQuestionToTimeline = async (roomId: string, questionData: {
+    question: string;
+    questionType: string;
+    difficulty: string;
+    status?: 'not_sent' | 'sent' | 'answered' | 'evaluated';
+  }) => {
+    if (!db) return;
+    
+    try {
+      const questionsRef = db.collection('interviews').doc(roomId).collection('questions');
+      await questionsRef.add({
+        ...questionData,
+        status: questionData.status || 'not_sent',
+        timestamp: Date.now(),
+        createdAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error adding question to timeline:', error);
+    }
+  };
+
   // Configure multer for file uploads
   const upload = multer({
     storage: multer.memoryStorage(),
@@ -161,6 +183,14 @@ ${topic ? `- Ensure the question directly relates to the specified topic: ${topi
       if (roomId) {
         console.log(`Storing question for room ${roomId}:`, question.substring(0, 100) + "...");
         await storage.setRoomQuestion(roomId, question);
+        
+        // Add to timeline
+        await addQuestionToTimeline(roomId, {
+          question,
+          questionType: type,
+          difficulty,
+          status: 'not_sent'
+        });
       }
 
       res.json({ question });
@@ -541,6 +571,14 @@ Format: Present each question as a concise, direct interview question.`;
           console.log(`Storing GitHub-based questions for room ${roomId}:`, combinedQuestions.substring(0, 100) + "...");
           await storage.setRoomQuestion(roomId, combinedQuestions);
           
+          // Add to timeline
+          await addQuestionToTimeline(roomId, {
+            question: combinedQuestions,
+            questionType: 'GitHub Profile',
+            difficulty: 'Medium',
+            status: 'not_sent'
+          });
+          
           // Also update Firestore for real-time sync
           if (db) {
             try {
@@ -630,6 +668,14 @@ Format: Present each question as a concise, direct interview question.`;
           const combinedQuestions = questions.join('\n\n');
           console.log(`Storing resume-based questions for room ${roomId}:`, combinedQuestions.substring(0, 100) + "...");
           await storage.setRoomQuestion(roomId, combinedQuestions);
+          
+          // Add to timeline
+          await addQuestionToTimeline(roomId, {
+            question: combinedQuestions,
+            questionType: 'Resume Analysis',
+            difficulty: 'Medium',
+            status: 'not_sent'
+          });
           
           // Also update Firestore for real-time sync
           if (db) {

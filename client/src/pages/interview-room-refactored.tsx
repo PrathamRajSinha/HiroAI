@@ -19,6 +19,7 @@ import { FileText, Github, Linkedin, MessageCircle, History, ChevronDown, Chevro
 import { VideoCall } from "@/components/video-call";
 import { SpeechTranscription } from "@/components/SpeechTranscription";
 import { TranscriptViewer } from "@/components/TranscriptViewer";
+import { QuestionTimeline } from "@/components/QuestionTimeline";
 import * as pdfjsLib from 'pdfjs-dist';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
@@ -62,6 +63,7 @@ export default function InterviewRoom() {
   const [candidateEmail, setCandidateEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [isTimelineCollapsed, setIsTimelineCollapsed] = useState(false);
   
   // Firebase Firestore integration
   const { data: interviewData, loading: firestoreLoading, error: firestoreError, updateQuestion, updateSummary, getQuestionHistory, updateQuestionWithCode, saveJobContext, getJobContext, updateInterviewData, sendQuestionToCandidate, getSentQuestions } = useInterviewRoom(roomId || "");
@@ -1868,6 +1870,15 @@ export default function InterviewRoom() {
           </div>
         </Tabs>
       </div>
+
+      {/* Question Timeline - Right Sidebar (Only for interviewers) */}
+      {isInterviewer && (
+        <QuestionTimeline
+          roomId={roomId || ""}
+          isCollapsed={isTimelineCollapsed}
+          onToggleCollapse={() => setIsTimelineCollapsed(!isTimelineCollapsed)}
+        />
+      )}
     </div>
   );
 }
