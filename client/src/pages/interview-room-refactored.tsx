@@ -24,6 +24,7 @@ import { InterviewCompletion } from "@/components/InterviewCompletion";
 import { CompletedInterviewView } from "@/components/CompletedInterviewView";
 import { TemplateManager } from "@/components/TemplateManager";
 import { ConsentScreen } from "@/components/ConsentScreen";
+import { PerformanceSidebar } from "@/components/PerformanceSidebar";
 import * as pdfjsLib from 'pdfjs-dist';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
@@ -56,6 +57,9 @@ export default function InterviewRoom() {
   // Consent management for candidates
   const [consentGiven, setConsentGiven] = useState<boolean>(false);
   const [consentLoading, setConsentLoading] = useState<boolean>(true);
+  
+  // Performance sidebar state
+  const [isPerformanceSidebarCollapsed, setIsPerformanceSidebarCollapsed] = useState<boolean>(false);
   
   // Generated questions for each source
   const [generatedResumeQuestions, setGeneratedResumeQuestions] = useState<string[]>([]);
@@ -1994,6 +1998,15 @@ export default function InterviewRoom() {
           roomId={roomId || ""}
           isCollapsed={isTimelineCollapsed}
           onToggleCollapse={() => setIsTimelineCollapsed(!isTimelineCollapsed)}
+        />
+      )}
+      
+      {/* Performance Sidebar - AI Scorecard (Only for interviewers) */}
+      {isInterviewer && (
+        <PerformanceSidebar
+          roomId={roomId || ""}
+          isCollapsed={isPerformanceSidebarCollapsed}
+          onToggleCollapse={() => setIsPerformanceSidebarCollapsed(!isPerformanceSidebarCollapsed)}
         />
       )}
     </div>

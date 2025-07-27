@@ -51,13 +51,21 @@ A cutting-edge technical interview platform that transforms hiring processes thr
 - Question history tracking
 - Live code feedback and evaluation
 
-### 7. **Advanced Reporting & Analytics**
+### 7. **Performance Analytics & AI Scorecard**
+- **Real-time Performance Sidebar**: Live candidate insights for interviewers
+- **AI Score Breakdown**: Detailed metrics for correctness, efficiency, code quality, and readability
+- **Aggregated Analytics**: Overall performance tracking across all questions
+- **Strengths & Weaknesses Analysis**: AI-identified candidate capabilities and improvement areas
+- **Question-by-Question Tracking**: Individual question performance with collapsible details
+- **Live Firestore Sync**: Real-time updates as candidates answer questions
+
+### 8. **Advanced Reporting & Analytics**
 - Comprehensive interview reports with candidate scoring
 - PDF export functionality for interview summaries
 - Email integration for automated report distribution
 - Historical performance tracking
 
-### 8. **Branding & User Experience**
+### 9. **Branding & User Experience**
 - Custom Hiro.ai branding with violet color scheme
 - Responsive design for all device types
 - Professional logo integration
@@ -70,6 +78,11 @@ A cutting-edge technical interview platform that transforms hiring processes thr
 - Real-time collaboration capabilities
 
 ## Recent Changes
+- **January 2025**: Added comprehensive Performance Sidebar (AI Scorecard) for real-time candidate insights
+- **January 2025**: Implemented live AI score tracking with correctness, efficiency, quality, and readability metrics
+- **January 2025**: Created aggregated performance analytics with strengths and weaknesses analysis
+- **January 2025**: Added question-by-question score breakdown in collapsible interface
+- **January 2025**: Integrated Firestore real-time sync for live performance updates
 - **January 2025**: Added candidate consent screen with privacy & recording notice before interview room access
 - **January 2025**: Implemented consent tracking in Firestore with IP address logging and timestamp
 - **January 2025**: Created comprehensive Templates system for storing and reusing job configurations
