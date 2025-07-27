@@ -23,6 +23,7 @@ import { QuestionTimeline } from "@/components/QuestionTimeline";
 import { InterviewCompletion } from "@/components/InterviewCompletion";
 import { CompletedInterviewView } from "@/components/CompletedInterviewView";
 import { TemplateManager } from "@/components/TemplateManager";
+import { ConsentScreen } from "@/components/ConsentScreen";
 import * as pdfjsLib from 'pdfjs-dist';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
@@ -51,6 +52,10 @@ export default function InterviewRoom() {
   const [difficulty, setDifficulty] = useState<string>("Medium");
   const [customTopic, setCustomTopic] = useState<string>("");
   const [isGeneratingFromProfile, setIsGeneratingFromProfile] = useState<boolean>(false);
+  
+  // Consent management for candidates
+  const [consentGiven, setConsentGiven] = useState<boolean>(false);
+  const [consentLoading, setConsentLoading] = useState<boolean>(true);
   
   // Generated questions for each source
   const [generatedResumeQuestions, setGeneratedResumeQuestions] = useState<string[]>([]);
@@ -123,12 +128,40 @@ export default function InterviewRoom() {
     loadJobContext();
   }, [roomId, getJobContext, isInterviewer, hasCheckedJobContext]);
 
+  // Check consent status for candidates
+  useEffect(() => {
+    if (isCandidate && roomId) {
+      const checkConsent = async () => {
+        try {
+          const response = await apiRequest(`/api/interviews/${roomId}/consent`, 'GET');
+          setConsentGiven(response.consentGiven || false);
+        } catch (error) {
+          console.error('Error checking consent:', error);
+          setConsentGiven(false);
+        } finally {
+          setConsentLoading(false);
+        }
+      };
+      
+      checkConsent();
+    } else {
+      // Interviewers don't need consent
+      setConsentGiven(true);
+      setConsentLoading(false);
+    }
+  }, [isCandidate, roomId]);
+
   // Monitor interview completion status
   useEffect(() => {
     if (interviewData && (interviewData as any).status === 'completed') {
       setIsInterviewCompleted(true);
     }
   }, [interviewData]);
+
+  // Handle consent given
+  const handleConsentGiven = () => {
+    setConsentGiven(true);
+  };
 
   // Reload history when a new question is added
   useEffect(() => {
@@ -1446,6 +1479,22 @@ export default function InterviewRoom() {
   };
 
   // Show completed interview view if interview is completed
+  // Show consent screen for candidates who haven't given consent yet
+  if (isCandidate && consentLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Checking consent status...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isCandidate && !consentGiven) {
+    return <ConsentScreen roomId={roomId || ""} onConsentGiven={handleConsentGiven} />;
+  }
+
   if (isInterviewCompleted) {
     return (
       <div className="min-h-screen bg-gray-50 p-6">
@@ -1637,7 +1686,7 @@ export default function InterviewRoom() {
                                                    template.seniorityLevel as 'Junior' | 'Mid' | 'Senior';
                       
                       const mappedRoleType = ['Frontend', 'Backend', 'Fullstack', 'DevOps', 'Data Science', 'Mobile', 'QA', 'Product Manager'].includes(template.roleType) ? 'Coding' : 
-                                           template.roleType === 'Behavioral' ? 'Behavioral' : 
+                                           template.roleType.includes('Behavioral') ? 'Behavioral' : 
                                            'System Design';
                       
                       const newJobContext = {

@@ -70,6 +70,12 @@ A cutting-edge technical interview platform that transforms hiring processes thr
 - Real-time collaboration capabilities
 
 ## Recent Changes
+- **January 2025**: Added candidate consent screen with privacy & recording notice before interview room access
+- **January 2025**: Implemented consent tracking in Firestore with IP address logging and timestamp
+- **January 2025**: Created comprehensive Templates system for storing and reusing job configurations
+- **January 2025**: Built Clone Interview feature for duplicating completed interview setups
+- **January 2025**: Enhanced create-interview page with detailed job context and question preferences
+- **January 2025**: Integrated TemplateManager component with save/load functionality
 - **January 2025**: Added comprehensive "Mark Interview as Completed" functionality
 - **January 2025**: Implemented AI-powered final summary generation combining code quality, verbal transcripts, and profile insights
 - **January 2025**: Added interviewer feedback collection system with manual notes and hire/no hire decisions

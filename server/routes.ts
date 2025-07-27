@@ -1171,6 +1171,66 @@ Keep the summary professional, objective, and actionable. Focus on specific obse
     }
   });
 
+  // Record candidate consent
+  app.post("/api/interviews/consent", async (req, res) => {
+    try {
+      const { roomId, consentGiven, timestamp } = req.body;
+      
+      if (!roomId) {
+        return res.status(400).json({ error: "Room ID is required" });
+      }
+
+      const consentData = {
+        consentGiven: consentGiven || false,
+        timestamp: timestamp || Date.now(),
+        ipAddress: req.ip || req.connection.remoteAddress
+      };
+
+      if (db) {
+        await db.collection('interviews').doc(roomId).update({
+          candidateConsent: consentData
+        });
+      }
+
+      res.json({ 
+        success: true,
+        message: "Consent recorded successfully"
+      });
+    } catch (error) {
+      console.error("Error recording consent:", error);
+      res.status(500).json({ error: "Failed to record consent" });
+    }
+  });
+
+  // Check consent status
+  app.get("/api/interviews/:roomId/consent", async (req, res) => {
+    try {
+      const { roomId } = req.params;
+      
+      if (!roomId) {
+        return res.status(400).json({ error: "Room ID is required" });
+      }
+
+      let consentGiven = false;
+
+      if (db) {
+        const doc = await db.collection('interviews').doc(roomId).get();
+        if (doc.exists) {
+          const data = doc.data();
+          consentGiven = data?.candidateConsent?.consentGiven || false;
+        }
+      }
+
+      res.json({ 
+        consentGiven,
+        roomId
+      });
+    } catch (error) {
+      console.error("Error checking consent:", error);
+      res.status(500).json({ error: "Failed to check consent status" });
+    }
+  });
+
   // Clone interview endpoint
   app.post("/api/clone-interview", async (req, res) => {
     try {
