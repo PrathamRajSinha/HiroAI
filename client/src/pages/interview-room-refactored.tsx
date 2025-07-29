@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FileText, Github, Linkedin, MessageCircle, MessageSquare, History, ChevronDown, ChevronRight, Code, Brain, Video, Briefcase, Settings, Volume2, BarChart3 } from "lucide-react";
 import { VideoCall } from "@/components/video-call";
-import { VideoCallChat } from "@/components/VideoCallChat";
+
 import { CompleteInterviewButton } from "@/components/CompleteInterviewButton";
 import { SpeechTranscription } from "@/components/SpeechTranscription";
 import { TranscriptViewer } from "@/components/TranscriptViewer";
@@ -1568,16 +1568,7 @@ export default function InterviewRoom() {
           )}
         </div>
         
-        {/* Chat Section */}
-        <div className="border-t border-gray-200 flex-1 flex flex-col">
-          <div className="p-3 border-b border-gray-200">
-            <h3 className="text-xs font-semibold text-gray-600 flex items-center gap-2">
-              <MessageSquare className="h-3 w-3" />
-              Chat
-            </h3>
-          </div>
-          <VideoCallChat roomId={roomId || ""} userRole={role || "guest"} />
-        </div>
+
         
         {/* Complete Interview Button - Bottom Left */}
         {isInterviewer && (
