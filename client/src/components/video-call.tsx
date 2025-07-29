@@ -4,9 +4,8 @@ interface VideoCallProps {
 }
 
 export function VideoCall({ roomId, role }: VideoCallProps) {
-  // Use Jitsi Meet which is more reliable for demo purposes and has built-in chat
-  const sanitizedRoomId = roomId.replace(/[^a-zA-Z0-9-]/g, '');
-  const videoCallUrl = `https://meet.jit.si/${sanitizedRoomId}?config.startWithAudioMuted=false&config.startWithVideoMuted=false&config.prejoinPageEnabled=false&config.toolbarButtons=['microphone','camera','chat','desktop','fullscreen','fodeviceselection','hangup','profile','settings']&userInfo.displayName=${encodeURIComponent(role)}`;
+  // Use the original Daily.co API that was working
+  const videoCallUrl = `https://aiinterview.daily.co/${roomId}`;
 
   return (
     <div className="h-full flex flex-col">
@@ -30,7 +29,7 @@ export function VideoCall({ roomId, role }: VideoCallProps) {
       
       {/* Info about chat */}
       <div className="mt-2 text-xs text-gray-600 text-center">
-        Click the chat button in Jitsi Meet to use real-time messaging
+        Click the chat icon in the video call to use built-in messaging
       </div>
     </div>
   );
