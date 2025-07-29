@@ -16,8 +16,10 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { FileText, Github, Linkedin, MessageCircle, History, ChevronDown, ChevronRight, Code, Brain, Video, Briefcase, Settings, Volume2, BarChart3 } from "lucide-react";
+import { FileText, Github, Linkedin, MessageCircle, MessageSquare, History, ChevronDown, ChevronRight, Code, Brain, Video, Briefcase, Settings, Volume2, BarChart3 } from "lucide-react";
 import { VideoCall } from "@/components/video-call";
+import { VideoCallChat } from "@/components/VideoCallChat";
+import { CompleteInterviewButton } from "@/components/CompleteInterviewButton";
 import { SpeechTranscription } from "@/components/SpeechTranscription";
 import { TranscriptViewer } from "@/components/TranscriptViewer";
 import { QuestionTimeline } from "@/components/QuestionTimeline";
@@ -1547,24 +1549,51 @@ export default function InterviewRoom() {
 
   return (
     <div className="h-screen w-screen flex gap-6 p-4 bg-gray-50">
-      {/* Left Panel - Video Call */}
-      <div className="w-64 h-full bg-white rounded-xl shadow-md border border-gray-200">
+      {/* Left Panel - Video Call & Chat */}
+      <div className="w-64 h-full bg-white rounded-xl shadow-md border border-gray-200 flex flex-col">
         <div className="p-4 border-b border-gray-200">
           <h2 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
             <Video className="h-4 w-4" />
             Video Call
           </h2>
         </div>
-        <div className="p-4 h-full">
+        <div className="p-4 flex-1 flex flex-col">
           {roomId ? (
             <VideoCall roomId={roomId} role={role || "guest"} />
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-gray-500">
+            <div className="h-32 flex flex-col items-center justify-center text-gray-500">
               <Video className="h-8 w-8 mb-2 text-gray-400" />
               <div className="text-sm">No Room ID</div>
             </div>
           )}
         </div>
+        
+        {/* Chat Section */}
+        <div className="border-t border-gray-200 flex-1 flex flex-col">
+          <div className="p-3 border-b border-gray-200">
+            <h3 className="text-xs font-semibold text-gray-600 flex items-center gap-2">
+              <MessageSquare className="h-3 w-3" />
+              Chat
+            </h3>
+          </div>
+          <VideoCallChat roomId={roomId || ""} />
+        </div>
+        
+        {/* Complete Interview Button - Bottom Left */}
+        {isInterviewer && (
+          <div className="p-4 border-t border-gray-200">
+            <CompleteInterviewButton 
+              roomId={roomId || ""} 
+              onInterviewCompleted={() => {
+                setIsInterviewCompleted(true);
+                toast({
+                  title: "Interview Completed",
+                  description: "Report generated and downloaded automatically",
+                });
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Middle Panel - Code Editor */}
@@ -1587,24 +1616,7 @@ export default function InterviewRoom() {
                         {jobContext.seniorityLevel} {jobContext.jobTitle}
                       </Badge>
                     )}
-                    <InterviewCompletion 
-                      roomId={roomId || ""}
-                      onInterviewCompleted={() => {
-                        setIsInterviewCompleted(true);
-                        toast({
-                          title: "Interview Completed",
-                          description: "Interview has been successfully completed and saved",
-                        });
-                      }}
-                    />
-                    <Button 
-                      onClick={handleEndInterview}
-                      variant="destructive" 
-                      size="sm"
-                      className="bg-red-600 hover:bg-red-700 text-white"
-                    >
-                      End Interview
-                    </Button>
+
                     <Dialog open={showJobContextDialog} onOpenChange={setShowJobContextDialog}>
                       <DialogTrigger asChild>
                         <Button variant="ghost" size="sm">
