@@ -63,6 +63,12 @@ export const useSpeechToText = ({ roomId, questionId, onTranscriptUpdate }: UseT
     recognition.interimResults = true;
     recognition.lang = 'en-US';
     recognition.maxAlternatives = 1;
+    
+    // Add service hints to improve reliability
+    if ('serviceURI' in recognition) {
+      // Some browsers support setting service URI
+      recognition.serviceURI = 'wss://www.google.com/speech-api/v2/recognize';
+    }
 
     recognition.onstart = () => {
       console.log('Speech recognition started');

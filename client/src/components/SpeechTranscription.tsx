@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Mic, MicOff, Volume2, VolumeX, Edit3, Save } from 'lucide-react';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import { toast } from '@/hooks/use-toast';
 
@@ -20,6 +21,8 @@ export function SpeechTranscription({
   onTranscriptUpdate 
 }: SpeechTranscriptionProps) {
   const [isEnabled, setIsEnabled] = useState(false);
+  const [useManualInput, setUseManualInput] = useState(false);
+  const [manualText, setManualText] = useState('');
   
   const {
     isListening,
@@ -85,6 +88,23 @@ export function SpeechTranscription({
     }
   };
 
+  const handleSaveManualText = () => {
+    if (manualText.trim() && onTranscriptUpdate) {
+      onTranscriptUpdate(manualText);
+      toast({
+        title: "Response Saved",
+        description: "Your written response has been saved to the interview.",
+      });
+    }
+  };
+
+  const handleToggleInputMode = () => {
+    setUseManualInput(!useManualInput);
+    if (isListening) {
+      stopListening();
+    }
+  };
+
   const handleToggleEnable = () => {
     if (isEnabled && isListening) {
       stopListening();
@@ -122,37 +142,52 @@ export function SpeechTranscription({
             >
               {isEnabled ? "Enabled" : "Enable"}
             </Button>
+            
             {isEnabled && (
               <>
                 <Button
-                  variant={isListening ? "destructive" : "default"}
+                  variant="outline"
                   size="sm"
-                  onClick={handleToggleListening}
-                  disabled={!isActive || !questionId}
-                  className={isListening ? "animate-pulse" : ""}
+                  onClick={handleToggleInputMode}
+                  className={useManualInput ? "bg-blue-50 border-blue-200" : ""}
                 >
-                  {isListening ? (
-                    <>
-                      <MicOff className="h-4 w-4 mr-2" />
-                      Stop
-                    </>
-                  ) : (
-                    <>
-                      <Mic className="h-4 w-4 mr-2" />
-                      Start
-                    </>
-                  )}
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  {useManualInput ? "Voice Mode" : "Text Mode"}
                 </Button>
                 
-                {error && error.includes('network') && !isListening && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRetry}
-                    className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                  >
-                    Retry
-                  </Button>
+                {!useManualInput && (
+                  <>
+                    <Button
+                      variant={isListening ? "destructive" : "default"}
+                      size="sm"
+                      onClick={handleToggleListening}
+                      disabled={!isActive || !questionId}
+                      className={isListening ? "animate-pulse" : ""}
+                    >
+                      {isListening ? (
+                        <>
+                          <MicOff className="h-4 w-4 mr-2" />
+                          Stop
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="h-4 w-4 mr-2" />
+                          Start
+                        </>
+                      )}
+                    </Button>
+                    
+                    {error && error.includes('network') && !isListening && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRetry}
+                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                      >
+                        Retry
+                      </Button>
+                    )}
+                  </>
                 )}
               </>
             )}
@@ -173,39 +208,70 @@ export function SpeechTranscription({
       
       {isEnabled && (
         <CardContent className="space-y-3">
-          {/* Live transcript display */}
-          {(transcript || interimTranscript) && (
-            <div className="space-y-2">
-              <div className="text-sm font-medium text-gray-700">Your Response:</div>
-              <div className="bg-white border rounded-lg p-3 min-h-[100px] max-h-[200px] overflow-y-auto">
-                <div className="text-sm leading-relaxed">
-                  {/* Final transcript */}
-                  <span className="text-gray-900">{transcript}</span>
-                  {/* Interim transcript (lighter color) */}
-                  {interimTranscript && (
-                    <span className="text-gray-500 italic">{interimTranscript}</span>
-                  )}
-                  {/* Cursor when listening */}
-                  {isListening && <span className="animate-pulse ml-1 text-blue-500">|</span>}
+          {useManualInput ? (
+            /* Manual text input mode */
+            <div className="space-y-3">
+              <div className="text-sm font-medium text-gray-700">Write Your Response:</div>
+              <Textarea
+                value={manualText}
+                onChange={(e) => setManualText(e.target.value)}
+                placeholder="Type your response to the interview question here..."
+                className="min-h-[120px] resize-none"
+                disabled={!isActive || !questionId}
+              />
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-gray-500">
+                  Words: {manualText.split(' ').filter(word => word.length > 0).length}
                 </div>
+                <Button
+                  onClick={handleSaveManualText}
+                  disabled={!manualText.trim() || !isActive || !questionId}
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Response
+                </Button>
               </div>
-              
-              {transcript && (
-                <div className="text-xs text-gray-500 flex justify-between">
-                  <span>Words: {transcript.split(' ').filter(word => word.length > 0).length}</span>
-                  <span>Auto-saved to interview</span>
+            </div>
+          ) : (
+            /* Speech recognition mode */
+            <>
+              {/* Live transcript display */}
+              {(transcript || interimTranscript) && (
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-gray-700">Your Response:</div>
+                  <div className="bg-white border rounded-lg p-3 min-h-[100px] max-h-[200px] overflow-y-auto">
+                    <div className="text-sm leading-relaxed">
+                      {/* Final transcript */}
+                      <span className="text-gray-900">{transcript}</span>
+                      {/* Interim transcript (lighter color) */}
+                      {interimTranscript && (
+                        <span className="text-gray-500 italic">{interimTranscript}</span>
+                      )}
+                      {/* Cursor when listening */}
+                      {isListening && <span className="animate-pulse ml-1 text-blue-500">|</span>}
+                    </div>
+                  </div>
+                  
+                  {transcript && (
+                    <div className="text-xs text-gray-500 flex justify-between">
+                      <span>Words: {transcript.split(' ').filter(word => word.length > 0).length}</span>
+                      <span>Auto-saved to interview</span>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          )}
-          
-          {/* Instructions */}
-          {isEnabled && !transcript && !interimTranscript && (
-            <div className="text-center py-6 text-gray-500">
-              <Mic className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-              <div className="text-sm">Click "Start" to begin speech transcription</div>
-              <div className="text-xs mt-1">Your speech will be automatically saved</div>
-            </div>
+              
+              {/* Instructions */}
+              {isEnabled && !transcript && !interimTranscript && !useManualInput && (
+                <div className="text-center py-6 text-gray-500">
+                  <Mic className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                  <div className="text-sm">Click "Start" to begin speech transcription</div>
+                  <div className="text-xs mt-1">Your speech will be automatically saved</div>
+                </div>
+              )}
+            </>
           )}
           
           {/* Error display */}
@@ -225,11 +291,19 @@ export function SpeechTranscription({
             </div>
           )}
 
-          {/* Permissions note */}
+          {/* Instructions and notes */}
           {isEnabled && !error && (
             <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-              <strong>Note:</strong> This feature requires microphone permissions and internet connectivity. 
-              Your browser may prompt you to allow microphone access.
+              {useManualInput ? (
+                <>
+                  <strong>Text Mode:</strong> Type your response and click "Save Response" to record your answer.
+                </>
+              ) : (
+                <>
+                  <strong>Voice Mode:</strong> Requires microphone permissions and internet connectivity. 
+                  Your browser may prompt you to allow microphone access. Switch to "Text Mode" if speech recognition fails.
+                </>
+              )}
             </div>
           )}
         </CardContent>
