@@ -1573,81 +1573,44 @@ export default function InterviewRoom() {
         {isInterviewer && (
           <Card>
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-bold flex items-center gap-2">
-                  <Brain className="h-5 w-5" />
-                  Interview Controls
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  {/* Sidebar Toggle Buttons */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={() => setActiveSidebar(activeSidebar === 'timeline' ? 'closed' : 'timeline')}
-                        variant={activeSidebar === 'timeline' ? 'default' : 'outline'}
-                        size="sm"
-                        className={`transition-all duration-200 ${activeSidebar === 'timeline' ? 'bg-violet-600 hover:bg-violet-700' : ''}`}
-                      >
-                        <History className="h-4 w-4" />
-                        Question Timeline
-                        {questionHistory.length > 0 && (
-                          <Badge variant="secondary" className="ml-1 h-4 w-4 p-0 text-xs">
-                            {questionHistory.length}
-                          </Badge>
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Toggle question timeline and history view</p>
-                    </TooltipContent>
-                  </Tooltip>
-                  
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={() => setActiveSidebar(activeSidebar === 'performance' ? 'closed' : 'performance')}
-                        variant={activeSidebar === 'performance' ? 'default' : 'outline'}
-                        size="sm"
-                        className={`transition-all duration-200 ${activeSidebar === 'performance' ? 'bg-violet-600 hover:bg-violet-700' : ''}`}
-                      >
-                        <BarChart3 className="h-4 w-4" />
-                        AI Scorecard
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Toggle AI performance scorecard with real-time analytics</p>
-                    </TooltipContent>
-                  </Tooltip>
-                  {jobContext && (
-                    <Badge variant="secondary" className="text-xs">
-                      <Briefcase className="h-3 w-3 mr-1" />
-                      {jobContext.seniorityLevel} {jobContext.jobTitle}
-                    </Badge>
-                  )}
-                  <InterviewCompletion 
-                    roomId={roomId || ""}
-                    onInterviewCompleted={() => {
-                      setIsInterviewCompleted(true);
-                      toast({
-                        title: "Interview Completed",
-                        description: "Interview has been successfully completed and saved",
-                      });
-                    }}
-                  />
-                  <Button 
-                    onClick={handleEndInterview}
-                    variant="destructive" 
-                    size="sm"
-                    className="bg-red-600 hover:bg-red-700 text-white"
-                  >
-                    End Interview
-                  </Button>
-                  <Dialog open={showJobContextDialog} onOpenChange={setShowJobContextDialog}>
-                    <DialogTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <Settings className="h-4 w-4" />
-                      </Button>
-                    </DialogTrigger>
+              <div className="space-y-3">
+                {/* Header with title and main action buttons */}
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <Brain className="h-5 w-5" />
+                    Interview Controls
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    {jobContext && (
+                      <Badge variant="secondary" className="text-xs">
+                        <Briefcase className="h-3 w-3 mr-1" />
+                        {jobContext.seniorityLevel} {jobContext.jobTitle}
+                      </Badge>
+                    )}
+                    <InterviewCompletion 
+                      roomId={roomId || ""}
+                      onInterviewCompleted={() => {
+                        setIsInterviewCompleted(true);
+                        toast({
+                          title: "Interview Completed",
+                          description: "Interview has been successfully completed and saved",
+                        });
+                      }}
+                    />
+                    <Button 
+                      onClick={handleEndInterview}
+                      variant="destructive" 
+                      size="sm"
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      End Interview
+                    </Button>
+                    <Dialog open={showJobContextDialog} onOpenChange={setShowJobContextDialog}>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
                     <DialogContent className="sm:max-w-md">
                       <DialogHeader>
                         <DialogTitle>Setup Job Context</DialogTitle>
@@ -1710,6 +1673,49 @@ export default function InterviewRoom() {
                   </Dialog>
                 </div>
               </div>
+              
+              {/* Sidebar Toggle Buttons Row */}
+              <div className="flex items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => setActiveSidebar(activeSidebar === 'timeline' ? 'closed' : 'timeline')}
+                      variant={activeSidebar === 'timeline' ? 'default' : 'outline'}
+                      size="sm"
+                      className={`transition-all duration-200 flex items-center gap-2 ${activeSidebar === 'timeline' ? 'bg-violet-600 hover:bg-violet-700 text-white' : ''}`}
+                    >
+                      <History className="h-4 w-4" />
+                      Question Timeline
+                      {questionHistory.length > 0 && (
+                        <Badge variant="secondary" className="ml-1 h-4 w-4 p-0 text-xs">
+                          {questionHistory.length}
+                        </Badge>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Toggle question timeline and history view</p>
+                  </TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => setActiveSidebar(activeSidebar === 'performance' ? 'closed' : 'performance')}
+                      variant={activeSidebar === 'performance' ? 'default' : 'outline'}
+                      size="sm"
+                      className={`transition-all duration-200 flex items-center gap-2 ${activeSidebar === 'performance' ? 'bg-violet-600 hover:bg-violet-700 text-white' : ''}`}
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                      AI Performance Scorecard
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Toggle AI performance scorecard with real-time analytics</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </div>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
