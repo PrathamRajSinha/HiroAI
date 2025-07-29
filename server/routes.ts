@@ -1032,6 +1032,132 @@ Keep the summary professional, objective, and actionable. Focus on specific obse
     }
   });
 
+  // Interview completion endpoint - Alternative route for CompleteInterviewButton
+  app.post("/api/interviews/:roomId/complete", async (req, res) => {
+    try {
+      const { roomId } = req.params;
+      const { interviewerNotes, decision, overallRating, timestamp } = req.body;
+      
+      if (!roomId) {
+        return res.status(400).json({ error: "Room ID is required" });
+      }
+
+      const completionData = {
+        status: 'completed',
+        interviewerNotes: interviewerNotes || '',
+        finalDecision: decision || 'pending',
+        overallRating: overallRating || 3,
+        completedAt: timestamp ? new Date(timestamp).getTime() : Date.now(),
+        completedBy: 'interviewer'
+      };
+
+      if (db) {
+        try {
+          // Update main interview document
+          await db.collection('interviews').doc(roomId).update({
+            ...completionData,
+            completedAt: completionData.completedAt
+          });
+
+          // Save completion details
+          await db.collection('interviews').doc(roomId).collection('completion').doc('details').set({
+            ...completionData,
+            timestamp: completionData.completedAt
+          });
+        } catch (firestoreError) {
+          console.error("Error saving interview completion:", firestoreError);
+          return res.status(500).json({ error: "Failed to save completion to database" });
+        }
+      }
+
+      res.json({ 
+        success: true,
+        message: "Interview completed successfully",
+        completionData
+      });
+
+    } catch (error) {
+      console.error('Interview completion error:', error);
+      res.status(500).json({ 
+        error: "Failed to complete interview",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Generate interview report endpoint for CompleteInterviewButton
+  app.get("/api/interviews/:roomId/report", async (req, res) => {
+    try {
+      const { roomId } = req.params;
+      
+      if (!roomId) {
+        return res.status(400).json({ error: "Room ID is required" });
+      }
+
+      // Fetch interview data
+      let interviewData: any = {};
+      let questionHistory: any[] = [];
+      let jobContext: any = null;
+      let latestCode: string | null = null;
+
+      try {
+        if (db) {
+          // Get interview data
+          const interviewDoc = await db.collection('interviews').doc(roomId).get();
+          if (interviewDoc.exists) {
+            interviewData = interviewDoc.data();
+          }
+
+          // Get question history
+          const historySnapshot = await db.collection('interviews').doc(roomId).collection('history').orderBy('timestamp', 'desc').get();
+          questionHistory = historySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+          // Get job context
+          const jobContextDoc = await db.collection('interviews').doc(roomId).collection('jobContext').doc('current').get();
+          if (jobContextDoc.exists) {
+            jobContext = jobContextDoc.data();
+          } else if (interviewData.jobContext) {
+            jobContext = interviewData.jobContext;
+          }
+
+          // Get latest code
+          const codeSnapshot = await db.collection('interviews').doc(roomId).collection('code').orderBy('timestamp', 'desc').limit(1).get();
+          if (!codeSnapshot.empty) {
+            latestCode = codeSnapshot.docs[0].data().code;
+          }
+        }
+      } catch (fetchError) {
+        console.error("Error fetching interview data for report:", fetchError);
+      }
+
+      // Generate HTML report
+      const reportHtml = generateReportHtml({
+        candidateName: interviewData.candidateName || 'Anonymous Candidate',
+        companyName: 'Hiro.ai',
+        jobContext: jobContext || { jobTitle: 'Software Engineer', seniorityLevel: 'Mid', techStack: 'General' },
+        questionHistory,
+        overallSummary: interviewData.preliminarySummary || 'Interview completed',
+        interviewDate: new Date().toLocaleDateString(),
+        latestCode,
+        latestCodeAnalysis: questionHistory.length > 0 ? questionHistory[0].aiFeedback : null
+      });
+
+      res.json({
+        success: true,
+        reportHtml,
+        interviewData,
+        questionCount: questionHistory.length
+      });
+
+    } catch (error) {
+      console.error('Report generation error:', error);
+      res.status(500).json({ 
+        error: "Failed to generate report",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Submit interview feedback endpoint
   app.post("/api/submit-interview-feedback", async (req, res) => {
     try {

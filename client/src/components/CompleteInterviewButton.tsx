@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -135,6 +135,9 @@ export function CompleteInterviewButton({ roomId, onInterviewCompleted }: Comple
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Complete Interview</DialogTitle>
+          <DialogDescription>
+            Provide final notes and hiring decision. The interview report will be automatically downloaded.
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
