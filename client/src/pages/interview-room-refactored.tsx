@@ -1576,7 +1576,7 @@ export default function InterviewRoom() {
               Chat
             </h3>
           </div>
-          <VideoCallChat roomId={roomId || ""} />
+          <VideoCallChat roomId={roomId || ""} userRole={role || "guest"} />
         </div>
         
         {/* Complete Interview Button - Bottom Left */}

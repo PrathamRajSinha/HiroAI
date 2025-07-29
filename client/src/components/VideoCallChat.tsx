@@ -15,9 +15,10 @@ interface ChatMessage {
 
 interface VideoCallChatProps {
   roomId: string;
+  userRole?: string;
 }
 
-export function VideoCallChat({ roomId }: VideoCallChatProps) {
+export function VideoCallChat({ roomId, userRole = 'user' }: VideoCallChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isConnected, setIsConnected] = useState(false);
@@ -39,7 +40,7 @@ export function VideoCallChat({ roomId }: VideoCallChatProps) {
     if (!roomId) return;
 
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat/${roomId}`;
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws/${roomId}`;
     
     try {
       const ws = new WebSocket(wsUrl);
@@ -95,8 +96,8 @@ export function VideoCallChat({ roomId }: VideoCallChatProps) {
     const messageData = {
       type: 'chat_message',
       message: newMessage.trim(),
-      sender: 'User', // This would be dynamic based on authentication
-      role: 'interviewer', // This would be dynamic based on user role
+      sender: userRole === 'interviewer' ? 'Interviewer' : 'Candidate',
+      role: userRole,
       timestamp: new Date().toISOString(),
       roomId
     };
