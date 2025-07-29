@@ -4,8 +4,9 @@ interface VideoCallProps {
 }
 
 export function VideoCall({ roomId, role }: VideoCallProps) {
-  // Generate a unique room URL based on the roomId
-  const videoCallUrl = `https://aiinterview.daily.co/${roomId}?showFullscreenButton=false&showLeaveButton=false&showPeopleUI=true&showChatButton=true&showScreenShareButton=false&showMuteButton=true&showVideoButton=true&userName=${role}&lang=en&theme=light`;
+  // Use Jitsi Meet which is more reliable for demo purposes and has built-in chat
+  const sanitizedRoomId = roomId.replace(/[^a-zA-Z0-9-]/g, '');
+  const videoCallUrl = `https://meet.jit.si/${sanitizedRoomId}?config.startWithAudioMuted=false&config.startWithVideoMuted=false&config.prejoinPageEnabled=false&config.toolbarButtons=['microphone','camera','chat','desktop','fullscreen','fodeviceselection','hangup','profile','settings']&userInfo.displayName=${encodeURIComponent(role)}`;
 
   return (
     <div className="h-full flex flex-col">
@@ -29,7 +30,7 @@ export function VideoCall({ roomId, role }: VideoCallProps) {
       
       {/* Info about chat */}
       <div className="mt-2 text-xs text-gray-600 text-center">
-        Click the chat icon in the video call to use built-in messaging
+        Click the chat button in Jitsi Meet to use real-time messaging
       </div>
     </div>
   );
