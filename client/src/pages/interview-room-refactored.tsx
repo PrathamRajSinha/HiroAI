@@ -292,10 +292,12 @@ export default function InterviewRoom() {
       });
       setIsGeneratingFromProfile(false);
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error("LinkedIn generation error:", error);
+      const errorMessage = error?.response?.data?.error || error?.message || "Failed to generate questions from LinkedIn. Please try again.";
       toast({
-        title: "Error",
-        description: "Failed to generate questions from LinkedIn. Please try again.",
+        title: "LinkedIn Analysis Error",
+        description: errorMessage,
         variant: "destructive",
       });
       setIsGeneratingFromProfile(false);

@@ -373,85 +373,127 @@ Format: Present each question as a complete, professional interview question tha
       let profileData = '';
       
       if (!isLikelyProfileText && url.includes('linkedin.com/in/')) {
-        // Use a simpler approach - fetch HTML and try to extract basic info
+        // Try Proxycurl API first if available, then fallback to basic extraction
         try {
           console.log(`Starting LinkedIn data extraction for: ${url}`);
           
-          // Simple fetch approach first
-          const response = await fetch(url, {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-              'Accept-Language': 'en-US,en;q=0.9',
-              'Accept-Encoding': 'gzip, deflate, br',
-              'DNT': '1',
-              'Connection': 'keep-alive',
-              'Upgrade-Insecure-Requests': '1',
-            }
-          });
+          // Try Proxycurl API if key is available
+          if (process.env.PROXYCURL_API_KEY) {
+            try {
+              const proxycurlUrl = new URL('https://nubela.co/proxycurl/api/v2/linkedin');
+              proxycurlUrl.searchParams.append('url', url);
+              
+              const proxycurlResponse = await fetch(proxycurlUrl.toString(), {
+                method: 'GET',
+                headers: {
+                  'Authorization': `Bearer ${process.env.PROXYCURL_API_KEY}`,
+                },
+              });
 
-          if (response.ok) {
-            const html = await response.text();
-            const cheerio = (await import('cheerio')).default;
-            const $ = cheerio.load(html);
-            
-            // Extract basic information using meta tags and common selectors
-            const title = $('title').text().replace(' | LinkedIn', '').trim();
-            const description = $('meta[name="description"]').attr('content') || '';
-            const ogTitle = $('meta[property="og:title"]').attr('content') || '';
-            const ogDescription = $('meta[property="og:description"]').attr('content') || '';
-            
-            // Try to extract from JSON-LD structured data
-            let structuredData = '';
-            $('script[type="application/ld+json"]').each((i, elem) => {
-              try {
-                const jsonData = JSON.parse($(elem).html() || '');
-                if (jsonData['@type'] === 'Person') {
-                  structuredData = JSON.stringify(jsonData);
+              if (!proxycurlResponse.ok) {
+                // Improved error logging as requested
+                console.error(`Proxycurl API error - Status: ${proxycurlResponse.status}, StatusText: ${proxycurlResponse.statusText}`);
+                try {
+                  const errorData = await proxycurlResponse.json();
+                  console.error('Proxycurl API error response:', errorData);
+                } catch (jsonError) {
+                  const errorText = await proxycurlResponse.text();
+                  console.error('Proxycurl API error response (text):', errorText);
                 }
-              } catch (e) {
-                // Ignore parsing errors
+                throw new Error(`Proxycurl API error: ${proxycurlResponse.status}`);
               }
-            });
-            
-            const profileParts = [];
-            
-            // Extract name and headline from title and meta tags
-            if (title) {
-              const nameParts = title.split(' - ');
-              if (nameParts.length >= 2) {
-                profileParts.push(`Name: ${nameParts[0].trim()}`);
-                profileParts.push(`Headline: ${nameParts.slice(1).join(' - ').trim()}`);
-              } else if (title) {
-                profileParts.push(`Name: ${title}`);
+
+              const proxycurlData = await proxycurlResponse.json();
+              
+              // Extract relevant profile information from Proxycurl
+              const profileParts = [];
+              if (proxycurlData.full_name) profileParts.push(`Name: ${proxycurlData.full_name}`);
+              if (proxycurlData.headline) profileParts.push(`Headline: ${proxycurlData.headline}`);
+              if (proxycurlData.summary) profileParts.push(`Summary: ${proxycurlData.summary.substring(0, 500)}`);
+              if (proxycurlData.occupation) profileParts.push(`Current Role: ${proxycurlData.occupation}`);
+              if (proxycurlData.skills && proxycurlData.skills.length > 0) {
+                profileParts.push(`Skills: ${proxycurlData.skills.slice(0, 8).join(', ')}`);
               }
+              if (proxycurlData.experiences && proxycurlData.experiences.length > 0) {
+                const recentExp = proxycurlData.experiences.slice(0, 3).map((exp: any) => 
+                  `${exp.title} at ${exp.company}${exp.description ? ' - ' + exp.description.substring(0, 200) : ''}`
+                ).join(' | ');
+                profileParts.push(`Recent Experience: ${recentExp}`);
+              }
+              
+              profileData = profileParts.join('\n\n');
+              console.log(`Successfully extracted LinkedIn data via Proxycurl. Profile length: ${profileData.length} characters`);
+              
+            } catch (proxycurlError) {
+              console.error('Proxycurl extraction failed, falling back to basic extraction:', proxycurlError);
+              // Continue to fallback method below
             }
-            
-            if (ogTitle && ogTitle !== title) {
-              profileParts.push(`Professional Title: ${ogTitle.replace(' | LinkedIn', '')}`);
-            }
-            
-            if (description) {
-              profileParts.push(`Summary: ${description.substring(0, 300)}`);
-            }
-            
-            if (ogDescription && ogDescription !== description) {
-              profileParts.push(`About: ${ogDescription.substring(0, 300)}`);
-            }
-            
-            profileData = profileParts.join('\n\n');
-            
-            console.log(`Extracted LinkedIn data using meta tags. Profile length: ${profileData.length} characters`);
           }
           
+          // Fallback: Simple HTML extraction if Proxycurl failed or key not available
           if (!profileData.trim()) {
-            throw new Error('No profile data extracted');
+            const response = await fetch(url, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'DNT': '1',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+              }
+            });
+
+            if (response.ok) {
+              const html = await response.text();
+              const cheerio = (await import('cheerio')).default;
+              const $ = cheerio.load(html);
+              
+              // Extract basic information using meta tags and common selectors
+              const title = $('title').text().replace(' | LinkedIn', '').trim();
+              const description = $('meta[name="description"]').attr('content') || '';
+              const ogTitle = $('meta[property="og:title"]').attr('content') || '';
+              const ogDescription = $('meta[property="og:description"]').attr('content') || '';
+              
+              const profileParts = [];
+              
+              // Extract name and headline from title and meta tags
+              if (title) {
+                const nameParts = title.split(' - ');
+                if (nameParts.length >= 2) {
+                  profileParts.push(`Name: ${nameParts[0].trim()}`);
+                  profileParts.push(`Headline: ${nameParts.slice(1).join(' - ').trim()}`);
+                } else if (title) {
+                  profileParts.push(`Name: ${title}`);
+                }
+              }
+              
+              if (ogTitle && ogTitle !== title) {
+                profileParts.push(`Professional Title: ${ogTitle.replace(' | LinkedIn', '')}`);
+              }
+              
+              if (description) {
+                profileParts.push(`Summary: ${description.substring(0, 300)}`);
+              }
+              
+              if (ogDescription && ogDescription !== description) {
+                profileParts.push(`About: ${ogDescription.substring(0, 300)}`);
+              }
+              
+              profileData = profileParts.join('\n\n');
+              console.log(`Extracted LinkedIn data using meta tags. Profile length: ${profileData.length} characters`);
+            }
+          }
+          
+          // Explicit validation as requested
+          if (!profileData.trim()) {
+            throw new Error('No relevant profile information could be extracted from the LinkedIn URL');
           }
           
         } catch (error) {
           console.error('LinkedIn data extraction failed:', error);
           return res.status(500).json({ 
-            error: "Unable to extract LinkedIn profile data automatically. Please copy and paste the profile information (name, headline, about section, experience) manually for accurate question generation." 
+            error: error.message || "Unable to extract LinkedIn profile data automatically. Please copy and paste the profile information (name, headline, about section, experience) manually for accurate question generation." 
           });
         }
       } else if (isLikelyProfileText) {
@@ -459,6 +501,13 @@ Format: Present each question as a complete, professional interview question tha
       } else {
         return res.status(400).json({ 
           error: "Please provide either a LinkedIn URL (https://linkedin.com/in/username) or paste the profile text directly" 
+        });
+      }
+
+      // Final validation - ensure profileData is not empty after processing
+      if (!profileData.trim()) {
+        return res.status(400).json({ 
+          error: "No relevant profile information could be extracted. Please check the LinkedIn URL or provide profile text manually." 
         });
       }
 
