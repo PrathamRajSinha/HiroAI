@@ -508,8 +508,14 @@ Format: Present each question as a complete, professional interview question tha
           
         } catch (error) {
           console.error('LinkedIn data extraction failed:', error);
-          return res.status(500).json({ 
-            error: error.message || "Unable to extract LinkedIn profile data automatically. Please copy and paste the profile information (name, headline, about section, experience) manually for accurate question generation." 
+          
+          // Provide clear guidance to user about LinkedIn access limitations
+          const errorMessage = error.message === 'No relevant profile information could be extracted from the LinkedIn URL' 
+            ? "LinkedIn blocks automated access to protect user privacy. Please manually copy and paste the profile information instead:\n\n1. Visit the LinkedIn profile in your browser\n2. Copy the person's name, headline, about section, and recent experience\n3. Paste that information in the text field above\n\nThis will generate highly specific questions based on their actual background."
+            : "Unable to access LinkedIn profile automatically. Please copy the profile information manually for accurate question generation.";
+            
+          return res.status(400).json({ 
+            error: errorMessage
           });
         }
       } else if (isLikelyProfileText) {

@@ -1303,7 +1303,7 @@ export default function InterviewRoom() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                   />
                   <div className="text-xs text-gray-500 mt-1">
-                    <strong>Real scraping enabled:</strong> Paste any LinkedIn profile URL and the system will automatically extract name, headline, experience, and skills to generate specific interview questions
+                    <strong>LinkedIn Integration:</strong> Due to LinkedIn's privacy protections, automatic extraction may be limited. For best results, manually copy and paste the profile information (name, headline, about section, experience) into the text field above.
                   </div>
                 </div>
                 
