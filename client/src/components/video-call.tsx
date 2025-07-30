@@ -4,8 +4,9 @@ interface VideoCallProps {
 }
 
 export function VideoCall({ roomId, role }: VideoCallProps) {
-  // Use the original Daily.co API that was working
-  const videoCallUrl = `https://aiinterview.daily.co/${roomId}`;
+  // Use Daily.co's demo version with proper room format
+  const sanitizedRoomId = roomId.replace(/[^a-zA-Z0-9-]/g, '');
+  const videoCallUrl = `https://${sanitizedRoomId}.daily.co/`;
 
   return (
     <div className="h-full flex flex-col">
