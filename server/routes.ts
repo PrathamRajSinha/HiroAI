@@ -397,8 +397,7 @@ Format: Present each question as a complete, professional interview question tha
                   const errorData = await proxycurlResponse.json();
                   console.error('Proxycurl API error response:', errorData);
                 } catch (jsonError) {
-                  const errorText = await proxycurlResponse.text();
-                  console.error('Proxycurl API error response (text):', errorText);
+                  console.error('Proxycurl API error - failed to parse JSON response');
                 }
                 throw new Error(`Proxycurl API error: ${proxycurlResponse.status}`);
               }
@@ -455,10 +454,12 @@ Format: Present each question as a complete, professional interview question tha
               const ogTitle = $('meta[property="og:title"]').attr('content') || '';
               const ogDescription = $('meta[property="og:description"]').attr('content') || '';
               
+              console.log(`Extraction debug - Title: "${title}", Description: "${description}", OG Title: "${ogTitle}", OG Description: "${ogDescription}"`);
+              
               const profileParts = [];
               
               // Extract name and headline from title and meta tags
-              if (title) {
+              if (title && title !== 'LinkedIn') {
                 const nameParts = title.split(' - ');
                 if (nameParts.length >= 2) {
                   profileParts.push(`Name: ${nameParts[0].trim()}`);
@@ -468,20 +469,35 @@ Format: Present each question as a complete, professional interview question tha
                 }
               }
               
-              if (ogTitle && ogTitle !== title) {
+              if (ogTitle && ogTitle !== title && ogTitle !== 'LinkedIn') {
                 profileParts.push(`Professional Title: ${ogTitle.replace(' | LinkedIn', '')}`);
               }
               
-              if (description) {
+              if (description && description.length > 20) {
                 profileParts.push(`Summary: ${description.substring(0, 300)}`);
               }
               
-              if (ogDescription && ogDescription !== description) {
+              if (ogDescription && ogDescription !== description && ogDescription.length > 20) {
                 profileParts.push(`About: ${ogDescription.substring(0, 300)}`);
+              }
+              
+              // If we still don't have much data, try to extract from URL pattern
+              if (profileParts.length === 0) {
+                const urlMatch = url.match(/linkedin\.com\/in\/([^\/\?]+)/);
+                if (urlMatch) {
+                  const username = urlMatch[1].replace(/-/g, ' ').replace(/\d+/g, '').trim();
+                  if (username.length > 2) {
+                    profileParts.push(`Name: ${username.split(' ').map(word => 
+                      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                    ).join(' ')}`);
+                    profileParts.push(`Professional: LinkedIn Professional with username ${urlMatch[1]}`);
+                  }
+                }
               }
               
               profileData = profileParts.join('\n\n');
               console.log(`Extracted LinkedIn data using meta tags. Profile length: ${profileData.length} characters`);
+              console.log(`Profile data content: ${profileData}`);
             }
           }
           
