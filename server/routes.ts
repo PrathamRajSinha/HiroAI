@@ -373,37 +373,117 @@ Format: Present each question as a complete, professional interview question tha
       let profileData = '';
       
       if (!isLikelyProfileText && url.includes('linkedin.com/in/')) {
-        // Try to extract LinkedIn profile data using a web scraping service
+        // Extract LinkedIn profile data using Puppeteer
         try {
-          // Use a public API service that can extract LinkedIn profile data
-          const scrapingResponse = await fetch(`https://api.scrapfly.io/scrape?key=demo&url=${encodeURIComponent(url)}&render_js=true&extract=%7B%22name%22%3A%22h1%22%2C%22headline%22%3A%22%5Bdata-generated-suggestion-target%5D%22%2C%22about%22%3A%22%23about%20~%20div%20span%5Baria-expanded%3Dfalse%5D%22%7D`);
+          const puppeteer = (await import('puppeteer')).default;
           
-          if (scrapingResponse.ok) {
-            const scrapingData = await scrapingResponse.json();
-            if (scrapingData.result && scrapingData.result.content) {
-              const extracted = scrapingData.result.content;
-              profileData = [
-                extracted.name ? `Name: ${extracted.name}` : '',
-                extracted.headline ? `Headline: ${extracted.headline}` : '',
-                extracted.about ? `About: ${extracted.about}` : ''
-              ].filter(item => item).join('\n');
-            }
+          console.log(`Starting LinkedIn scraping for: ${url}`);
+          
+          const browser = await puppeteer.launch({
+            headless: true,
+            args: [
+              '--no-sandbox',
+              '--disable-setuid-sandbox',
+              '--disable-dev-shm-usage',
+              '--disable-accelerated-2d-canvas',
+              '--disable-gpu',
+              '--window-size=1920x1080'
+            ]
+          });
+          
+          const page = await browser.newPage();
+          
+          // Set user agent to appear as a regular browser
+          await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+          
+          // Set viewport
+          await page.setViewport({ width: 1920, height: 1080 });
+          
+          // Navigate to the LinkedIn profile
+          await page.goto(url, { 
+            waitUntil: 'networkidle2',
+            timeout: 30000 
+          });
+          
+          // Wait a bit for dynamic content to load
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          
+          // Extract profile information
+          const extracted = await page.evaluate(() => {
+            const getTextContent = (selector: string) => {
+              const element = document.querySelector(selector);
+              return element ? element.textContent?.trim() || '' : '';
+            };
+            
+            const getAllTextContent = (selector: string) => {
+              const elements = document.querySelectorAll(selector);
+              return Array.from(elements).map(el => el.textContent?.trim() || '').filter(text => text.length > 0);
+            };
+            
+            // Try multiple selectors for name
+            const name = getTextContent('h1') || 
+                        getTextContent('.text-heading-xlarge') || 
+                        getTextContent('[data-anonymize="person-name"]') ||
+                        getTextContent('.top-card-layout__title');
+            
+            // Try multiple selectors for headline
+            const headline = getTextContent('.text-body-medium.break-words') ||
+                           getTextContent('.top-card-layout__headline') ||
+                           getTextContent('[data-anonymize="headline"]') ||
+                           getTextContent('.pv-text-details__left-panel .text-body-medium');
+            
+            // Try to get about section
+            const about = getTextContent('#about + * .inline-show-more-text__text') ||
+                         getTextContent('.pv-about__summary-text') ||
+                         getTextContent('[data-anonymize="about"]') ||
+                         getTextContent('.core-section-container__content .text-body-medium');
+            
+            // Try to get experience information
+            const experienceTexts = getAllTextContent('#experience + * .pvs-entity__caption-wrapper');
+            const experience = experienceTexts.slice(0, 3).join(' | '); // Get first 3 experiences
+            
+            // Try to get skills
+            const skillsTexts = getAllTextContent('#skills + * .pvs-entity__caption-wrapper span[aria-hidden="true"]');
+            const skills = skillsTexts.slice(0, 8).join(', '); // Get first 8 skills
+            
+            return {
+              name,
+              headline,
+              about,
+              experience,
+              skills
+            };
+          });
+          
+          await browser.close();
+          
+          // Build profile data string
+          const profileParts = [];
+          if (extracted.name) profileParts.push(`Name: ${extracted.name}`);
+          if (extracted.headline) profileParts.push(`Headline: ${extracted.headline}`);
+          if (extracted.about) profileParts.push(`About: ${extracted.about.substring(0, 500)}`); // Limit about section
+          if (extracted.experience) profileParts.push(`Experience: ${extracted.experience.substring(0, 400)}`);
+          if (extracted.skills) profileParts.push(`Skills: ${extracted.skills}`);
+          
+          profileData = profileParts.join('\n\n');
+          
+          console.log(`Successfully extracted LinkedIn data. Profile length: ${profileData.length} characters`);
+          
+          if (!profileData.trim()) {
+            throw new Error('No profile data extracted');
           }
+          
         } catch (error) {
-          console.log('LinkedIn scraping failed, falling back to manual approach');
-        }
-        
-        // If scraping failed, provide clear instructions for manual input
-        if (!profileData.trim()) {
-          return res.status(400).json({ 
-            error: "Unable to automatically extract LinkedIn profile data. Please manually copy and paste the profile text (name, headline, experience, skills) into the text area for accurate question generation." 
+          console.error('LinkedIn scraping failed:', error);
+          return res.status(500).json({ 
+            error: "Failed to scrape LinkedIn profile. LinkedIn may be blocking automated access. Please copy and paste the profile text manually for accurate question generation." 
           });
         }
       } else if (isLikelyProfileText) {
         profileData = url;
       } else {
         return res.status(400).json({ 
-          error: "Please provide either a LinkedIn URL or paste the profile text directly" 
+          error: "Please provide either a LinkedIn URL (https://linkedin.com/in/username) or paste the profile text directly" 
         });
       }
 
