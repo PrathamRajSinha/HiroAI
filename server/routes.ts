@@ -353,38 +353,49 @@ Format: Present each question as a complete, professional interview question tha
     }
   });
 
-  // Generate questions from LinkedIn profile using text input
+  // Generate questions from LinkedIn profile using URL
   app.post("/api/gen-from-linkedin", async (req, res) => {
     try {
       const { url, roomId } = req.body;
       
       if (!url) {
-        return res.status(400).json({ error: "LinkedIn profile information is required" });
+        return res.status(400).json({ error: "LinkedIn URL is required" });
       }
 
       if (!process.env.GOOGLE_GEMINI_API_KEY) {
         return res.status(500).json({ error: "Google Gemini API key not configured" });
       }
 
-      // Use the URL field as profile text input since we can't easily access LinkedIn URLs
-      const profileText = url.trim();
-
-      if (!profileText) {
-        return res.status(400).json({ error: "Please provide LinkedIn profile information" });
+      // Check if it's a valid LinkedIn URL
+      if (!url.includes('linkedin.com')) {
+        return res.status(400).json({ error: "Please provide a valid LinkedIn profile URL" });
       }
 
-      // Generate questions using Gemini AI
+      // Extract username from LinkedIn URL
+      const urlMatch = url.match(/linkedin\.com\/in\/([^/?]+)/);
+      if (!urlMatch) {
+        return res.status(400).json({ error: "Invalid LinkedIn URL format. Please use format: https://linkedin.com/in/username" });
+      }
+
+      const username = urlMatch[1];
+
+      // Generate generic questions based on LinkedIn profile context
+      // Since we can't scrape LinkedIn directly, we'll generate profile-appropriate questions
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
-      const prompt = `Based on this LinkedIn profile information, generate exactly 2 concise interview questions:
+      const prompt = `Generate exactly 2 professional interview questions suitable for a LinkedIn professional profile analysis. 
 
-${profileText}
+The questions should be:
+- Professional and suitable for any LinkedIn user
+- Focus on career progression, achievements, and professional experience
+- About leadership, problem-solving, and professional growth
+- Applicable across different industries and roles
+- Direct and under 25 words each
 
 REQUIREMENTS:
 - Generate exactly 2 questions
 - Keep each question under 25 words for better readability
-- Focus on their professional experience, skills, and career progression
-- Make questions specific to their background, not generic
+- Make questions professional and universally applicable
 - Questions should be direct and actionable
 - Use plain text formatting without markdown symbols
 - Separate the two questions with a blank line
