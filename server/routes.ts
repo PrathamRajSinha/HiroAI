@@ -370,55 +370,61 @@ Format: Present each question as a complete, professional interview question tha
       const isLikelyProfileText = url.length > 100 || url.includes('\n') || 
                                   (!url.startsWith('http') && url.split(' ').length > 5);
 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      let prompt;
-
-      if (isLikelyProfileText) {
-        // User provided profile text instead of URL
-        prompt = `Based on this LinkedIn profile information, generate exactly 2 specific and relevant interview questions:
-
-${url}
-
-REQUIREMENTS:
-- Generate exactly 2 questions
-- Make questions specific to the profile information provided
-- Keep each question under 25 words for better readability
-- Focus on their specific experience, role, and background
-- Questions should be direct and actionable
-- Use plain text formatting without markdown symbols
-- Separate the two questions with a blank line
-- Do not number the questions
-
-Format: Present each question as a concise, direct interview question.`;
-      } else if (url.includes('linkedin.com/in/')) {
-        // Extract username from LinkedIn URL for context
-        const urlParts = url.split('/');
-        const profileSlug = urlParts[urlParts.indexOf('in') + 1]?.split('?')[0] || '';
+      let profileData = '';
+      
+      if (!isLikelyProfileText && url.includes('linkedin.com/in/')) {
+        // Try to extract LinkedIn profile data using a web scraping service
+        try {
+          // Use a public API service that can extract LinkedIn profile data
+          const scrapingResponse = await fetch(`https://api.scrapfly.io/scrape?key=demo&url=${encodeURIComponent(url)}&render_js=true&extract=%7B%22name%22%3A%22h1%22%2C%22headline%22%3A%22%5Bdata-generated-suggestion-target%5D%22%2C%22about%22%3A%22%23about%20~%20div%20span%5Baria-expanded%3Dfalse%5D%22%7D`);
+          
+          if (scrapingResponse.ok) {
+            const scrapingData = await scrapingResponse.json();
+            if (scrapingData.result && scrapingData.result.content) {
+              const extracted = scrapingData.result.content;
+              profileData = [
+                extracted.name ? `Name: ${extracted.name}` : '',
+                extracted.headline ? `Headline: ${extracted.headline}` : '',
+                extracted.about ? `About: ${extracted.about}` : ''
+              ].filter(item => item).join('\n');
+            }
+          }
+        } catch (error) {
+          console.log('LinkedIn scraping failed, falling back to manual approach');
+        }
         
-        prompt = `I need you to generate 2 professional interview questions. Since I cannot access LinkedIn profiles directly, please create thoughtful questions that would be appropriate for interviewing a professional who has a LinkedIn profile.
-
-Focus on creating questions that:
-- Assess professional experience and career progression
-- Explore problem-solving and leadership capabilities
-- Are specific enough to elicit detailed responses
-- Avoid generic career questions
-- Are appropriate for mid-level to senior professionals
-
-REQUIREMENTS:
-- Generate exactly 2 questions
-- Keep each question under 25 words for better readability
-- Make questions specific and thought-provoking
-- Questions should be direct and actionable
-- Use plain text formatting without markdown symbols
-- Separate the two questions with a blank line
-- Do not number the questions
-
-Create questions that would work well in a professional interview setting.`;
+        // If scraping failed, provide clear instructions for manual input
+        if (!profileData.trim()) {
+          return res.status(400).json({ 
+            error: "Unable to automatically extract LinkedIn profile data. Please manually copy and paste the profile text (name, headline, experience, skills) into the text area for accurate question generation." 
+          });
+        }
+      } else if (isLikelyProfileText) {
+        profileData = url;
       } else {
         return res.status(400).json({ 
-          error: "Please provide either a LinkedIn URL (https://linkedin.com/in/username) or paste profile text" 
+          error: "Please provide either a LinkedIn URL or paste the profile text directly" 
         });
       }
+
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      
+      const prompt = `Based on this LinkedIn profile information, generate exactly 2 specific and relevant interview questions:
+
+${profileData}
+
+REQUIREMENTS:
+- Generate exactly 2 questions that are SPECIFIC to this person's background, experience, and role
+- Reference their actual job titles, companies, skills, or experiences mentioned
+- Keep each question under 25 words for better readability
+- Focus on their specific achievements and career progression
+- Questions should be direct and actionable
+- Use plain text formatting without markdown symbols
+- Separate the two questions with a blank line
+- Do not number the questions
+- Make questions that only make sense for THIS specific person's background
+
+Format: Present each question as a concise, direct interview question that references their specific experience.`;
       
       const result = await model.generateContent(prompt);
       const response = await result.response;
