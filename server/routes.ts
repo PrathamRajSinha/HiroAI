@@ -184,13 +184,8 @@ ${topic ? `- Ensure the question directly relates to the specified topic: ${topi
         console.log(`Storing question for room ${roomId}:`, question.substring(0, 100) + "...");
         await storage.setRoomQuestion(roomId, question);
         
-        // Add to timeline
-        await addQuestionToTimeline(roomId, {
-          question,
-          questionType: type,
-          difficulty,
-          status: 'not_sent'
-        });
+        // Note: Questions are only added to timeline when explicitly sent to candidates
+        // via the "Send to Candidate" button, not when generated
       }
 
       res.json({ question });

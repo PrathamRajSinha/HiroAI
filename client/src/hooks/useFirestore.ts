@@ -332,26 +332,20 @@ export function useInterviewRoom(roomId: string) {
       
       await addDoc(sentQuestionsRef, sentQuestion);
 
-      // Update timeline status to 'sent' for matching question
+      // Add question to timeline when sent to candidate
       try {
         const questionsRef = collection(db, "interviews", roomId, "questions");
-        const q = query(questionsRef, orderBy("timestamp", "desc"));
-        const querySnapshot = await getDocs(q);
-        
-        // Find the most recent question that matches
-        const matchingDoc = querySnapshot.docs.find(doc => {
-          const data = doc.data();
-          return data.question === question && data.status === 'not_sent';
+        await addDoc(questionsRef, {
+          question,
+          questionType,
+          difficulty,
+          status: 'sent',
+          timestamp: Date.now(),
+          sentTimestamp: Date.now(),
+          createdAt: new Date().toISOString()
         });
-        
-        if (matchingDoc) {
-          await updateDoc(matchingDoc.ref, {
-            status: 'sent',
-            sentTimestamp: Date.now()
-          });
-        }
       } catch (timelineError) {
-        console.error("Error updating timeline status:", timelineError);
+        console.error("Error adding question to timeline:", timelineError);
       }
     } catch (err) {
       console.error("Error sending question to candidate:", err);
