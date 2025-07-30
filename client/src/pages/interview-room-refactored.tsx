@@ -1291,17 +1291,17 @@ export default function InterviewRoom() {
               <CardContent className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    LinkedIn Profile URL
+                    LinkedIn Profile URL or Text
                   </label>
-                  <input
-                    type="text"
+                  <textarea
                     value={linkedinUrl}
                     onChange={(e) => setLinkedinUrl(e.target.value)}
-                    placeholder="https://linkedin.com/in/username"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    placeholder="Option 1: https://linkedin.com/in/username&#10;&#10;Option 2: Paste profile text:&#10;John Doe - Senior Software Engineer at Tech Corp&#10;● Led development of microservices architecture&#10;● 5+ years experience with React and Node.js&#10;● Previously worked at StartupX as Full Stack Developer"
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 resize-vertical"
                   />
                   <div className="text-xs text-gray-500 mt-1">
-                    Enter the LinkedIn profile URL to generate relevant interview questions
+                    Enter either a LinkedIn URL or paste profile text (name, title, experience, skills)
                   </div>
                 </div>
                 

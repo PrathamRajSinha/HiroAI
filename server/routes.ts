@@ -366,42 +366,59 @@ Format: Present each question as a complete, professional interview question tha
         return res.status(500).json({ error: "Google Gemini API key not configured" });
       }
 
-      // Check if it's a valid LinkedIn URL
-      if (!url.includes('linkedin.com')) {
-        return res.status(400).json({ error: "Please provide a valid LinkedIn profile URL" });
-      }
+      // Check if input looks like profile text rather than just a URL
+      const isLikelyProfileText = url.length > 100 || url.includes('\n') || 
+                                  (!url.startsWith('http') && url.split(' ').length > 5);
 
-      // Extract username from LinkedIn URL
-      const urlMatch = url.match(/linkedin\.com\/in\/([^/?]+)/);
-      if (!urlMatch) {
-        return res.status(400).json({ error: "Invalid LinkedIn URL format. Please use format: https://linkedin.com/in/username" });
-      }
-
-      const username = urlMatch[1];
-
-      // Generate generic questions based on LinkedIn profile context
-      // Since we can't scrape LinkedIn directly, we'll generate profile-appropriate questions
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      
-      const prompt = `Generate exactly 2 professional interview questions suitable for a LinkedIn professional profile analysis. 
+      let prompt;
 
-The questions should be:
-- Professional and suitable for any LinkedIn user
-- Focus on career progression, achievements, and professional experience
-- About leadership, problem-solving, and professional growth
-- Applicable across different industries and roles
-- Direct and under 25 words each
+      if (isLikelyProfileText) {
+        // User provided profile text instead of URL
+        prompt = `Based on this LinkedIn profile information, generate exactly 2 specific and relevant interview questions:
+
+${url}
 
 REQUIREMENTS:
 - Generate exactly 2 questions
+- Make questions specific to the profile information provided
 - Keep each question under 25 words for better readability
-- Make questions professional and universally applicable
+- Focus on their specific experience, role, and background
 - Questions should be direct and actionable
 - Use plain text formatting without markdown symbols
 - Separate the two questions with a blank line
 - Do not number the questions
 
 Format: Present each question as a concise, direct interview question.`;
+      } else if (url.includes('linkedin.com/in/')) {
+        // Extract username from LinkedIn URL for context
+        const urlParts = url.split('/');
+        const profileSlug = urlParts[urlParts.indexOf('in') + 1]?.split('?')[0] || '';
+        
+        prompt = `I need you to generate 2 professional interview questions. Since I cannot access LinkedIn profiles directly, please create thoughtful questions that would be appropriate for interviewing a professional who has a LinkedIn profile.
+
+Focus on creating questions that:
+- Assess professional experience and career progression
+- Explore problem-solving and leadership capabilities
+- Are specific enough to elicit detailed responses
+- Avoid generic career questions
+- Are appropriate for mid-level to senior professionals
+
+REQUIREMENTS:
+- Generate exactly 2 questions
+- Keep each question under 25 words for better readability
+- Make questions specific and thought-provoking
+- Questions should be direct and actionable
+- Use plain text formatting without markdown symbols
+- Separate the two questions with a blank line
+- Do not number the questions
+
+Create questions that would work well in a professional interview setting.`;
+      } else {
+        return res.status(400).json({ 
+          error: "Please provide either a LinkedIn URL (https://linkedin.com/in/username) or paste profile text" 
+        });
+      }
       
       const result = await model.generateContent(prompt);
       const response = await result.response;
