@@ -353,62 +353,30 @@ Format: Present each question as a complete, professional interview question tha
     }
   });
 
-  // Generate questions from LinkedIn profile using Proxycurl API
+  // Generate questions from LinkedIn profile using text input
   app.post("/api/gen-from-linkedin", async (req, res) => {
     try {
       const { url, roomId } = req.body;
       
       if (!url) {
-        return res.status(400).json({ error: "LinkedIn URL is required" });
-      }
-
-      if (!process.env.PROXYCURL_API_KEY) {
-        return res.status(500).json({ error: "Proxycurl API key not configured" });
+        return res.status(400).json({ error: "LinkedIn profile information is required" });
       }
 
       if (!process.env.GOOGLE_GEMINI_API_KEY) {
         return res.status(500).json({ error: "Google Gemini API key not configured" });
       }
 
-      // Fetch LinkedIn profile data using Proxycurl API
-      try {
-        const proxycurlUrl = new URL('https://nubela.co/proxycurl/api/v2/linkedin');
-        proxycurlUrl.searchParams.append('url', url);
-        
-        const proxycurlResponse = await fetch(proxycurlUrl.toString(), {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${process.env.PROXYCURL_API_KEY}`,
-          },
-        });
+      // Use the URL field as profile text input since we can't easily access LinkedIn URLs
+      const profileText = url.trim();
 
-        if (!proxycurlResponse.ok) {
-          throw new Error(`Proxycurl API error: ${proxycurlResponse.status}`);
-        }
+      if (!profileText) {
+        return res.status(400).json({ error: "Please provide LinkedIn profile information" });
+      }
 
-        const profileData = await proxycurlResponse.json();
-        
-        // Extract relevant profile information
-        const profileText = [
-          profileData.full_name ? `Name: ${profileData.full_name}` : '',
-          profileData.headline ? `Headline: ${profileData.headline}` : '',
-          profileData.summary ? `Summary: ${profileData.summary}` : '',
-          profileData.occupation ? `Current Role: ${profileData.occupation}` : '',
-          profileData.skills && profileData.skills.length > 0 ? `Skills: ${profileData.skills.join(', ')}` : '',
-          profileData.experiences && profileData.experiences.length > 0 ? 
-            `Recent Experience: ${profileData.experiences.slice(0, 3).map((exp: any) => 
-              `${exp.title} at ${exp.company}${exp.description ? ' - ' + exp.description.substring(0, 200) : ''}`
-            ).join('; ')}` : '',
-        ].filter((item: string) => item.length > 0).join('\n\n');
-
-        if (!profileText.trim()) {
-          throw new Error('Unable to extract profile information from LinkedIn');
-        }
-
-        // Generate questions using Gemini AI
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        
-        const prompt = `Based on this LinkedIn profile data, generate exactly 2 concise interview questions:
+      // Generate questions using Gemini AI
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      
+      const prompt = `Based on this LinkedIn profile information, generate exactly 2 concise interview questions:
 
 ${profileText}
 
@@ -423,46 +391,39 @@ REQUIREMENTS:
 - Do not number the questions
 
 Format: Present each question as a concise, direct interview question.`;
+      
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const generatedText = response.text();
+
+      // Split the response into individual questions
+      const questions = generatedText
+        .split('\n\n')
+        .filter(q => q.trim().length > 0)
+        .map(q => q.trim());
+
+      // Store the combined questions for the room if roomId is provided
+      if (roomId && questions.length > 0) {
+        const combinedQuestions = questions.join('\n\n');
+        console.log(`Storing LinkedIn-based questions for room ${roomId}:`, combinedQuestions.substring(0, 100) + "...");
+        await storage.setRoomQuestion(roomId, combinedQuestions);
         
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const generatedText = response.text();
-
-        // Split the response into individual questions
-        const questions = generatedText
-          .split('\n\n')
-          .filter(q => q.trim().length > 0)
-          .map(q => q.trim());
-
-        // Store the combined questions for the room if roomId is provided
-        if (roomId && questions.length > 0) {
-          const combinedQuestions = questions.join('\n\n');
-          console.log(`Storing LinkedIn-based questions for room ${roomId}:`, combinedQuestions.substring(0, 100) + "...");
-          await storage.setRoomQuestion(roomId, combinedQuestions);
-          
-          // Also update Firestore for real-time sync
-          if (db) {
-            try {
-              await db.collection('interviews').doc(roomId).set({
-                question: combinedQuestions,
-                questionType: 'LinkedIn Profile',
-                difficulty: 'Medium',
-                timestamp: Date.now()
-              }, { merge: true });
-            } catch (firestoreError) {
-              console.error("Error updating Firestore:", firestoreError);
-            }
+        // Also update Firestore for real-time sync
+        if (db) {
+          try {
+            await db.collection('interviews').doc(roomId).set({
+              question: combinedQuestions,
+              questionType: 'LinkedIn Profile',
+              difficulty: 'Medium',
+              timestamp: Date.now()
+            }, { merge: true });
+          } catch (firestoreError) {
+            console.error("Error updating Firestore:", firestoreError);
           }
         }
-
-        res.json({ questions });
-
-      } catch (apiError) {
-        console.error("LinkedIn profile fetching error:", apiError);
-        res.status(500).json({ 
-          error: "Failed to fetch LinkedIn profile data. Please check the URL and try again." 
-        });
       }
+
+      res.json({ questions });
 
     } catch (error) {
       console.error("Error generating questions from LinkedIn:", error);
@@ -566,13 +527,8 @@ Format: Present each question as a concise, direct interview question.`;
           console.log(`Storing GitHub-based questions for room ${roomId}:`, combinedQuestions.substring(0, 100) + "...");
           await storage.setRoomQuestion(roomId, combinedQuestions);
           
-          // Add to timeline
-          await addQuestionToTimeline(roomId, {
-            question: combinedQuestions,
-            questionType: 'GitHub Profile',
-            difficulty: 'Medium',
-            status: 'not_sent'
-          });
+          // Note: Questions are only added to timeline when explicitly sent to candidates
+          // via the "Send to Candidate" button, not when generated
           
           // Also update Firestore for real-time sync
           if (db) {
