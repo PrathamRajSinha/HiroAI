@@ -2140,6 +2140,51 @@ Focus on areas that need improvement or deeper exploration based on the scores a
     }
   });
 
+  // Live transcript analysis endpoint
+  app.post("/api/live-transcript-analysis", async (req, res) => {
+    try {
+      const { transcript, question } = req.body;
+
+      if (!transcript?.trim()) {
+        return res.status(400).json({ error: 'Transcript is required' });
+      }
+
+      if (!process.env.GEMINI_API_KEY) {
+        return res.status(500).json({ error: 'Gemini API key not configured' });
+      }
+
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      
+      const prompt = question ? 
+        `Provide a brief analysis of this candidate's response to the interview question. Focus on key points, strengths, and areas for improvement.
+
+Question: ${question}
+
+Candidate's Response: ${transcript}
+
+Provide a concise summary (2-3 sentences) highlighting:
+- How well they addressed the question
+- Key strengths demonstrated
+- Any notable insights or concerns
+
+Keep it professional and constructive.` :
+        `Provide a brief analysis of this candidate's response. Summarize the key points they made and highlight any notable strengths or insights.
+
+Candidate's Response: ${transcript}
+
+Provide a concise summary (2-3 sentences) focusing on the main points and overall quality of their response.`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const summary = response.text();
+
+      res.json({ summary });
+    } catch (error) {
+      console.error('Error analyzing transcript:', error);
+      res.status(500).json({ error: 'Failed to analyze transcript' });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

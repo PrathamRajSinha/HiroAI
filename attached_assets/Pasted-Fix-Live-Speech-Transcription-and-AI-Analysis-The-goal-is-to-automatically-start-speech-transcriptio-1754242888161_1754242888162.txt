@@ -1,0 +1,19 @@
+Fix Live Speech Transcription and AI Analysis
+The goal is to automatically start speech transcription for the candidate when a question is sent, make the process invisible to the candidate, and provide a live, rolling analysis to the interviewer.
+
+Prompt for client/src/hooks/useSpeechToText.ts and client/src/components/SpeechTranscription.tsx
+"Hey Replit Agent, please modify the speech transcription feature to be automatic and silent for the candidate, while providing live feedback to the interviewer.
+
+In client/src/hooks/useSpeechToText.ts, update the useEffect hook so that startListening() is automatically called when a new questionId is received and isActive is true but isListening is false. This will trigger transcription as soon as a new question is sent.
+
+Remove the line that sets the TOAST_REMOVE_DELAY constant. This constant is currently set to a very large number (1000000) and is causing toasts to remain on the screen indefinitely. Remove the addToRemoveQueue function from the reducer definition and all associated calls to it, as this logic is no longer needed.
+
+In client/src/components/SpeechTranscription.tsx, modify the component's render logic. For the candidate (role === 'candidate'), hide the handleToggleEnable button and handleToggleInputMode button. The transcription should start automatically without user interaction.
+
+Remove all toast notifications related to speech recognition errors (e.g., network, permission denied, etc.). Instead, the component should handle these errors silently by simply stopping the transcription.
+
+Implement a new feature to perform live AI analysis on the transcript. This requires two parts:
+
+Backend: Create a new API endpoint, /api/live-transcript-analysis, that accepts a transcript and a question as parameters. This endpoint should use the Google Gemini model to provide a brief summary of the transcript in relation to the question, and then return the summary.
+
+Frontend: In client/src/components/TranscriptViewer.tsx, integrate a useMutation hook to call the new /api/live-transcript-analysis endpoint whenever the transcript state changes. The returned summary should be displayed live in the viewer. Additionally, hide the manual "AI Summary" button."

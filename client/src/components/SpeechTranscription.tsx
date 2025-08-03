@@ -11,6 +11,7 @@ interface SpeechTranscriptionProps {
   roomId: string;
   questionId?: string;
   isActive: boolean; // Whether this question is currently active
+  role?: 'interviewer' | 'candidate';
   onTranscriptUpdate?: (transcript: string) => void;
 }
 
@@ -18,9 +19,10 @@ export function SpeechTranscription({
   roomId, 
   questionId, 
   isActive, 
+  role = 'candidate',
   onTranscriptUpdate 
 }: SpeechTranscriptionProps) {
-  const [isEnabled, setIsEnabled] = useState(false);
+  const [isEnabled, setIsEnabled] = useState(role === 'candidate' ? true : false);
   const [useManualInput, setUseManualInput] = useState(false);
   const [manualText, setManualText] = useState('');
   
@@ -35,43 +37,58 @@ export function SpeechTranscription({
   } = useSpeechToText({ 
     roomId, 
     questionId, 
+    isActive,
     onTranscriptUpdate 
   });
 
-  // Auto-stop listening when question changes or becomes inactive
+  // Auto-start/stop listening for candidates when questions change
   useEffect(() => {
-    if (!isActive && isListening) {
+    if (role === 'candidate' && isActive && questionId && isEnabled && !isListening && isSupported) {
+      // Automatically start listening for candidates when a new question is active
+      startListening();
+    } else if (!isActive && isListening) {
+      // Stop listening when question becomes inactive
       stopListening();
     }
-  }, [isActive, isListening, stopListening]);
+  }, [isActive, questionId, isEnabled, isListening, isSupported, role, startListening, stopListening]);
 
-  // Show error toast
+  // Show error toast only for interviewers, handle silently for candidates
   useEffect(() => {
-    if (error) {
+    if (error && role === 'interviewer') {
       toast({
         title: "Speech Recognition Error",
         description: error,
         variant: "destructive",
       });
+    } else if (error && role === 'candidate') {
+      // For candidates, just silently stop transcription
+      console.log('Speech recognition error (handled silently):', error);
+      if (isListening) {
+        stopListening();
+      }
     }
-  }, [error]);
+  }, [error, role, isListening, stopListening]);
 
   const handleToggleListening = () => {
     if (!isSupported) {
-      toast({
-        title: "Not Supported",
-        description: "Speech recognition is not supported in this browser. Please use Chrome or Safari.",
-        variant: "destructive",
-      });
+      if (role === 'interviewer') {
+        toast({
+          title: "Not Supported",
+          description: "Speech recognition is not supported in this browser. Please use Chrome or Safari.",
+          variant: "destructive",
+        });
+      }
       return;
     }
 
     if (!questionId) {
-      toast({
-        title: "No Active Question",
-        description: "Please wait for a question to be sent before starting transcription.",
-        variant: "destructive",
-      });
+      if (role === 'interviewer') {
+        toast({
+          title: "No Active Question",
+          description: "Please wait for a question to be sent before starting transcription.",
+          variant: "destructive",
+        });
+      }
       return;
     }
 
@@ -112,7 +129,13 @@ export function SpeechTranscription({
     setIsEnabled(!isEnabled);
   };
 
-  if (!isSupported) {
+  // For candidates, don't show anything if not supported - fail silently
+  if (!isSupported && role === 'candidate') {
+    return null;
+  }
+
+  // For interviewers, show the not supported message
+  if (!isSupported && role === 'interviewer') {
     return (
       <Card className="border-yellow-200 bg-yellow-50">
         <CardContent className="p-4">
@@ -125,6 +148,29 @@ export function SpeechTranscription({
     );
   }
 
+  // Minimal interface for candidates
+  if (role === 'candidate') {
+    return (
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 mb-4">
+        <div className="flex items-center gap-2">
+          {isListening ? (
+            <>
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+              <span className="text-xs text-gray-600">Recording your response...</span>
+            </>
+          ) : (
+            <>
+              <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+              <span className="text-xs text-gray-600">
+                {isEnabled ? 'Ready to record' : 'Voice recording disabled'}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Card className={`transition-colors ${isListening ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}>
       <CardHeader className="pb-3">
@@ -134,58 +180,63 @@ export function SpeechTranscription({
             Speech Transcription
           </CardTitle>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleToggleEnable}
-              className={isEnabled ? "bg-green-50 border-green-200" : ""}
-            >
-              {isEnabled ? "Enabled" : "Enable"}
-            </Button>
-            
-            {isEnabled && (
+            {/* Full controls for interviewers */}
+            {role === 'interviewer' && (
               <>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleToggleInputMode}
-                  className={useManualInput ? "bg-blue-50 border-blue-200" : ""}
+                  onClick={handleToggleEnable}
+                  className={isEnabled ? "bg-green-50 border-green-200" : ""}
                 >
-                  <Edit3 className="h-4 w-4 mr-2" />
-                  {useManualInput ? "Voice Mode" : "Text Mode"}
+                  {isEnabled ? "Enabled" : "Enable"}
                 </Button>
                 
-                {!useManualInput && (
+                {isEnabled && (
                   <>
                     <Button
-                      variant={isListening ? "destructive" : "default"}
+                      variant="outline"
                       size="sm"
-                      onClick={handleToggleListening}
-                      disabled={!isActive || !questionId}
-                      className={isListening ? "animate-pulse" : ""}
+                      onClick={handleToggleInputMode}
+                      className={useManualInput ? "bg-blue-50 border-blue-200" : ""}
                     >
-                      {isListening ? (
-                        <>
-                          <MicOff className="h-4 w-4 mr-2" />
-                          Stop
-                        </>
-                      ) : (
-                        <>
-                          <Mic className="h-4 w-4 mr-2" />
-                          Start
-                        </>
-                      )}
+                      <Edit3 className="h-4 w-4 mr-2" />
+                      {useManualInput ? "Voice Mode" : "Text Mode"}
                     </Button>
                     
-                    {error && error.includes('network') && !isListening && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleRetry}
-                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                      >
-                        Retry
-                      </Button>
+                    {!useManualInput && (
+                      <>
+                        <Button
+                          variant={isListening ? "destructive" : "default"}
+                          size="sm"
+                          onClick={handleToggleListening}
+                          disabled={!isActive || !questionId}
+                          className={isListening ? "animate-pulse" : ""}
+                        >
+                          {isListening ? (
+                            <>
+                              <MicOff className="h-4 w-4 mr-2" />
+                              Stop
+                            </>
+                          ) : (
+                            <>
+                              <Mic className="h-4 w-4 mr-2" />
+                              Start
+                            </>
+                          )}
+                        </Button>
+                        
+                        {error && error.includes('network') && !isListening && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleRetry}
+                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                          >
+                            Retry
+                          </Button>
+                        )}
+                      </>
                     )}
                   </>
                 )}
@@ -193,6 +244,8 @@ export function SpeechTranscription({
             )}
           </div>
         </div>
+        
+
         
         {isEnabled && (
           <div className="flex items-center gap-2 text-sm text-gray-600">

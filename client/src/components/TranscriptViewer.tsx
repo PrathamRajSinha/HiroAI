@@ -1,10 +1,10 @@
+import { useEffect } from 'react';
 import { useTranscriptListener } from '@/hooks/useSpeechToText';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Volume2, Clock, Download } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
 interface TranscriptViewerProps {
@@ -17,41 +17,40 @@ export function TranscriptViewer({ roomId, questionId, currentQuestion }: Transc
   const { transcript, isComplete, loading } = useTranscriptListener(roomId, questionId);
   const { toast } = useToast();
 
-  // Mutation to summarize transcript using Gemini
-  const summarizeTranscriptMutation = useMutation({
-    mutationFn: async (text: string) => {
-      const response = await fetch('/api/summarize-transcript', {
+  // Mutation for live transcript analysis using Gemini
+  const liveAnalysisMutation = useMutation({
+    mutationFn: async ({ transcript, question }: { transcript: string; question?: string }) => {
+      const response = await fetch('/api/live-transcript-analysis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ transcript: text, question: currentQuestion }),
+        body: JSON.stringify({ transcript, question }),
       });
       if (!response.ok) {
-        throw new Error('Failed to summarize transcript');
+        throw new Error('Failed to analyze transcript');
       }
       return response.json();
     },
-    onSuccess: (data) => {
-      toast({
-        title: "Transcript Summarized",
-        description: "AI summary has been generated successfully.",
-      });
-    },
     onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to summarize transcript. Please try again.",
-        variant: "destructive",
-      });
+      console.error('Error analyzing transcript:', error);
+      // Fail silently for live analysis to avoid interrupting the user
     },
   });
 
-  const handleSummarize = () => {
-    if (transcript && transcript.trim()) {
-      summarizeTranscriptMutation.mutate(transcript);
+  // Trigger live analysis whenever transcript changes
+  useEffect(() => {
+    if (transcript && transcript.trim().length > 50) { // Only analyze substantial content
+      const timeoutId = setTimeout(() => {
+        liveAnalysisMutation.mutate({ 
+          transcript, 
+          question: currentQuestion 
+        });
+      }, 2000); // Debounce for 2 seconds to avoid too frequent API calls
+
+      return () => clearTimeout(timeoutId);
     }
-  };
+  }, [transcript, currentQuestion]);
 
   const handleDownload = () => {
     if (!transcript) return;
@@ -149,14 +148,6 @@ export function TranscriptViewer({ roomId, questionId, currentQuestion }: Transc
         {transcript && (
           <div className="flex gap-2 pt-3 border-t">
             <Button
-              onClick={handleSummarize}
-              disabled={summarizeTranscriptMutation.isPending}
-              size="sm"
-              className="bg-violet-600 hover:bg-violet-700"
-            >
-              {summarizeTranscriptMutation.isPending ? "Summarizing..." : "🧠 AI Summary"}
-            </Button>
-            <Button
               onClick={handleDownload}
               variant="outline"
               size="sm"
@@ -167,11 +158,26 @@ export function TranscriptViewer({ roomId, questionId, currentQuestion }: Transc
           </div>
         )}
 
-        {/* AI Summary Display */}
-        {summarizeTranscriptMutation.data && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-4">
-            <div className="text-xs font-medium text-green-900 mb-2">AI Summary:</div>
-            <div className="text-sm text-green-800">{summarizeTranscriptMutation.data.summary}</div>
+        {/* Live AI Analysis Display */}
+        {liveAnalysisMutation.data && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+            <div className="text-xs font-medium text-blue-900 mb-2 flex items-center gap-1">
+              Live AI Analysis
+              {liveAnalysisMutation.isPending && (
+                <span className="animate-pulse text-blue-600">●</span>
+              )}
+            </div>
+            <div className="text-sm text-blue-800">{liveAnalysisMutation.data.summary}</div>
+          </div>
+        )}
+
+        {/* Loading indicator for live analysis */}
+        {liveAnalysisMutation.isPending && !liveAnalysisMutation.data && transcript && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mt-4">
+            <div className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-2">
+              <span className="animate-pulse">●</span>
+              Analyzing response...
+            </div>
           </div>
         )}
 

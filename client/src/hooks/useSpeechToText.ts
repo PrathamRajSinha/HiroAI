@@ -15,10 +15,11 @@ interface SpeechToTextHook {
 interface UseTranscriptProps {
   roomId: string;
   questionId?: string;
+  isActive: boolean;
   onTranscriptUpdate?: (transcript: string) => void;
 }
 
-export const useSpeechToText = ({ roomId, questionId, onTranscriptUpdate }: UseTranscriptProps): SpeechToTextHook => {
+export const useSpeechToText = ({ roomId, questionId, isActive, onTranscriptUpdate }: UseTranscriptProps): SpeechToTextHook => {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
@@ -203,6 +204,14 @@ export const useSpeechToText = ({ roomId, questionId, onTranscriptUpdate }: UseT
       });
     }
   }, [isListening, roomId, questionId, transcript]);
+
+  // Auto-start listening when a new questionId is received and isActive is true
+  useEffect(() => {
+    if (questionId && isActive && !isListening && recognitionRef.current) {
+      console.log('Auto-starting transcription for new question:', questionId);
+      startListening();
+    }
+  }, [questionId, isActive, isListening, startListening]);
 
   return {
     isListening,
