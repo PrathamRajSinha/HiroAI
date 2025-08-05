@@ -104,24 +104,27 @@ export const useSpeechToText = ({ roomId, questionId, isActive, onTranscriptUpda
     recognition.onerror = (event: any) => {
       console.error('Speech recognition error:', event.error);
       
-      // Handle specific error cases
+      // Handle specific error cases with focus on microphone conflicts
       if (event.error === 'aborted') {
         setError('Speech recognition was stopped');
       } else if (event.error === 'not-allowed') {
-        setError('Microphone access denied. Please allow microphone access and try again.');
+        setError('Microphone is in use by another application. Please stop the video call or use the text input mode.');
       } else if (event.error === 'no-speech') {
         setError('No speech detected. Try speaking louder or closer to the microphone.');
       } else if (event.error === 'network') {
         setError('Network connection issue. Speech recognition requires internet connectivity.');
       } else if (event.error === 'service-not-allowed') {
         setError('Speech recognition service not available. Please try again later.');
+      } else if (event.error === 'audio-capture') {
+        setError('Microphone is in use by another application. Please stop the video call or use the text input mode.');
       } else {
-        setError(`Speech recognition error: ${event.error}. Please try again.`);
+        // Default to microphone conflict for unknown errors since that's the most common issue
+        setError('Microphone is in use by another application. Please stop the video call or use the text input mode.');
       }
       
       setIsListening(false);
       
-      // Auto-retry for network errors after a delay
+      // Do NOT auto-retry for permission/microphone errors to avoid conflicts
       if (event.error === 'network' && recognitionRef.current) {
         setTimeout(() => {
           if (!isListening && recognitionRef.current) {
@@ -153,7 +156,7 @@ export const useSpeechToText = ({ roomId, questionId, isActive, onTranscriptUpda
     };
   }, [isSupported]); // Remove transcript and saveTranscript dependencies to prevent re-initialization
 
-  const startListening = useCallback(() => {
+  const startListening = useCallback(async () => {
     if (!recognitionRef.current || isListening) return;
     
     console.log('Attempting to start speech recognition...');
@@ -162,19 +165,64 @@ export const useSpeechToText = ({ roomId, questionId, isActive, onTranscriptUpda
     setInterimTranscript('');
     
     try {
-      // Request microphone permissions first
-      navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(() => {
-          console.log('Microphone permission granted');
-          recognitionRef.current.start();
-        })
-        .catch((err) => {
-          console.error('Microphone permission denied:', err);
-          setError('Microphone access is required for speech recognition. Please allow microphone access and try again.');
-        });
-    } catch (err) {
+      // Check if microphone is already in use by checking active media devices
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const audioInputDevices = devices.filter(device => device.kind === 'audioinput');
+      
+      if (audioInputDevices.length === 0) {
+        setError('No microphone detected. Please connect a microphone and try again.');
+        return;
+      }
+
+      // Request microphone permissions first and check for conflicts
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('Microphone permission granted, checking for conflicts...');
+        
+        // Check if the stream has active tracks (indicating potential conflicts)
+        const audioTracks = stream.getAudioTracks();
+        
+        if (audioTracks.length === 0) {
+          setError('No audio input available. Please check your microphone connection.');
+          return;
+        }
+
+        // Stop the test stream immediately to release the microphone
+        audioTracks.forEach(track => track.stop());
+        
+        // Small delay to ensure microphone is released
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Now start speech recognition
+        recognitionRef.current.start();
+        
+      } catch (micError: any) {
+        console.error('Microphone access error:', micError);
+        
+        // Handle specific microphone error cases
+        if (micError.name === 'NotAllowedError') {
+          setError('Microphone access denied. Please allow microphone access in your browser settings and try again.');
+        } else if (micError.name === 'NotFoundError') {
+          setError('No microphone found. Please connect a microphone and refresh the page.');
+        } else if (micError.name === 'AbortError' || micError.name === 'NotReadableError') {
+          setError('Microphone is in use by another application. Please stop the video call or use the text input mode.');
+        } else if (micError.name === 'OverconstrainedError') {
+          setError('Microphone configuration issue. Please try a different microphone or refresh the page.');
+        } else {
+          // Generic fallback for other microphone conflicts
+          setError('Microphone is in use by another application. Please stop the video call or use the text input mode.');
+        }
+        return;
+      }
+      
+    } catch (err: any) {
       console.error('Error starting speech recognition:', err);
-      setError('Failed to start speech recognition. Please ensure you are using a supported browser.');
+      
+      if (err.name === 'NotSupportedError') {
+        setError('Speech recognition is not supported in this browser. Please use Chrome or Safari.');
+      } else {
+        setError('Failed to start speech recognition. Please ensure you are using a supported browser.');
+      }
     }
   }, [isListening]);
 

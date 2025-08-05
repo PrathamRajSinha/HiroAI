@@ -92,6 +92,18 @@ export function SpeechTranscription({
       return;
     }
 
+    // Handle specific microphone conflict errors
+    if (error && error.includes('Microphone is in use by another application')) {
+      if (role === 'interviewer') {
+        toast({
+          title: "Microphone Conflict",
+          description: "The microphone is being used by the video call. Please stop the video call or use text input mode.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
     if (isListening) {
       stopListening();
     } else {
@@ -100,6 +112,16 @@ export function SpeechTranscription({
   };
 
   const handleRetry = () => {
+    // Don't retry if there's a microphone conflict error
+    if (error && error.includes('Microphone is in use')) {
+      toast({
+        title: "Cannot Retry",
+        description: "Microphone is still in use by another application. Please stop the video call first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!isListening) {
       startListening();
     }
@@ -236,6 +258,17 @@ export function SpeechTranscription({
                             Retry
                           </Button>
                         )}
+                        
+                        {error && error.includes('Microphone is in use') && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleToggleInputMode}
+                            className="text-green-600 border-green-200 hover:bg-green-50"
+                          >
+                            Switch to Text Mode
+                          </Button>
+                        )}
                       </>
                     )}
                   </>
@@ -331,7 +364,8 @@ export function SpeechTranscription({
           {error && (
             <div className={`text-xs p-3 rounded-lg border ${
               error.includes('network') ? 'bg-yellow-50 border-yellow-200 text-yellow-800' :
-              error.includes('not-allowed') ? 'bg-red-50 border-red-200 text-red-800' :
+              error.includes('Microphone is in use') ? 'bg-blue-50 border-blue-200 text-blue-800' :
+              error.includes('not-allowed') || error.includes('denied') ? 'bg-red-50 border-red-200 text-red-800' :
               'bg-orange-50 border-orange-200 text-orange-800'
             }`}>
               <div className="font-medium mb-1">Speech Recognition Issue:</div>
@@ -339,6 +373,16 @@ export function SpeechTranscription({
               {error.includes('network') && (
                 <div className="mt-2 text-xs">
                   💡 Try checking your internet connection or clicking the Retry button above.
+                </div>
+              )}
+              {error.includes('Microphone is in use') && (
+                <div className="mt-2 text-xs">
+                  💡 This is common when using video calls. Switch to "Text Mode" to continue with written responses.
+                </div>
+              )}
+              {(error.includes('not-allowed') || error.includes('denied')) && !error.includes('Microphone is in use') && (
+                <div className="mt-2 text-xs">
+                  💡 Click the microphone icon in your browser's address bar to allow microphone access.
                 </div>
               )}
             </div>
