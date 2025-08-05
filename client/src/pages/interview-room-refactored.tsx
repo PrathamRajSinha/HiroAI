@@ -48,6 +48,7 @@ export default function InterviewRoom() {
   // State management
   const [activeTab, setActiveTab] = useState<TabType>("question");
   const [generatedSummary, setGeneratedSummary] = useState<string>("");
+  const [generatedQuestion, setGeneratedQuestion] = useState<string>(""); // New state for generated question text
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeUrl, setResumeUrl] = useState<string>("");
   const [githubUrl, setGithubUrl] = useState<string>("");
@@ -190,12 +191,13 @@ export default function InterviewRoom() {
       return apiRequest("/api/generate-question", "POST", { type, difficulty, roomId, jobContext, topic });
     },
     onSuccess: async (data: { question: string }) => {
-      await updateQuestion(data.question, questionType, difficulty);
-      // Switch to question tab to show the generated question
+      // Set the generated question state instead of immediately updating Firestore
+      setGeneratedQuestion(data.question);
+      // Hide the question tab and show the generated question text instead
       setActiveTab("question");
       toast({
         title: "Question Generated",
-        description: "New coding question has been generated successfully.",
+        description: "New coding question has been generated successfully. Review and send to candidate.",
       });
     },
     onError: (error) => {
@@ -229,11 +231,17 @@ export default function InterviewRoom() {
   });
 
   const sendToCandidateMutation = useMutation({
-    mutationFn: async ({ question, questionType, difficulty }: { question: string; questionType: string; difficulty: string }) => {
-      await sendQuestionToCandidate(question, questionType, difficulty);
+    mutationFn: async () => {
+      // Use the generatedQuestion state as the source for the question text
+      await sendQuestionToCandidate(generatedQuestion, questionType, difficulty);
+      // Also update the local question state when sending to candidate
+      await updateQuestion(generatedQuestion, questionType, difficulty);
       return { success: true };
     },
     onSuccess: () => {
+      // Clear the generated question state after sending
+      setGeneratedQuestion("");
+      
       // Show success animation
       setShowSendSuccess(true);
       setTimeout(() => setShowSendSuccess(false), 2000);
@@ -784,27 +792,26 @@ export default function InterviewRoom() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {interviewData.question ? (
+                {generatedQuestion ? (
                   <div className="space-y-3">
                     <div className="flex gap-2">
-                      <Badge variant="secondary">{interviewData.questionType}</Badge>
-                      <Badge variant="outline">{interviewData.difficulty}</Badge>
+                      <Badge variant="secondary">{questionType}</Badge>
+                      <Badge variant="outline">{difficulty}</Badge>
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        Generated (Not Sent)
+                      </Badge>
                     </div>
                     <div 
-                      className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg border"
+                      className="text-sm text-gray-700 whitespace-pre-wrap bg-blue-50 p-4 rounded-lg border border-blue-200"
                       dangerouslySetInnerHTML={{
-                        __html: highlightTopic(interviewData.question, customTopic)
+                        __html: highlightTopic(generatedQuestion, customTopic)
                       }}
                     />
                     <div className="flex justify-end mt-4">
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
-                            onClick={() => sendToCandidateMutation.mutate({
-                              question: interviewData.question || "",
-                              questionType: interviewData.questionType || "General",
-                              difficulty: interviewData.difficulty || "Medium"
-                            })}
+                            onClick={() => sendToCandidateMutation.mutate()}
                             disabled={sendToCandidateMutation.isPending}
                             className={`bg-violet-600 hover:bg-violet-700 text-white transition-all duration-300 ${
                               showSendSuccess ? "bg-green-600 animate-pulse" : "hover:scale-105"
@@ -819,6 +826,22 @@ export default function InterviewRoom() {
                         </TooltipContent>
                       </Tooltip>
                     </div>
+                  </div>
+                ) : interviewData.question ? (
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <Badge variant="secondary">{interviewData.questionType}</Badge>
+                      <Badge variant="outline">{interviewData.difficulty}</Badge>
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        Sent to Candidate
+                      </Badge>
+                    </div>
+                    <div 
+                      className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg border"
+                      dangerouslySetInnerHTML={{
+                        __html: highlightTopic(interviewData.question, customTopic)
+                      }}
+                    />
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
@@ -1171,11 +1194,12 @@ export default function InterviewRoom() {
                                 </Button>
                                 {isInterviewer && (
                                   <Button
-                                    onClick={() => sendToCandidateMutation.mutate({
-                                      question,
-                                      questionType: "Resume Analysis",
-                                      difficulty: "Medium"
-                                    })}
+                                    onClick={() => {
+                                      setGeneratedQuestion(question);
+                                      setQuestionType("Resume Analysis");
+                                      setDifficulty("Medium");
+                                      sendToCandidateMutation.mutate();
+                                    }}
                                     size="sm"
                                     disabled={sendToCandidateMutation.isPending}
                                     className="bg-orange-600 hover:bg-orange-700 text-white"
@@ -1255,11 +1279,12 @@ export default function InterviewRoom() {
                                 </Button>
                                 {isInterviewer && (
                                   <Button
-                                    onClick={() => sendToCandidateMutation.mutate({
-                                      question,
-                                      questionType: "GitHub Analysis",
-                                      difficulty: "Medium"
-                                    })}
+                                    onClick={() => {
+                                      setGeneratedQuestion(question);
+                                      setQuestionType("GitHub Analysis");
+                                      setDifficulty("Medium");
+                                      sendToCandidateMutation.mutate();
+                                    }}
                                     size="sm"
                                     disabled={sendToCandidateMutation.isPending}
                                     className="bg-gray-700 hover:bg-gray-800 text-white"
@@ -1349,11 +1374,12 @@ export default function InterviewRoom() {
                                 </Button>
                                 {isInterviewer && (
                                   <Button
-                                    onClick={() => sendToCandidateMutation.mutate({
-                                      question,
-                                      questionType: "LinkedIn Analysis",
-                                      difficulty: "Medium"
-                                    })}
+                                    onClick={() => {
+                                      setGeneratedQuestion(question);
+                                      setQuestionType("LinkedIn Analysis");
+                                      setDifficulty("Medium");
+                                      sendToCandidateMutation.mutate();
+                                    }}
                                     size="sm"
                                     disabled={sendToCandidateMutation.isPending}
                                     className="bg-blue-600 hover:bg-blue-700 text-white"

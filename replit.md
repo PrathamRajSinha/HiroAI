@@ -78,6 +78,11 @@ A cutting-edge technical interview platform that transforms hiring processes thr
 - Real-time collaboration capabilities
 
 ## Recent Changes
+- **January 2025**: Decoupled question generation from submission workflow - questions are now generated into preview state before sending to candidates
+- **January 2025**: Added generatedQuestion state variable to hold AI-generated questions for review before submission
+- **January 2025**: Updated Current Question card to show generated questions with "Generated (Not Sent)" badge vs "Sent to Candidate" status
+- **January 2025**: Modified sendToCandidateMutation to use generatedQuestion state and only save to Firestore when explicitly sent
+- **January 2025**: Enhanced question generation flow - generates to preview, then requires explicit send action
 - **January 2025**: Added comprehensive Performance Sidebar (AI Scorecard) for real-time candidate insights
 - **January 2025**: Implemented live AI score tracking with correctness, efficiency, quality, and readability metrics
 - **January 2025**: Created aggregated performance analytics with strengths and weaknesses analysis
