@@ -1269,6 +1269,117 @@ Keep the summary professional, objective, and actionable. Focus on specific obse
     }
   });
 
+  // Download PDF report endpoint
+  app.get("/api/interviews/:roomId/download-report", async (req, res) => {
+    try {
+      const { roomId } = req.params;
+      
+      if (!roomId) {
+        return res.status(400).json({ error: "Room ID is required" });
+      }
+
+      // Fetch interview data
+      let interviewData: any = {};
+      let questionHistory: any[] = [];
+      let jobContext: any = null;
+      let latestCode: string | null = null;
+
+      try {
+        if (db) {
+          // Get interview data
+          const interviewDoc = await db.collection('interviews').doc(roomId).get();
+          if (interviewDoc.exists) {
+            interviewData = interviewDoc.data();
+          }
+
+          // Get question history
+          const historySnapshot = await db.collection('interviews').doc(roomId).collection('history').orderBy('timestamp', 'desc').get();
+          questionHistory = historySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+          // Get job context
+          const jobContextDoc = await db.collection('interviews').doc(roomId).collection('jobContext').doc('current').get();
+          if (jobContextDoc.exists) {
+            jobContext = jobContextDoc.data();
+          } else if (interviewData.jobContext) {
+            jobContext = interviewData.jobContext;
+          }
+
+          // Get latest code
+          const codeSnapshot = await db.collection('interviews').doc(roomId).collection('code').orderBy('timestamp', 'desc').limit(1).get();
+          if (!codeSnapshot.empty) {
+            latestCode = codeSnapshot.docs[0].data().code;
+          }
+        }
+      } catch (fetchError) {
+        console.error("Error fetching interview data for PDF report:", fetchError);
+        return res.status(500).json({ error: "Failed to fetch interview data" });
+      }
+
+      // Generate HTML report
+      const reportHtml = generateReportHtml({
+        candidateName: interviewData.candidateName || 'Anonymous Candidate',
+        companyName: 'Hiro.ai',
+        jobContext: jobContext || { jobTitle: 'Software Engineer', seniorityLevel: 'Mid', techStack: 'General' },
+        questionHistory,
+        overallSummary: interviewData.preliminarySummary || 'Interview completed',
+        interviewDate: new Date().toLocaleDateString(),
+        latestCode,
+        latestCodeAnalysis: questionHistory.length > 0 ? questionHistory[0].aiFeedback : null
+      });
+
+      // Generate PDF using Puppeteer
+      const puppeteer = await import('puppeteer');
+      
+      let browser;
+      try {
+        browser = await puppeteer.launch({
+          headless: true,
+          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        });
+        
+        const page = await browser.newPage();
+        
+        // Set content and wait for any images/styles to load
+        await page.setContent(reportHtml, { waitUntil: 'networkidle0' });
+        
+        // Generate PDF
+        const pdfBuffer = await page.pdf({
+          format: 'A4',
+          printBackground: true,
+          margin: {
+            top: '20mm',
+            right: '15mm',
+            bottom: '20mm',
+            left: '15mm'
+          }
+        });
+        
+        // Set response headers for PDF download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="interview-report-${roomId}.pdf"`);
+        res.setHeader('Content-Length', pdfBuffer.length);
+        
+        // Send PDF buffer
+        res.send(pdfBuffer);
+        
+      } catch (pdfError) {
+        console.error("Error generating PDF:", pdfError);
+        return res.status(500).json({ error: "Failed to generate PDF" });
+      } finally {
+        if (browser) {
+          await browser.close();
+        }
+      }
+
+    } catch (error) {
+      console.error('PDF report generation error:', error);
+      res.status(500).json({ 
+        error: "Failed to generate PDF report",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Submit interview feedback endpoint
   app.post("/api/submit-interview-feedback", async (req, res) => {
     try {

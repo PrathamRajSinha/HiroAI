@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Eye, Plus, Search, Users, Calendar, Clock, Trophy, FileText } from "lucide-react";
+import { Eye, Plus, Search, Users, Calendar, Clock, Trophy, FileText, Download } from "lucide-react";
 import { CloneInterviewButton } from "@/components/CloneInterviewButton";
 import hiroLogo from "@assets/logo hiro_1749550404647.png";
 
@@ -284,6 +284,18 @@ export default function Dashboard() {
                           </Link>
                           {interview.status === 'Completed' && (
                             <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                title="Download Report"
+                                onClick={() => {
+                                  import('../components/CompleteInterviewButton').then(({ downloadInterviewReport }) => {
+                                    downloadInterviewReport(interview.id, toast);
+                                  });
+                                }}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
                               <CloneInterviewButton 
                                 interviewId={interview.id}
                                 jobTitle={interview.jobContext?.jobTitle}

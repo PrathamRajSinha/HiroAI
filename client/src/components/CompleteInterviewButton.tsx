@@ -7,9 +7,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { CheckCircle, Loader2, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-// @ts-ignore
-import html2pdf from 'html2pdf.js';
 
 interface CompleteInterviewButtonProps {
   roomId: string;
@@ -22,6 +19,44 @@ interface CompletionData {
   overallRating: number;
 }
 
+// Export the download function for use in other components
+export const downloadInterviewReport = async (roomId: string, toast: any) => {
+  try {
+    const response = await fetch(`/api/interviews/${roomId}/download-report`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to generate report');
+    }
+    
+    // Create blob from the response
+    const blob = await response.blob();
+    
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `interview-report-${roomId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    
+    // Cleanup
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    toast({
+      title: "PDF Downloaded",
+      description: "Interview report has been downloaded successfully.",
+    });
+  } catch (error) {
+    console.error('Error downloading report:', error);
+    toast({
+      title: "Download Failed",
+      description: "Could not download the report. Please try again.",
+      variant: "destructive"
+    });
+  }
+};
+
 export function CompleteInterviewButton({ roomId, onInterviewCompleted }: CompleteInterviewButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState<CompletionData>({
@@ -33,7 +68,6 @@ export function CompleteInterviewButton({ roomId, onInterviewCompleted }: Comple
 
   const completeInterviewMutation = useMutation({
     mutationFn: async (data: CompletionData) => {
-      // First complete the interview
       const response = await fetch(`/api/interviews/${roomId}/complete`, {
         method: 'POST',
         headers: {
@@ -49,25 +83,12 @@ export function CompleteInterviewButton({ roomId, onInterviewCompleted }: Comple
         throw new Error('Failed to complete interview');
       }
 
-      // Generate the PDF report
-      const reportResponse = await fetch(`/api/interviews/${roomId}/report`);
-      if (!reportResponse.ok) {
-        throw new Error('Failed to generate report');
-      }
-      
-      const reportData = await reportResponse.json();
-      
-      return { completion: await response.json(), report: reportData };
+      return await response.json();
     },
-    onSuccess: async (data) => {
-      // Auto-download the PDF report
-      if (data.report && data.report.reportHtml) {
-        await generateAndDownloadPDF(data.report.reportHtml, `interview-report-${roomId}.pdf`);
-      }
-      
+    onSuccess: () => {
       toast({
         title: "Interview Completed Successfully",
-        description: "The interview has been completed and the report has been downloaded.",
+        description: "The interview has been marked as complete. You can now download the report.",
       });
       
       setIsOpen(false);
@@ -83,37 +104,7 @@ export function CompleteInterviewButton({ roomId, onInterviewCompleted }: Comple
     }
   });
 
-  const generateAndDownloadPDF = async (htmlContent: string, filename: string) => {
-    try {
-      const element = document.createElement('div');
-      element.innerHTML = htmlContent;
-      element.style.padding = '20px';
-      element.style.fontFamily = 'Arial, sans-serif';
-      element.style.lineHeight = '1.6';
-      
-      const options = {
-        margin: 1,
-        filename: filename,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-      };
-
-      await html2pdf().set(options).from(element).save();
-      
-      toast({
-        title: "PDF Downloaded",
-        description: `Interview report saved as ${filename}`,
-      });
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      toast({
-        title: "PDF Generation Failed",
-        description: "Could not generate PDF report. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
+  const handleDownloadReport = () => downloadInterviewReport(roomId, toast);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,7 +127,7 @@ export function CompleteInterviewButton({ roomId, onInterviewCompleted }: Comple
         <DialogHeader>
           <DialogTitle>Complete Interview</DialogTitle>
           <DialogDescription>
-            Provide final notes and hiring decision. The interview report will be automatically downloaded.
+            Provide final notes and hiring decision to complete the interview.
           </DialogDescription>
         </DialogHeader>
         
@@ -215,8 +206,8 @@ export function CompleteInterviewButton({ roomId, onInterviewCompleted }: Comple
                 </>
               ) : (
                 <>
-                  <Download className="h-4 w-4 mr-2" />
-                  Complete & Download Report
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Complete Interview
                 </>
               )}
             </Button>

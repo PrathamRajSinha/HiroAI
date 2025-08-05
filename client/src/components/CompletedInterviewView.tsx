@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CheckCircle, Brain, FileText, ThumbsUp, ThumbsDown, Minus, Clock, User, Award } from 'lucide-react';
+import { CheckCircle, Brain, FileText, ThumbsUp, ThumbsDown, Minus, Clock, User, Award, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -25,6 +26,7 @@ export function CompletedInterviewView({ roomId }: CompletedInterviewViewProps) 
   const [summary, setSummary] = useState<InterviewSummary | null>(null);
   const [interviewData, setInterviewData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!roomId) return;
@@ -233,6 +235,18 @@ export function CompletedInterviewView({ roomId }: CompletedInterviewViewProps) 
 
       {/* Action Buttons */}
       <div className="flex gap-3">
+        <Button 
+          variant="outline"
+          onClick={() => {
+            import('./CompleteInterviewButton').then(({ downloadInterviewReport }) => {
+              downloadInterviewReport(roomId, toast);
+            });
+          }}
+          className="flex-1"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Download Report
+        </Button>
         <Button 
           variant="outline"
           onClick={() => window.print()}
