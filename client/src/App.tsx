@@ -9,6 +9,8 @@ import CreateInterview from "@/pages/create-interview";
 import Dashboard from "@/pages/dashboard";
 import InterviewReview from "@/pages/interview-review";
 import InterviewThread from "@/pages/interview-thread";
+import CandidateExitInterview from "@/pages/candidate-exit-interview";
+import CandidateThankYou from "@/pages/candidate-thank-you";
 
 function Router() {
   return (
@@ -19,6 +21,8 @@ function Router() {
       <Route path="/dashboard/interview/:roomId" component={InterviewThread} />
       <Route path="/interview/:roomId" component={InterviewRoom} />
       <Route path="/interview/:id/review" component={InterviewReview} />
+      <Route path="/candidate/:roomId/exit-interview" component={CandidateExitInterview} />
+      <Route path="/candidate/:roomId/thank-you" component={CandidateThankYou} />
       <Route component={NotFound} />
     </Switch>
   );

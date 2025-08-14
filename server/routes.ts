@@ -1483,6 +1483,87 @@ Keep the summary professional, objective, and actionable. Focus on specific obse
     }
   });
 
+  // Candidate feedback endpoint
+  app.post("/api/interviews/:roomId/candidate-feedback", async (req, res) => {
+    try {
+      const { roomId } = req.params;
+      const {
+        overallExperience,
+        interviewDifficulty,
+        platformUsability,
+        technicalIssues,
+        technicalIssuesDescription,
+        interviewerRating,
+        questionsRelevant,
+        questionsQuality,
+        improvementSuggestions,
+        wouldRecommend,
+        additionalComments,
+        timestamp
+      } = req.body;
+      
+      if (!roomId) {
+        return res.status(400).json({ error: "Room ID is required" });
+      }
+
+      const feedbackData = {
+        overallExperience: overallExperience || 4,
+        interviewDifficulty: interviewDifficulty || 'just-right',
+        platformUsability: platformUsability || 4,
+        technicalIssues: technicalIssues || false,
+        technicalIssuesDescription: technicalIssuesDescription || '',
+        interviewerRating: interviewerRating || 4,
+        questionsRelevant: questionsRelevant !== undefined ? questionsRelevant : true,
+        questionsQuality: questionsQuality || 4,
+        improvementSuggestions: improvementSuggestions || '',
+        wouldRecommend: wouldRecommend !== undefined ? wouldRecommend : true,
+        additionalComments: additionalComments || '',
+        submittedAt: timestamp ? new Date(timestamp).getTime() : Date.now(),
+        submittedBy: 'candidate'
+      };
+
+      console.log(`[Candidate Feedback] Saving feedback for roomId: ${roomId}`);
+
+      if (db) {
+        try {
+          // Save candidate feedback
+          await db.collection('interviews').doc(roomId).collection('candidateFeedback').doc('details').set({
+            ...feedbackData,
+            timestamp: feedbackData.submittedAt
+          });
+
+          // Update main interview document with feedback flag
+          await db.collection('interviews').doc(roomId).update({
+            candidateFeedbackSubmitted: true,
+            candidateFeedbackAt: feedbackData.submittedAt
+          });
+
+          console.log(`[Candidate Feedback] Successfully saved feedback for ${roomId}`);
+        } catch (firestoreError) {
+          console.error("Error saving candidate feedback:", firestoreError);
+          return res.status(500).json({ error: "Failed to save feedback to database" });
+        }
+      }
+
+      res.json({ 
+        success: true,
+        message: "Candidate feedback submitted successfully",
+        feedbackData: {
+          roomId,
+          submittedAt: feedbackData.submittedAt,
+          overallRating: feedbackData.overallExperience
+        }
+      });
+
+    } catch (error) {
+      console.error('Candidate feedback error:', error);
+      res.status(500).json({ 
+        error: "Failed to submit candidate feedback",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Template management endpoints
   
   // Get all templates

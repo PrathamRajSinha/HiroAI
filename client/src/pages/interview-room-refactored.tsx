@@ -2091,6 +2091,28 @@ export default function InterviewRoom() {
                         console.log('Transcript updated:', transcript);
                       }}
                     />
+                    
+                    {/* Exit Interview Button for Candidates */}
+                    <Card className="mt-6 border-blue-200 bg-blue-50">
+                      <CardContent className="p-4 text-center">
+                        <div className="mb-3">
+                          <div className="text-sm font-medium text-blue-800 mb-1">
+                            Finished with your interview?
+                          </div>
+                          <div className="text-xs text-blue-600">
+                            Share your experience and help us improve our platform
+                          </div>
+                        </div>
+                        <Button 
+                          onClick={() => window.open(`/candidate/${roomId}/exit-interview`, '_blank')}
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                          size="sm"
+                        >
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          Exit Interview
+                        </Button>
+                      </CardContent>
+                    </Card>
                   </div>
                 </TabsContent>
 
