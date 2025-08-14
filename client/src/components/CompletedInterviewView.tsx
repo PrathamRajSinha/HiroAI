@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CheckCircle, Brain, FileText, ThumbsUp, ThumbsDown, Minus, Clock, User, Award, Download } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -32,10 +33,27 @@ export function CompletedInterviewView({ roomId }: CompletedInterviewViewProps) 
     if (!roomId) return;
 
     // Listen to the completed interview summary
-    const summaryRef = doc(db, 'interviews', roomId, 'finalSummary', 'complete');
+    const summaryRef = doc(db, 'interviews', roomId, 'completion', 'details');
     const unsubscribeSummary = onSnapshot(summaryRef, (doc) => {
       if (doc.exists()) {
-        setSummary(doc.data() as InterviewSummary);
+        const data = doc.data();
+        // Map decision values from completion form to view format
+        const mapDecision = (decision: string) => {
+          switch (decision) {
+            case 'hire': return 'hire';
+            case 'no-hire': return 'no_hire';
+            case 'pending': return 'maybe';
+            default: return 'maybe';
+          }
+        };
+        
+        setSummary({
+          finalSummary: data.interviewerNotes || 'Interview completed successfully',
+          interviewerNotes: data.interviewerNotes || '',
+          finalDecision: mapDecision(data.finalDecision || 'pending'),
+          completedAt: data.completedAt || Date.now(),
+          completedBy: data.completedBy || 'interviewer'
+        } as InterviewSummary);
       }
       setLoading(false);
     }, (error) => {
@@ -237,10 +255,17 @@ export function CompletedInterviewView({ roomId }: CompletedInterviewViewProps) 
       <div className="flex gap-3">
         <Button 
           variant="outline"
-          onClick={() => {
-            import('./CompleteInterviewButton').then(({ downloadInterviewReport }) => {
-              downloadInterviewReport(roomId, toast);
-            });
+          onClick={async () => {
+            try {
+              const { downloadInterviewReport } = await import('./CompleteInterviewButton');
+              await downloadInterviewReport(roomId, toast);
+            } catch (error) {
+              toast({
+                title: "Download Failed",
+                description: "Could not download the report. Please try again.",
+                variant: "destructive"
+              });
+            }
           }}
           className="flex-1"
         >

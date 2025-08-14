@@ -117,7 +117,7 @@ export const downloadInterviewReport = async (roomId: string, toast: any) => {
     console.error('Error downloading report:', error);
     toast({
       title: "Download Failed",
-      description: `Could not download the report: ${error.message}. Please try again.`,
+      description: `Could not download the report: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`,
       variant: "destructive"
     });
   }
