@@ -2664,6 +2664,61 @@ function generateReportHtml(data: {
     <div class="summary-section">
         <div class="summary-title">Overall Performance Summary</div>
         <div>${overallSummary}</div>
+        
+        ${questionHistory.length > 0 ? `
+        <div style="margin-top: 20px;">
+            <h4 style="color: #065f46; margin-bottom: 15px;">Interview Statistics</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; border: 1px solid #d1fae5; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <div style="font-size: 28px; font-weight: bold; color: #059669;">${questionHistory.length}</div>
+                    <div style="font-size: 13px; color: #6b7280; font-weight: 500;">Questions Asked</div>
+                </div>
+                <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; border: 1px solid #d1fae5; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <div style="font-size: 28px; font-weight: bold; color: #059669;">${questionHistory.filter(q => q.candidateAnswer || q.candidateCode).length}</div>
+                    <div style="font-size: 13px; color: #6b7280; font-weight: 500;">Questions Answered</div>
+                </div>
+                <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; border: 1px solid #d1fae5; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <div style="font-size: 28px; font-weight: bold; color: #059669;">${questionHistory.filter(q => q.aiFeedback && q.aiFeedback.scores).length}</div>
+                    <div style="font-size: 13px; color: #6b7280; font-weight: 500;">AI Evaluated</div>
+                </div>
+                ${(() => {
+                    const scoredQuestions = questionHistory.filter(q => q.aiFeedback && q.aiFeedback.scores && typeof q.aiFeedback.scores.overall === 'number');
+                    const avgScore = scoredQuestions.length > 0 ? 
+                        (scoredQuestions.reduce((sum, q) => sum + (q.aiFeedback.scores.overall || 0), 0) / scoredQuestions.length).toFixed(1) : 'N/A';
+                    const scoreColor = avgScore !== 'N/A' ? 
+                        (parseFloat(avgScore) >= 7 ? '#059669' : parseFloat(avgScore) >= 5 ? '#d97706' : '#dc2626') : '#6b7280';
+                    return `
+                    <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; border: 1px solid #d1fae5; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <div style="font-size: 28px; font-weight: bold; color: ${scoreColor};">${avgScore}</div>
+                        <div style="font-size: 13px; color: #6b7280; font-weight: 500;">Average Score</div>
+                    </div>
+                    `;
+                })()}
+            </div>
+            
+            ${(() => {
+                const answeredQuestions = questionHistory.filter(q => q.candidateAnswer || q.candidateCode);
+                const scoredQuestions = questionHistory.filter(q => q.aiFeedback && q.aiFeedback.scores);
+                const responseRate = questionHistory.length > 0 ? ((answeredQuestions.length / questionHistory.length) * 100).toFixed(0) : 0;
+                const evaluationRate = questionHistory.length > 0 ? ((scoredQuestions.length / questionHistory.length) * 100).toFixed(0) : 0;
+                
+                return `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+                    <div style="background: #f0f9ff; border-radius: 8px; padding: 15px; border-left: 4px solid #3b82f6;">
+                        <div style="font-weight: bold; color: #1e40af; margin-bottom: 5px;">Response Rate</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #1e40af;">${responseRate}%</div>
+                        <div style="font-size: 12px; color: #6b7280;">Questions with candidate responses</div>
+                    </div>
+                    <div style="background: #fef3c7; border-radius: 8px; padding: 15px; border-left: 4px solid #f59e0b;">
+                        <div style="font-weight: bold; color: #92400e; margin-bottom: 5px;">Evaluation Coverage</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #92400e;">${evaluationRate}%</div>
+                        <div style="font-size: 12px; color: #6b7280;">Questions with AI analysis</div>
+                    </div>
+                </div>
+                `;
+            })()}
+        </div>
+        ` : ''}
     </div>
 
     ${latestCode && latestCode.trim() && latestCode !== 'No code submitted' ? `
@@ -2756,10 +2811,16 @@ function generateReportHtml(data: {
         <div class="question-content">
             <div class="question-text">${question.question || 'No question text available'}</div>
             
-            ${question.candidateAnswer ? `
+            ${question.candidateAnswer || question.candidateCode ? `
             <div style="background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 4px;">
-                <div style="font-weight: bold; color: #1e40af; margin-bottom: 10px;">Candidate's Response:</div>
+                ${question.candidateAnswer ? `
+                <div style="font-weight: bold; color: #1e40af; margin-bottom: 10px;">Candidate's Verbal Response:</div>
                 <div style="color: #374151; line-height: 1.6; white-space: pre-wrap;">${question.candidateAnswer}</div>
+                ` : ''}
+                ${question.candidateCode ? `
+                <div style="font-weight: bold; color: #1e40af; margin-bottom: 10px; margin-top: ${question.candidateAnswer ? '15px' : '0'};">Candidate's Code Solution:</div>
+                <div style="background: #1f2937; color: #f9fafb; padding: 15px; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 14px; overflow-x: auto; white-space: pre-wrap;">${question.candidateCode}</div>
+                ` : ''}
                 ${question.answerTimestamp ? `
                 <div style="font-size: 12px; color: #6b7280; margin-top: 10px;">
                     Submitted: ${new Date(question.answerTimestamp).toLocaleString()}
@@ -2768,12 +2829,7 @@ function generateReportHtml(data: {
             </div>
             ` : ''}
             
-            ${question.candidateCode ? `
-            <div class="code-section">
-                <div class="code-title">Candidate's Code Solution:</div>
-                <div class="code-block">${question.candidateCode}</div>
-            </div>
-            ` : (question.candidateAnswer ? '' : '<p style="color: #6b7280; font-style: italic;">No response provided by candidate</p>')}
+            ${!question.candidateAnswer && !question.candidateCode ? '<p style="color: #6b7280; font-style: italic; padding: 15px; background: #f9fafb; border-radius: 4px; border-left: 4px solid #d1d5db;">No response provided by candidate</p>' : ''}
             
             ${question.aiFeedback ? `
             <div class="feedback-section">
