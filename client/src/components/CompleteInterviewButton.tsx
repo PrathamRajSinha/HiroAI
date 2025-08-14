@@ -46,22 +46,34 @@ export const downloadInterviewReport = async (roomId: string, toast: any) => {
       import('html2canvas')
     ]);
     
-    // Create a temporary container for the HTML content
-    const container = document.createElement('div');
-    container.innerHTML = data.htmlContent;
-    container.style.position = 'absolute';
-    container.style.left = '-9999px';
-    container.style.top = '0';
-    container.style.width = '800px';
-    container.style.background = 'white';
-    container.style.padding = '20px';
-    document.body.appendChild(container);
+    // Create a completely isolated iframe for PDF generation to avoid DOM conflicts
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.left = '-9999px';
+    iframe.style.top = '0';
+    iframe.style.width = '800px';
+    iframe.style.height = '1000px';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+    
+    // Write the HTML content directly to the iframe
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!iframeDoc) {
+      throw new Error('Unable to access iframe document');
+    }
+    
+    iframeDoc.open();
+    iframeDoc.write(data.htmlContent);
+    iframeDoc.close();
+    
+    // Get the container from inside the iframe
+    const container = iframeDoc.body;
     
     try {
       // Wait for fonts and styles to load
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Generate canvas from HTML
+      // Generate canvas from HTML inside the isolated iframe
       const canvas = await html2canvas(container, {
         scale: 2,
         useCORS: true,
@@ -71,7 +83,8 @@ export const downloadInterviewReport = async (roomId: string, toast: any) => {
         height: container.scrollHeight,
         scrollX: 0,
         scrollY: 0,
-        logging: false
+        logging: false,
+        foreignObjectRendering: true
       });
       
       // Create PDF
@@ -109,8 +122,8 @@ export const downloadInterviewReport = async (roomId: string, toast: any) => {
       });
       
     } finally {
-      // Clean up temporary container
-      document.body.removeChild(container);
+      // Clean up temporary iframe
+      document.body.removeChild(iframe);
     }
     
   } catch (error) {
