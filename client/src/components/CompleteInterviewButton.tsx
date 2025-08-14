@@ -28,30 +28,96 @@ export const downloadInterviewReport = async (roomId: string, toast: any) => {
       throw new Error('Failed to generate report');
     }
     
-    // Create blob from the response
-    const blob = await response.blob();
+    const data = await response.json();
     
-    // Create download link
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `interview-report-${roomId}.pdf`;
-    document.body.appendChild(link);
-    link.click();
+    if (!data.success || !data.htmlContent) {
+      throw new Error('Invalid report data received');
+    }
     
-    // Cleanup
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-    
-    toast({
-      title: "PDF Downloaded",
-      description: "Interview report has been downloaded successfully.",
+    console.log('Report data received:', {
+      hasContent: !!data.htmlContent,
+      contentLength: data.htmlContent?.length,
+      reportData: data.reportData
     });
+    
+    // Import jsPDF and html2canvas dynamically
+    const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+      import('jspdf'),
+      import('html2canvas')
+    ]);
+    
+    // Create a temporary container for the HTML content
+    const container = document.createElement('div');
+    container.innerHTML = data.htmlContent;
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    container.style.width = '800px';
+    container.style.background = 'white';
+    container.style.padding = '20px';
+    document.body.appendChild(container);
+    
+    try {
+      // Wait for fonts and styles to load
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Generate canvas from HTML
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 800,
+        height: container.scrollHeight,
+        scrollX: 0,
+        scrollY: 0,
+        logging: false
+      });
+      
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL('image/png');
+      
+      // Calculate dimensions to fit on page
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth - 20; // 10mm margin on each side
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 10; // Start 10mm from top
+      
+      // Add first page
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= (pdfHeight - 20); // Account for margins
+      
+      // Add additional pages if content is longer
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= (pdfHeight - 20);
+      }
+      
+      // Download the PDF
+      const fileName = `interview-report-${data.candidateName?.replace(/\s+/g, '-') || roomId}.pdf`;
+      pdf.save(fileName);
+      
+      toast({
+        title: "PDF Downloaded",
+        description: `Interview report has been downloaded successfully. Questions: ${data.reportData?.questionCount || 0}, Code: ${data.reportData?.hasCode ? 'Yes' : 'No'}, Answers: ${data.reportData?.hasAnswers ? 'Yes' : 'No'}`,
+      });
+      
+    } finally {
+      // Clean up temporary container
+      document.body.removeChild(container);
+    }
+    
   } catch (error) {
     console.error('Error downloading report:', error);
     toast({
       title: "Download Failed",
-      description: "Could not download the report. Please try again.",
+      description: `Could not download the report: ${error.message}. Please try again.`,
       variant: "destructive"
     });
   }

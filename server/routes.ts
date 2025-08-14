@@ -445,7 +445,7 @@ Format: Present each question as a complete, professional interview question tha
 
             if (response.ok) {
               const html = await response.text();
-              const cheerio = (await import('cheerio')).default;
+              const cheerio = await import('cheerio');
               const $ = cheerio.load(html);
               
               // Extract basic information using meta tags and common selectors
@@ -487,7 +487,7 @@ Format: Present each question as a complete, professional interview question tha
                 if (urlMatch) {
                   const username = urlMatch[1].replace(/-/g, ' ').replace(/\d+/g, '').trim();
                   if (username.length > 2) {
-                    profileParts.push(`Name: ${username.split(' ').map(word => 
+                    profileParts.push(`Name: ${username.split(' ').map((word: string) => 
                       word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
                     ).join(' ')}`);
                     profileParts.push(`Professional: LinkedIn Professional with username ${urlMatch[1]}`);
@@ -510,7 +510,7 @@ Format: Present each question as a complete, professional interview question tha
           console.error('LinkedIn data extraction failed:', error);
           
           // Provide clear guidance to user about LinkedIn access limitations
-          const errorMessage = error.message === 'No relevant profile information could be extracted from the LinkedIn URL' 
+          const errorMessage = (error as Error).message === 'No relevant profile information could be extracted from the LinkedIn URL' 
             ? "LinkedIn blocks automated access to protect user privacy. Please manually copy and paste the profile information instead:\n\n1. Visit the LinkedIn profile in your browser\n2. Copy the person's name, headline, about section, and recent experience\n3. Paste that information in the text field above\n\nThis will generate highly specific questions based on their actual background."
             : "Unable to access LinkedIn profile automatically. Please copy the profile information manually for accurate question generation.";
             
@@ -1286,29 +1286,109 @@ Keep the summary professional, objective, and actionable. Focus on specific obse
 
       try {
         if (db) {
+          console.log(`[PDF Report] Fetching data for roomId: ${roomId}`);
+          
           // Get interview data
           const interviewDoc = await db.collection('interviews').doc(roomId).get();
           if (interviewDoc.exists) {
             interviewData = interviewDoc.data();
+            console.log(`[PDF Report] Interview data found:`, Object.keys(interviewData));
+          } else {
+            console.log(`[PDF Report] No interview document found for ${roomId}`);
           }
 
-          // Get question history
+          // Get question history with enhanced data collection
           const historySnapshot = await db.collection('interviews').doc(roomId).collection('history').orderBy('timestamp', 'desc').get();
           questionHistory = historySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          console.log(`[PDF Report] Found ${questionHistory.length} questions in history`);
+          
+          // Get questions collection (newer approach)
+          const questionsSnapshot = await db.collection('interviews').doc(roomId).collection('questions').orderBy('timestamp', 'desc').get();
+          const questionsFromQuestionsCollection = questionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          console.log(`[PDF Report] Found ${questionsFromQuestionsCollection.length} questions in questions collection`);
+          
+          // Merge questions from both collections, prioritizing the newer questions collection
+          if (questionsFromQuestionsCollection.length > 0) {
+            questionHistory = [...questionsFromQuestionsCollection, ...questionHistory];
+            // Remove duplicates based on question text or timestamp
+            questionHistory = questionHistory.filter((question, index, self) => 
+              index === self.findIndex(q => q.question === question.question || q.timestamp === question.timestamp)
+            );
+          }
+
+          // Get candidate answers for each question
+          for (let question of questionHistory) {
+            try {
+              // Try to get answer from answers collection
+              const answerDoc = await db.collection('interviews').doc(roomId).collection('answers').doc(question.id).get();
+              if (answerDoc.exists) {
+                const answerData = answerDoc.data();
+                if (answerData) {
+                  question.candidateAnswer = answerData.transcript || answerData.answer || answerData.response;
+                  question.answerTimestamp = answerData.timestamp;
+                }
+                console.log(`[PDF Report] Found answer for question ${question.id}`);
+              }
+              
+              // Also check if there's AI feedback/scores for this question
+              const feedbackDoc = await db.collection('interviews').doc(roomId).collection('feedback').doc(question.id).get();
+              if (feedbackDoc.exists) {
+                const feedbackData = feedbackDoc.data();
+                question.aiFeedback = feedbackData;
+                console.log(`[PDF Report] Found AI feedback for question ${question.id}`);
+              }
+            } catch (answerError) {
+              console.log(`[PDF Report] Could not get answer for question ${question.id}:`, answerError);
+            }
+          }
 
           // Get job context
           const jobContextDoc = await db.collection('interviews').doc(roomId).collection('jobContext').doc('current').get();
           if (jobContextDoc.exists) {
             jobContext = jobContextDoc.data();
+            console.log(`[PDF Report] Job context found from jobContext collection`);
           } else if (interviewData.jobContext) {
             jobContext = interviewData.jobContext;
+            console.log(`[PDF Report] Job context found from interview data`);
+          } else {
+            console.log(`[PDF Report] No job context found`);
           }
 
-          // Get latest code
+          // Get latest code from multiple possible locations
           const codeSnapshot = await db.collection('interviews').doc(roomId).collection('code').orderBy('timestamp', 'desc').limit(1).get();
           if (!codeSnapshot.empty) {
             latestCode = codeSnapshot.docs[0].data().code;
+            console.log(`[PDF Report] Latest code found in code collection`);
+          } else {
+            // Check if code is stored in the main interview document
+            if (interviewData.currentCode || interviewData.code) {
+              latestCode = interviewData.currentCode || interviewData.code;
+              console.log(`[PDF Report] Latest code found in interview document`);
+            } else {
+              console.log(`[PDF Report] No code found`);
+            }
           }
+          
+          // Get performance data if available
+          const performanceSnapshot = await db.collection('interviews').doc(roomId).collection('performance').get();
+          if (!performanceSnapshot.empty) {
+            const performanceData = performanceSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            interviewData.performanceData = performanceData;
+            console.log(`[PDF Report] Found ${performanceData.length} performance records`);
+          }
+          
+          // Get completion data
+          const completionDoc = await db.collection('interviews').doc(roomId).collection('completion').doc('details').get();
+          if (completionDoc.exists) {
+            interviewData.completionData = completionDoc.data();
+            console.log(`[PDF Report] Completion data found`);
+          }
+          
+          console.log(`[PDF Report] Data collection summary:
+            - Interview data keys: ${Object.keys(interviewData)}
+            - Questions: ${questionHistory.length}
+            - Latest code length: ${latestCode ? latestCode.length : 0}
+            - Job context available: ${!!jobContext}`);
         }
       } catch (fetchError) {
         console.error("Error fetching interview data for PDF report:", fetchError);
@@ -1327,49 +1407,20 @@ Keep the summary professional, objective, and actionable. Focus on specific obse
         latestCodeAnalysis: questionHistory.length > 0 ? questionHistory[0].aiFeedback : null
       });
 
-      // Generate PDF using Puppeteer
-      const puppeteer = await import('puppeteer');
-      
-      let browser;
-      try {
-        browser = await puppeteer.launch({
-          headless: true,
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-        });
-        
-        const page = await browser.newPage();
-        
-        // Set content and wait for any images/styles to load
-        await page.setContent(reportHtml, { waitUntil: 'networkidle0' });
-        
-        // Generate PDF
-        const pdfBuffer = await page.pdf({
-          format: 'A4',
-          printBackground: true,
-          margin: {
-            top: '20mm',
-            right: '15mm',
-            bottom: '20mm',
-            left: '15mm'
-          }
-        });
-        
-        // Set response headers for PDF download
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="interview-report-${roomId}.pdf"`);
-        res.setHeader('Content-Length', pdfBuffer.length);
-        
-        // Send PDF buffer
-        res.send(pdfBuffer);
-        
-      } catch (pdfError) {
-        console.error("Error generating PDF:", pdfError);
-        return res.status(500).json({ error: "Failed to generate PDF" });
-      } finally {
-        if (browser) {
-          await browser.close();
+      // Send HTML content for client-side PDF generation
+      // This approach is more reliable than server-side Puppeteer in containerized environments
+      res.json({
+        success: true,
+        htmlContent: reportHtml,
+        candidateName: interviewData.candidateName || 'Anonymous Candidate',
+        roomId: roomId,
+        reportData: {
+          questionCount: questionHistory.length,
+          hasCode: !!latestCode,
+          hasAnswers: questionHistory.some(q => q.candidateAnswer),
+          completionData: interviewData.completionData
         }
-      }
+      });
 
     } catch (error) {
       console.error('PDF report generation error:', error);
@@ -2624,12 +2675,24 @@ function generateReportHtml(data: {
         <div class="question-content">
             <div class="question-text">${question.question || 'No question text available'}</div>
             
+            ${question.candidateAnswer ? `
+            <div style="background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <div style="font-weight: bold; color: #1e40af; margin-bottom: 10px;">Candidate's Response:</div>
+                <div style="color: #374151; line-height: 1.6; white-space: pre-wrap;">${question.candidateAnswer}</div>
+                ${question.answerTimestamp ? `
+                <div style="font-size: 12px; color: #6b7280; margin-top: 10px;">
+                    Submitted: ${new Date(question.answerTimestamp).toLocaleString()}
+                </div>
+                ` : ''}
+            </div>
+            ` : ''}
+            
             ${question.candidateCode ? `
             <div class="code-section">
-                <div class="code-title">Candidate's Solution:</div>
+                <div class="code-title">Candidate's Code Solution:</div>
                 <div class="code-block">${question.candidateCode}</div>
             </div>
-            ` : '<p style="color: #6b7280; font-style: italic;">No code solution provided</p>'}
+            ` : (question.candidateAnswer ? '' : '<p style="color: #6b7280; font-style: italic;">No response provided by candidate</p>')}
             
             ${question.aiFeedback ? `
             <div class="feedback-section">
